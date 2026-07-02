@@ -9,13 +9,29 @@ document.addEventListener('DOMContentLoaded', () => {
   const directWipInput = document.getElementById('directWip');
   const toggleDetails = document.getElementById('toggleDetails');
   const toggleHighlight = document.getElementById('toggleHighlight');
+  const toggleCaioRule = document.getElementById('toggleCaioRule');
+  const boardNameInput = document.getElementById('boardName');
+  const specialPeopleInput = document.getElementById('specialPeople');
+  const wipColumnsInput = document.getElementById('wipColumns');
   const saveBtn = document.getElementById('saveBtn');
   const status = document.getElementById('status');
   const errorMsg = document.getElementById('error-msg');
 
+  const defaultBoardName = 'Sda.Arms';
+  const defaultWipColumns = 'Desenvolvimento, Ready to CR, Code Review, Ready to HO, HO';
+  const defaultSpecialPeople = 'Caio';
+
+  function normalizeList(value) {
+    // Separa itens digitados por vírgula e remove espaços vazios.
+    return value
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean);
+  }
+
   // 2. CARREGAMENTO DOS DADOS SALVOS
   // Ao abrir o popup, perguntamos ao navegador se o usuário já havia salvo algo antes
-  chrome.storage.sync.get(['equipeSize', 'directWip', 'useEquipe', 'showDetails', 'highlightCards'], (data) => {
+  chrome.storage.sync.get(['equipeSize', 'directWip', 'useEquipe', 'showDetails', 'highlightCards', 'caioRuleEnabled', 'boardName', 'specialPeople', 'wipColumns'], (data) => {
     
     // Se existir configuração e foi escolhida a Equipe, preenchemos o input da Equipe
     if (data.useEquipe === true && data.equipeSize) {
@@ -35,6 +51,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (data.highlightCards !== undefined) {
       toggleHighlight.checked = data.highlightCards;
     }
+    if (data.caioRuleEnabled !== undefined) {
+      toggleCaioRule.checked = data.caioRuleEnabled;
+    }
+
+    // Carrega os valores salvos ou usa o padrão atual.
+    boardNameInput.value = data.boardName || defaultBoardName;
+    specialPeopleInput.value = Array.isArray(data.specialPeople) && data.specialPeople.length
+      ? data.specialPeople.join(', ')
+      : defaultSpecialPeople;
+    wipColumnsInput.value = Array.isArray(data.wipColumns) && data.wipColumns.length
+      ? data.wipColumns.join(', ')
+      : defaultWipColumns;
   });
 
   // 3. EXPERIÊNCIA DO USUÁRIO (UX) - EVITANDO CONFLITOS
@@ -51,17 +79,59 @@ document.addEventListener('DOMContentLoaded', () => {
     errorMsg.style.display = 'none'; 
   });
 
+  boardNameInput.addEventListener('input', () => {
+    // Limpa o aviso quando o usuário corrige o campo.
+    errorMsg.style.display = 'none';
+  });
+
+  specialPeopleInput.addEventListener('input', () => {
+    errorMsg.style.display = 'none';
+  });
+
+  wipColumnsInput.addEventListener('input', () => {
+    errorMsg.style.display = 'none';
+  });
+
   // 4. AÇÃO DE SALVAR
   // Quando o botão "Salvar Configuração" for clicado:
   saveBtn.addEventListener('click', () => {
     // Criamos um objeto que vai guardar as decisões do usuário
+    const boardName = boardNameInput.value.trim();
+    const specialPeople = normalizeList(specialPeopleInput.value);
+    const wipColumns = normalizeList(wipColumnsInput.value);
+
     let config = { 
       useEquipe: null, 
       equipeSize: null, 
       directWip: null,
       showDetails: toggleDetails.checked,     // Salva se o usuário quer ver o painel (true/false)
-      highlightCards: toggleHighlight.checked // Salva se o usuário quer os cards piscando (true/false)
+      highlightCards: toggleHighlight.checked, // Salva se o usuário quer os cards piscando (true/false)
+      caioRuleEnabled: toggleCaioRule.checked,
+      boardName: boardName || defaultBoardName,
+      specialPeople: specialPeople.length ? specialPeople : [defaultSpecialPeople],
+      wipColumns: wipColumns.length ? wipColumns : normalizeList(defaultWipColumns)
     };
+
+    // Garante que não salvamos board vazio.
+    if (!boardName) {
+      errorMsg.textContent = 'Informe um nome de board válido!';
+      errorMsg.style.display = 'block';
+      return;
+    }
+
+    // Mantém a regra de pessoas especiais configurável, mas nunca vazia.
+    if (specialPeople.length === 0) {
+      errorMsg.textContent = 'Informe pelo menos uma pessoa especial!';
+      errorMsg.style.display = 'block';
+      return;
+    }
+
+    // A lista de colunas WIP também precisa ter pelo menos um item.
+    if (config.wipColumns.length === 0) {
+      errorMsg.textContent = 'Informe pelo menos uma coluna WIP!';
+      errorMsg.style.display = 'block';
+      return;
+    }
 
     // Se o campo de equipe estiver preenchido, configuramos o objeto para a fórmula matemática
     if (equipeInput.value) {
