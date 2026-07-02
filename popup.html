@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: sans-serif; width: 300px; padding: 15px; background-color: #f8f9fa; }
+    h4 { margin-top: 0; color: #333; font-size: 16px; text-align: center; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; }
+    input[type="number"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    
+    .divider { text-align: center; margin: 15px 0; color: #666; font-size: 12px; font-weight: bold; }
+    
+    .toggle-group { margin-top: 15px; background: #fff; padding: 10px; border-radius: 4px; border: 1px solid #ddd; }
+    .toggle-group label { display: flex; align-items: center; font-weight: normal; margin-bottom: 8px; cursor: pointer; }
+    .toggle-group input[type="checkbox"] { width: auto; margin-right: 8px; cursor: pointer; }
+    
+    button { width: 100%; padding: 10px; background: #0078d4; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px;}
+    button:hover { background: #005a9e; }
+    
+    #status { margin-top: 10px; color: #1e8e3e; font-size: 13px; text-align: center; display: none; font-weight: bold; }
+    .error { margin-top: 10px; color: #cc292b; font-size: 13px; text-align: center; display: none; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h4>Definir Limite de WIP</h4>
+  
+  <div class="form-group">
+    <label>Tamanho da Equipe:</label>
+    <input type="number" id="equipeSize" min="1" placeholder="Nº de pessoas">
+    <div style="font-size: 11px; color: #666; margin-top: 4px;">Fórmula: 2 x Equipe + 1</div>
+  </div>
+
+  <div class="divider">OU</div>
+
+  <div class="form-group">
+    <label>WIP Direto (Fixo):</label>
+    <input type="number" id="directWip" min="1" placeholder="Insira o limite">
+  </div>
+
+  <div class="divider">MELHORIAS (OPCIONAIS)</div>
+
+  <div class="toggle-group">
+    <label>
+      <input type="checkbox" id="toggleDetails" checked>
+      Permitir clique no indicador para ver o detalhamento do gargalo por coluna.
+    </label>
+    <label style="margin-bottom: 0;">
+      <input type="checkbox" id="toggleHighlight" checked>
+      Destacar cards alarmantes (Aging > 10 ou Prazo curto/vencido).
+    </label>
+  </div>
+
+  <button id="saveBtn">Salvar Configuração</button>
+  <div id="status">Configuração salva com sucesso!</div>
+  <div id="error-msg" class="error">Preencha o WIP!</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

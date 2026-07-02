@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Azure DevOps - WIP do Board",
+  "version": "1.3",
+  "description": "Calcula o WIP total do board restrito à aba Maintenance/Features.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://dev.azure.com/sda-iatec/*",
+    "https://sda-iatec.visualstudio.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://dev.azure.com/sda-iatec/Sda.Arms/_boards/board/t/Maintenance/Features*",
+        "https://sda-iatec.visualstudio.com/Sda.Arms/_boards/board/t/Maintenance/Features*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Configurar WIP"
+  }
+}
