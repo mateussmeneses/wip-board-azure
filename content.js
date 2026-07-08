@@ -67,12 +67,25 @@ if (!document.getElementById('wip-alarm-style')) {
     #wip-details-panel {
       display: none; /* Começa escondido */
       margin-top: 10px;
-      padding-top: 10px;
+      padding: 10px;
       border-top: 1px solid rgba(0,0,0,0.1); /* Linha sutil separando o título do painel */
       font-size: 13px;
       font-weight: normal;
       text-transform: none;
       text-align: left;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.95);
+      color: #1f2937;
+    }
+    .wip-alerta-critico #wip-details-panel {
+      background: #fff5f5;
+      color: #111827;
+      border: 1px solid #fecaca;
+    }
+    .wip-alerta-atenção #wip-details-panel {
+      background: #fff7ed;
+      color: #111827;
+      border: 1px solid #fed7aa;
     }
     /* Como cada linha do painel vai se comportar (Nome da Coluna na esquerda, Número na direita) */
     .wip-detail-row {
@@ -86,46 +99,145 @@ if (!document.getElementById('wip-alarm-style')) {
   document.head.appendChild(style);
 }
 
-function getDefaultWipColumns() {
-  // Mantém o comportamento padrão atual caso o usuário não configure colunas.
-  return ["Desenvolvimento", "Ready to CR", "Code Review", "Ready to HO", "HO"];
+function normalizeText(value) {
+  return (value || '').toString().trim().toLowerCase();
+}
+
+function normalizeColumnName(value) {
+  // Normaliza nomes de coluna para comparação resiliente contra variações de renderização do Azure.
+  return normalizeText(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/[|]/g, ' ')
+    .trim();
+}
+
+function getHeaderColumnDisplayName(header) {
+  // Tenta obter o nome real da coluna a partir de diferentes pontos do header.
+  const ariaLabel = header?.getAttribute('aria-label') || '';
+  const editableLabel = header?.querySelector('.click-edit-field')?.textContent || '';
+
+  if (editableLabel.trim()) return editableLabel.trim();
+  if (ariaLabel.trim()) return ariaLabel.trim();
+
+  return (header?.textContent || '').trim();
+}
+
+function isConfiguredWipColumn(columnName, configuredColumns) {
+  const normalizedColumn = normalizeColumnName(columnName);
+  if (!normalizedColumn) return false;
+
+  return configuredColumns.some(configured => {
+    const normalizedConfigured = normalizeColumnName(configured);
+    if (!normalizedConfigured) return false;
+
+    // Aceita match exato e aproximação por inclusão para lidar com sufixos no Azure.
+    return normalizedConfigured === normalizedColumn
+      || normalizedConfigured.includes(normalizedColumn)
+      || normalizedColumn.includes(normalizedConfigured);
+  });
+}
+
+function isCardVisible(card) {
+  // O board do Azure pode manter cards no DOM mesmo filtrados; contamos apenas os visíveis.
+  if (!card) return false;
+  const style = window.getComputedStyle(card);
+  if (style.display === 'none' || style.visibility === 'hidden') return false;
+  if (card.closest('[aria-hidden="true"], .is-hidden, .hidden')) return false;
+  return card.getClientRects().length > 0;
+}
+
+function getCardAssignees(card) {
+  return Array.from(card.querySelectorAll('.identity-display-name span'))
+    .map(span => normalizeText(span.textContent))
+    .filter(Boolean);
+}
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const spaTagCache = {
+  builtAt: 0,
+  byItemId: new Map(),
+};
+
+function buildSpaTagIndexFromPageSource(specialTagPrefix) {
+  // Fallback: alguns boards não exibem o campo Tags no card, mas trazem os dados no HTML serializado.
+  const now = Date.now();
+  if (now - spaTagCache.builtAt < 5000 && spaTagCache.byItemId.size > 0) {
+    return spaTagCache.byItemId;
+  }
+
+  const html = (document.documentElement?.innerHTML || '').toLowerCase();
+  const map = new Map();
+
+  const normalizedPrefix = normalizeText(specialTagPrefix).replace(/^#/, '');
+  const tagRoot = normalizedPrefix.split(/[._-]/)[0] || 'spa';
+  const spaRegex = new RegExp(`#?${escapeRegex(tagRoot)}(?:[._-]?[a-z0-9]+)*`, 'i');
+  const cardChunkRegex = /\[(\d{5,}),([\s\S]{0,2600}?)\],/g;
+
+  let match;
+  while ((match = cardChunkRegex.exec(html)) !== null) {
+    const itemId = match[1];
+    const chunk = match[2];
+    if (spaRegex.test(chunk)) {
+      map.set(itemId, true);
+    }
+  }
+
+  spaTagCache.byItemId = map;
+  spaTagCache.builtAt = now;
+  return map;
+}
+
+function cardHasSpaTagFromSource(card, specialTagPrefix) {
+  const itemId = card?.getAttribute('data-itemid');
+  if (!itemId) return false;
+
+  const map = buildSpaTagIndexFromPageSource(specialTagPrefix);
+  return map.has(itemId);
 }
 
 function getBoardContext(data) {
   // Normaliza as opções salvas no popup em um único ponto de leitura.
+  const normalizedSpecialPeople = Array.isArray(data.specialPeople) && data.specialPeople.length
+    ? data.specialPeople.map(person => normalizeText(person)).filter(Boolean)
+    : [];
+
+  const normalizedColumns = (Array.isArray(data.wipColumns) && data.wipColumns.length
+    ? data.wipColumns
+    : []).map(column => normalizeColumnName(column)).filter(Boolean);
+
+  const currentBoardName = normalizeText(data.boardName || '');
+
+  const isConfigured = Boolean(currentBoardName)
+    && normalizedColumns.length > 0
+    && normalizedSpecialPeople.length > 0;
+
   return {
-    isHighlightActive: data.highlightCards !== false,
-    isDetailsActive: data.showDetails !== false,
-    currentBoardName: (data.boardName || 'Sda.Arms').trim(),
-    colunasWip: (Array.isArray(data.wipColumns) && data.wipColumns.length
-      ? data.wipColumns
-      : getDefaultWipColumns()).map(column => column.toLowerCase().trim()),
-    isCaioRuleActive: data.caioRuleEnabled !== false,
-    specialPeople: Array.isArray(data.specialPeople) && data.specialPeople.length
-      ? data.specialPeople
-      : ['Caio'],
+    isConfigured,
+    isHighlightActive: data.highlightCards === true,
+    isDetailsActive: data.showDetails === true,
+    currentBoardName,
+    colunasWip: normalizedColumns,
+    isSpecialRuleActive: data.specialRuleEnabled === true,
+    specialPeople: normalizedSpecialPeople,
+    specialTagPrefix: '#spa',
   };
 }
 
 function isAllowedBoard(currentBoardName) {
   // Garante que o indicador só seja renderizado quando a URL atual corresponder ao board desejado.
-  return window.location.href.includes(currentBoardName);
-}
-
-function getColumnCards(columnBodies, wipColumnIndexes) {
-  // Pega apenas os cards das colunas que fazem parte do cálculo de WIP.
-  const cards = [];
-  columnBodies.forEach((columnContainer, index) => {
-    if (!wipColumnIndexes.has(index)) return;
-    cards.push(...columnContainer.querySelectorAll('.wit-card'));
-  });
-  return cards;
+  return !!currentBoardName && window.location.href.toLowerCase().includes(currentBoardName);
 }
 
 function applyWipIndicatorState(indicator, current, limit, isDetailsActive, breakdown) {
   // Monta o estado visual do WIP total sem depender de reload.
   let titleHTML = '';
   let panelHTML = '';
+  const isCriticalState = limit !== null && current > limit;
 
   if (limit === null) {
     titleHTML = `<span>WIP: ${current} (Configure o limite na extensão)</span>`;
@@ -158,7 +270,9 @@ function applyWipIndicatorState(indicator, current, limit, isDetailsActive, brea
     `;
 
     breakdown.forEach(col => {
-      const colorStyle = col.count >= 5 ? 'color: #cc292b;' : '';
+      const colorStyle = col.count >= 5
+        ? (isCriticalState ? 'color: #7f1d1d;' : 'color: #cc292b;')
+        : 'color: inherit;';
       panelHTML += `
         <div class="wip-detail-row" style="${colorStyle}">
           <span class="wip-detail-name">${col.name}</span>
@@ -222,6 +336,25 @@ function analyzeCard(card) {
   });
 
   return { agingValue, targetDateDays, hasBlockTag };
+}
+
+function analyzeSpecialRule(card, specialTagPrefix) {
+  // Considera qualquer variação do prefixo (spa, spa.ui, spaapi) como tag especial única por card.
+  const tagsText = Array.from(card.querySelectorAll('.field-container'))
+    .filter(field => {
+      const labelEl = field.querySelector('.label');
+      return labelEl && normalizeText(labelEl.textContent) === 'tags';
+    })
+    .map(field => normalizeText(field.textContent))
+    .join(' ');
+
+  const normalizedPrefix = normalizeText(specialTagPrefix).replace(/^#/, '');
+  const tagRoot = normalizedPrefix.split(/[._-]/)[0] || 'spa';
+  const tagRegex = new RegExp(`(^|[\\s,;])#?${escapeRegex(tagRoot)}(?:[._-]?[a-z0-9]+)*($|[\\s,;])`, 'i');
+  // Primeiro tenta pelo campo visível de Tags; se não existir, usa fallback por itemId no HTML serializado.
+  const hasSpecialTag = tagRegex.test(tagsText) || cardHasSpaTagFromSource(card, specialTagPrefix);
+
+  return { hasSpecialTag };
 }
 
 function applyCardAlarm(card, isHighlightActive) {
@@ -291,7 +424,7 @@ function updateWipBoard() {
   }
 
   // Pede os dados e as configurações (toggles) que o usuário escolheu no popup
-  chrome.storage.sync.get(['useEquipe', 'equipeSize', 'directWip', 'showDetails', 'highlightCards', 'caioRuleEnabled', 'boardName', 'wipColumns'], (data) => {
+  chrome.storage.sync.get(['useEquipe', 'equipeSize', 'directWip', 'showDetails', 'highlightCards', 'specialRuleEnabled', 'boardName', 'specialPeople', 'wipColumns'], (data) => {
     
     // --- Lógica do Limite ---
     let limit = null; // Iniciamos vazio para identificar se a pessoa ainda não configurou
@@ -302,10 +435,20 @@ function updateWipBoard() {
       limit = data.directWip; // Usa o fixo
     }
 
-    const { isHighlightActive, isDetailsActive, currentBoardName, colunasWip, isCaioRuleActive, specialPeople } = getBoardContext(data);
+    const { isConfigured, isHighlightActive, isDetailsActive, currentBoardName, colunasWip, isSpecialRuleActive, specialPeople, specialTagPrefix } = getBoardContext(data);
+
+    if (!isConfigured) {
+      displayWip(0, null, [], false);
+      const indicator = document.getElementById('custom-wip-indicator');
+      if (indicator) {
+        indicator.innerHTML = '<div><span>Configure o board e as colunas no popup para iniciar.</span></div>';
+      }
+      return;
+    }
     
-    let totalCards = 0; // Soma bruta
-    let caioCards = 0;  // Soma exclusiva do responsável que vale apenas 1
+    let totalCards = 0; // Soma bruta baseada nos cards visíveis
+    const specialStatsByPerson = new Map(); // Controle por pessoa para aplicar regra de redução por pessoa.
+    const allWipCards = [];
     let columnsBreakdown = []; // Array que vai guardar o subtotal de CADA coluna para mostrarmos no painel
 
     // Buscamos na página as caixas de título das colunas e as caixas de conteúdo
@@ -319,66 +462,66 @@ function updateWipBoard() {
       return;
     }
 
-    // Analisa cada coluna individualmente...
+    // Mapeia os índices de coluna que realmente entram na regra de WIP.
+    const wipColumnsMeta = [];
     headers.forEach((header, index) => {
-      // Pega o nome da coluna no HTML (aria-label), remove espaços mortos e transforma em minúsculo
-      const rawName = header.getAttribute('aria-label') || '';
-      const columnName = rawName.toLowerCase().trim();
-      
-      // Se a coluna faz parte do cálculo...
-      if (colunasWip.includes(columnName)) {
-        
-        let colTotal = 0; // Cards dessa coluna específica
-        
-        // 1. Procuramos o número total que o próprio Azure mostra ao lado do título
-        const countSpan = header.querySelector('.board-column-item-count');
-        if (countSpan) {
-          colTotal = parseInt(countSpan.textContent, 10) || 0;
-          totalCards += colTotal; // Joga na soma geral
-        }
-
-        // Guarda o nome da coluna e o número dela para usarmos no painel (Melhoria 1)
-        columnsBreakdown.push({ name: rawName, count: colTotal });
-
-        // 2. Usamos a 'posição' (index) para achar os cards que pertencem a esta mesma coluna
-        const columnContainer = columnBodies[index];
-        if (columnContainer) {
-          // Buscamos apenas nomes contidos na coluna
-          const assignees = columnContainer.querySelectorAll('.identity-display-name span');
-          assignees.forEach(span => {
-            const name = span.textContent.trim().toLowerCase();
-            // Se encontrar a palavra-chave, adicionamos +1 na conta do responsável especial
-            if (isCaioRuleActive && specialPeople.some(person => name.includes(person.toLowerCase()))) {
-              caioCards++;
-            }
-          });
-        }
+      const displayName = getHeaderColumnDisplayName(header);
+      if (isConfiguredWipColumn(displayName, colunasWip)) {
+        wipColumnsMeta.push({ index, displayName });
       }
+    });
+
+    // Analisa apenas as colunas configuradas como WIP.
+    wipColumnsMeta.forEach(({ index, displayName }) => {
+      const columnContainer = columnBodies[index];
+      const cardsInColumn = columnContainer
+        ? Array.from(columnContainer.querySelectorAll('.wit-card')).filter(isCardVisible)
+        : [];
+
+      const colTotal = cardsInColumn.length;
+      totalCards += colTotal;
+      columnsBreakdown.push({ name: displayName, count: colTotal });
+
+      cardsInColumn.forEach(card => {
+        allWipCards.push(card);
+
+        if (!isSpecialRuleActive) return;
+
+        const assignees = getCardAssignees(card);
+        const matchedPerson = specialPeople.find(person => assignees.some(name => name.includes(person)));
+        if (!matchedPerson) return;
+
+        const currentStats = specialStatsByPerson.get(matchedPerson) || { tagged: 0, untagged: 0 };
+        const { hasSpecialTag } = analyzeSpecialRule(card, specialTagPrefix);
+
+        if (hasSpecialTag) {
+          currentStats.tagged += 1;
+        } else {
+          currentStats.untagged += 1;
+        }
+
+        specialStatsByPerson.set(matchedPerson, currentStats);
+      });
     });
 
     // --- LÓGICA DA MELHORIA 2: AVALIAR OS CARDS SOMENTE NAS COLUNAS WIP ---
-    const wipColumnIndexes = new Set();
-    headers.forEach((header, index) => {
-      const rawName = header.getAttribute('aria-label') || '';
-      const columnName = rawName.toLowerCase().trim();
-      if (colunasWip.includes(columnName)) {
-        wipColumnIndexes.add(index);
-      }
-    });
-
-    // Pré-filtra os cards para reduzir o trabalho da análise visual.
-    const allCards = getColumnCards(columnBodies, wipColumnIndexes);
-
-    allCards.forEach(card => {
+    allWipCards.forEach(card => {
       applyCardAlarm(card, isHighlightActive);
     });
     // -----------------------------------------------------------------------------
     
-    // REGRA DE NEGÓCIO FINAL (WIP): O Caio vale apenas 1
+    // REGRA DE NEGÓCIO FINAL (WIP): por pessoa especial, os cards spa* contam como 1 bloco.
     let finalWip = totalCards;
-    // Se o Caio tiver algum card e a regra estiver ligada, nós retiramos a contagem dele do montante e adicionamos somente 1.
-    if (isCaioRuleActive && caioCards > 0) {
-      finalWip = totalCards - caioCards + 1;
+    if (isSpecialRuleActive && specialStatsByPerson.size > 0) {
+      let specialOriginalTotal = 0;
+      let specialAdjustedTotal = 0;
+
+      specialStatsByPerson.forEach(({ tagged, untagged }) => {
+        specialOriginalTotal += tagged + untagged;
+        specialAdjustedTotal += untagged + (tagged > 0 ? 1 : 0);
+      });
+
+      finalWip = totalCards - specialOriginalTotal + specialAdjustedTotal;
     }
 
     // Envia todas as variáveis construídas para a função desenhar a tela
@@ -478,6 +621,52 @@ function displayWip(current, limit, breakdown, isDetailsActive) {
   applyWipIndicatorState(indicator, current, limit, isDetailsActive, breakdown);
 }
 
+function startBoardObservation() {
+  // Só começa a observar quando o body já existe, evitando falha no primeiro carregamento.
+  if (!document.body) {
+    window.addEventListener('load', startBoardObservation, { once: true });
+    return;
+  }
+
+  observer.observe(document.body, { childList: true, subtree: true });
+  bootstrapBoardRender();
+}
+
+function bootstrapBoardRender(attempt = 0) {
+  // Faz pequenas tentativas até o Azure terminar de montar o board sem exigir F5.
+  updateWipBoard();
+
+  const hasBoardHeaders = document.querySelectorAll('.kanban-board-column-header').length > 0;
+  if (hasBoardHeaders || attempt >= 10) {
+    return;
+  }
+
+  setTimeout(() => bootstrapBoardRender(attempt + 1), 500);
+}
+
+function ensureBoardMounted() {
+  // O Azure monta a board de forma assíncrona; aqui repetimos a tentativa até os headers existirem.
+  const hasBoardHeaders = document.querySelectorAll('.kanban-board-column-header').length > 0;
+  if (hasBoardHeaders) {
+    updateWipBoard();
+    return;
+  }
+
+  let attempt = 0;
+  const retry = () => {
+    updateWipBoard();
+    if (document.querySelectorAll('.kanban-board-column-header').length > 0 || attempt >= 12) {
+      return;
+    }
+
+    attempt += 1;
+    setTimeout(retry, 500);
+  };
+
+  retry();
+}
+
+
 // ============================================================================
 // 4. OBSERVERS E GATILHOS INICIAIS
 // ============================================================================
@@ -499,15 +688,7 @@ chrome.storage.onChanged.addListener(() => {
 
 // A primeira função executada ao carregar a página
 function init() {
-  // Passa a observar o corpo do site
-  observer.observe(document.body, { childList: true, subtree: true });
-  
-  // Tenta rodar. Se o Azure ainda estiver processando o quadro, espera 1 segundo e tenta de novo.
-  if (document.querySelectorAll('.kanban-board-column-header').length > 0) {
-    updateWipBoard();
-  } else {
-    setTimeout(updateWipBoard, 1000);
-  }
+  startBoardObservation();
 }
 
 // Verifica se o navegador está ocupado carregando. Se sim, espera; se não, roda direto.
@@ -516,3 +697,7 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+
+window.addEventListener('pageshow', () => {
+  ensureBoardMounted();
+});

@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const directWipInput = document.getElementById('directWip');
   const toggleDetails = document.getElementById('toggleDetails');
   const toggleHighlight = document.getElementById('toggleHighlight');
-  const toggleCaioRule = document.getElementById('toggleCaioRule');
+  const toggleSpecialRule = document.getElementById('toggleSpecialRule');
   const boardNameInput = document.getElementById('boardName');
   const specialPeopleInput = document.getElementById('specialPeople');
   const wipColumnsInput = document.getElementById('wipColumns');
@@ -17,9 +17,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const status = document.getElementById('status');
   const errorMsg = document.getElementById('error-msg');
 
-  const defaultBoardName = 'Sda.Arms';
-  const defaultWipColumns = 'Desenvolvimento, Ready to CR, Code Review, Ready to HO, HO';
-  const defaultSpecialPeople = 'Caio';
+  const standardConfig = {
+    boardName: 'Sda.Arms',
+    wipColumns: ['Desenvolvimento', 'Ready to CR', 'Code Review', 'Ready to HO', 'HO'],
+    specialPeople: ['Caio'],
+    showDetails: true,
+    highlightCards: true,
+    specialRuleEnabled: true,
+  };
 
   function normalizeList(value) {
     // Separa itens digitados por vírgula e remove espaços vazios.
@@ -29,9 +34,18 @@ document.addEventListener('DOMContentLoaded', () => {
       .filter(Boolean);
   }
 
+  function applyStandardConfigToForm() {
+    boardNameInput.value = standardConfig.boardName;
+    specialPeopleInput.value = standardConfig.specialPeople.join(', ');
+    wipColumnsInput.value = standardConfig.wipColumns.join(', ');
+    toggleDetails.checked = standardConfig.showDetails;
+    toggleHighlight.checked = standardConfig.highlightCards;
+    toggleSpecialRule.checked = standardConfig.specialRuleEnabled;
+  }
+
   // 2. CARREGAMENTO DOS DADOS SALVOS
   // Ao abrir o popup, perguntamos ao navegador se o usuário já havia salvo algo antes
-  chrome.storage.sync.get(['equipeSize', 'directWip', 'useEquipe', 'showDetails', 'highlightCards', 'caioRuleEnabled', 'boardName', 'specialPeople', 'wipColumns'], (data) => {
+  chrome.storage.sync.get(['equipeSize', 'directWip', 'useEquipe', 'showDetails', 'highlightCards', 'specialRuleEnabled', 'boardName', 'specialPeople', 'wipColumns', 'hasInitializedConfig'], (data) => {
     
     // Se existir configuração e foi escolhida a Equipe, preenchemos o input da Equipe
     if (data.useEquipe === true && data.equipeSize) {
@@ -51,18 +65,39 @@ document.addEventListener('DOMContentLoaded', () => {
     if (data.highlightCards !== undefined) {
       toggleHighlight.checked = data.highlightCards;
     }
-    if (data.caioRuleEnabled !== undefined) {
-      toggleCaioRule.checked = data.caioRuleEnabled;
+    if (data.specialRuleEnabled !== undefined) {
+      toggleSpecialRule.checked = data.specialRuleEnabled;
     }
 
-    // Carrega os valores salvos ou usa o padrão atual.
-    boardNameInput.value = data.boardName || defaultBoardName;
+    // Carrega apenas valores explicitamente salvos. Sem preset automático.
+    boardNameInput.value = data.boardName || '';
     specialPeopleInput.value = Array.isArray(data.specialPeople) && data.specialPeople.length
       ? data.specialPeople.join(', ')
-      : defaultSpecialPeople;
+      : '';
     wipColumnsInput.value = Array.isArray(data.wipColumns) && data.wipColumns.length
       ? data.wipColumns.join(', ')
-      : defaultWipColumns;
+      : '';
+
+    const hasAnyConfig = Boolean(data.boardName)
+      || (Array.isArray(data.wipColumns) && data.wipColumns.length)
+      || (Array.isArray(data.specialPeople) && data.specialPeople.length)
+      || data.equipeSize
+      || data.directWip;
+
+    // Primeiro uso: pergunta se o usuário quer carregar o padrão recomendado, sem salvar automático.
+    if (!data.hasInitializedConfig && !hasAnyConfig) {
+      const useStandard = window.confirm(
+        'Deseja carregar a configuração padrão recomendada?\n\n'
+        + '- Board: Sda.Arms\n'
+        + '- Colunas WIP: Desenvolvimento, Ready to CR, Code Review, Ready to HO, HO\n'
+        + '- Pessoa especial: Caio\n\n'
+        + 'Você poderá editar tudo antes de salvar.'
+      );
+
+      if (useStandard) {
+        applyStandardConfigToForm();
+      }
+    }
   });
 
   // 3. EXPERIÊNCIA DO USUÁRIO (UX) - EVITANDO CONFLITOS
@@ -106,10 +141,11 @@ document.addEventListener('DOMContentLoaded', () => {
       directWip: null,
       showDetails: toggleDetails.checked,     // Salva se o usuário quer ver o painel (true/false)
       highlightCards: toggleHighlight.checked, // Salva se o usuário quer os cards piscando (true/false)
-      caioRuleEnabled: toggleCaioRule.checked,
-      boardName: boardName || defaultBoardName,
-      specialPeople: specialPeople.length ? specialPeople : [defaultSpecialPeople],
-      wipColumns: wipColumns.length ? wipColumns : normalizeList(defaultWipColumns)
+      specialRuleEnabled: toggleSpecialRule.checked,
+      boardName,
+      specialPeople,
+      wipColumns,
+      hasInitializedConfig: true,
     };
 
     // Garante que não salvamos board vazio.

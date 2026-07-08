@@ -42,16 +42,16 @@
 
   <div class="toggle-group">
     <label>
-      <input type="checkbox" id="toggleDetails" checked>
+      <input type="checkbox" id="toggleDetails">
       Permitir clique no indicador para ver o detalhamento do gargalo por coluna.
     </label>
     <label style="margin-bottom: 0;">
-      <input type="checkbox" id="toggleHighlight" checked>
+      <input type="checkbox" id="toggleHighlight">
       Destacar cards alarmantes (Aging > 10 ou Prazo curto/vencido).
     </label>
     <label style="margin-bottom: 0;">
-      <input type="checkbox" id="toggleCaioRule" checked>
-      Aplicar regra especial para o Caio no cálculo do WIP.
+      <input type="checkbox" id="toggleSpecialRule">
+      Aplicar regra especial para pessoas configuradas no cálculo do WIP.
     </label>
   </div>
 
@@ -59,20 +59,20 @@
 
   <div class="form-group">
     <label>Nome do Board:</label>
-    <input type="text" id="boardName" placeholder="Ex: Sda.Arms">
+    <input type="text" id="boardName" placeholder="Informe o board">
     <div style="font-size: 11px; color: #666; margin-top: 4px;">Usado para identificar o board no Azure DevOps.</div>
   </div>
 
   <div class="form-group">
     <label>Pessoas Especiais (separadas por vírgula):</label>
-    <input type="text" id="specialPeople" placeholder="Caio, Outro Nome">
-    <div style="font-size: 11px; color: #666; margin-top: 4px;">A regra continua ligada por padrão e aceita mais de uma pessoa.</div>
+    <input type="text" id="specialPeople" placeholder="Ex: Pessoa 1, Pessoa 2">
+    <div style="font-size: 11px; color: #666; margin-top: 4px;">A regra aceita mais de uma pessoa quando habilitada.</div>
   </div>
 
   <div class="form-group">
     <label>Colunas WIP (separadas por vírgula):</label>
-    <input type="text" id="wipColumns" placeholder="Desenvolvimento, Ready to CR, Code Review">
-    <div style="font-size: 11px; color: #666; margin-top: 4px;">Mantém o padrão atual se ficar vazio.</div>
+    <input type="text" id="wipColumns" placeholder="Ex: Desenvolvimento, Ready to CR">
+    <div style="font-size: 11px; color: #666; margin-top: 4px;">Informe as colunas que entram no cálculo.</div>
   </div>
 
   <button id="saveBtn">Salvar Configuração</button>
