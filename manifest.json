@@ -21,5 +21,11 @@
   "action": {
     "default_popup": "popup.html",
     "default_title": "Configurar WIP"
+  },
+  "web_accessible_resources": [
+  {
+    "resources": ["version.json"],
+    "matches": ["<all_urls>"]
   }
+]
 }
