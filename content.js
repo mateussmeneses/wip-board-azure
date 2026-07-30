@@ -5,6 +5,20 @@
 // ============================================================================
 // O código abaixo cria um "estilo" (CSS) e injeta na página do Azure DevOps.
 // Ele controla as animações chamativas e o painel oculto de gargalos.
+async function getVersion() {
+  const web = await fetch('https://raw.githubusercontent.com/mateussmeneses/wip-board-azure/refs/heads/master/version.json').then(r => r.json());
+  const local = await fetch(chrome.runtime.getURL('version.json')).then(r => r.json());
+
+  const isUpdated = web.version === local.version;
+  if (isUpdated) return;
+  alert("Sua extensão está desatualizada, por favor atualize. O link está no console");
+  console.clear();
+  console.warn("https://codeload.github.com/mateussmeneses/wip-board-azure/zip/refs/heads/master");
+}
+
+getVersion()
+
+
 if (!document.getElementById('wip-alarm-style')) {
   const style = document.createElement('style');
   style.id = 'wip-alarm-style';
@@ -42,24 +56,23 @@ if (!document.getElementById('wip-alarm-style')) {
       100% { box-shadow: 0 0 0 0 rgba(245, 139, 31, 0); }
     }
     .card-alerta-critico {
-      border: 3px solid #c2410c !important;
-      box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.35) !important, 0 0 18px rgba(194, 65, 12, 0.28) !important;
+
+      box-shadow: 0 0 0 3px #c2410c !important;
+      
       background: linear-gradient(90deg, rgba(194, 65, 12, 0.24), rgba(255, 255, 255, 0)) !important;
       animation: pulse-card 1.4s infinite !important;
     }
     .card-alerta-alto {
-      border: 3px solid #ea580c !important;
-      box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.26) !important, 0 0 12px rgba(234, 88, 12, 0.18) !important;
+      box-shadow: 0 0 0 3px #ea580c !important;
       background: linear-gradient(90deg, rgba(234, 88, 12, 0.18), rgba(255, 255, 255, 0)) !important;
     }
     .card-alerta-medio {
-      border: 3px solid #f97316 !important;
-      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.22) !important, 0 0 10px rgba(249, 115, 22, 0.14) !important;
+      box-shadow: 0 0 0 3px #f97316 !important;
       background: linear-gradient(90deg, rgba(249, 115, 22, 0.14), rgba(255, 255, 255, 0)) !important;
     }
     .card-alerta-baixo {
+      box-shadow: 0 0 0 3px #fb923c !important;
       border: 3px solid #fb923c !important;
-      box-shadow: 0 0 0 2px rgba(251, 146, 60, 0.18) !important;
       background: linear-gradient(90deg, rgba(251, 146, 60, 0.1), rgba(255, 255, 255, 0)) !important;
     }
     
@@ -98,6 +111,7 @@ if (!document.getElementById('wip-alarm-style')) {
   `;
   document.head.appendChild(style);
 }
+
 
 function normalizeText(value) {
   return (value || '').toString().trim().toLowerCase();
