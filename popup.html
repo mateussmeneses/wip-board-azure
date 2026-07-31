@@ -1,83 +1,147 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <style>
-    body { font-family: sans-serif; width: 300px; padding: 15px; background-color: #f8f9fa; }
+    body { font-family: sans-serif; width: 320px; padding: 15px; background-color: #f8f9fa; }
     h4 { margin-top: 0; color: #333; font-size: 16px; text-align: center; }
-    .form-group { margin-bottom: 15px; }
+    .form-group { margin-bottom: 12px; }
     label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; }
-    input[type="number"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-    
-    .divider { text-align: center; margin: 15px 0; color: #666; font-size: 12px; font-weight: bold; }
-    
-    .toggle-group { margin-top: 15px; background: #fff; padding: 10px; border-radius: 4px; border: 1px solid #ddd; }
+    input[type="number"], input[type="text"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+
+    .divider { text-align: center; margin: 12px 0; color: #666; font-size: 12px; font-weight: bold; }
+
+    .toggle-group { margin-top: 10px; background: #fff; padding: 10px; border-radius: 4px; border: 1px solid #ddd; }
     .toggle-group label { display: flex; align-items: center; font-weight: normal; margin-bottom: 8px; cursor: pointer; }
     .toggle-group input[type="checkbox"] { width: auto; margin-right: 8px; cursor: pointer; }
-    
-    button { width: 100%; padding: 10px; background: #0078d4; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px;}
+
+    button { width: 100%; padding: 10px; background: #0078d4; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
     button:hover { background: #005a9e; }
-    
+    #apply-template { background: #f0f9ff; color: #0369a1; border: 1px dashed #0369a1; font-weight: normal; font-size: 12px; padding: 7px; margin-top: 0; margin-bottom: 8px; }
+    #apply-template:hover { background: #e0f2fe; }
+
+    .hint { font-size: 11px; color: #666; margin-top: 4px; }
+    .explanation-box { font-size: 11px; color: #1f2937; background: #eef6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 8px; margin-top: 4px; }
+    .explanation-box p { margin: 0 0 6px 0; }
+    .explanation-box p:last-child { margin-bottom: 0; }
+    .inline-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     #status { margin-top: 10px; color: #1e8e3e; font-size: 13px; text-align: center; display: none; font-weight: bold; }
     .error { margin-top: 10px; color: #cc292b; font-size: 13px; text-align: center; display: none; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h4>Definir Limite de WIP</h4>
-  
-  <div class="form-group">
-    <label>Tamanho da Equipe:</label>
-    <input type="number" id="equipeSize" min="1" placeholder="Nº de pessoas">
-    <div style="font-size: 11px; color: #666; margin-top: 4px;">Fórmula: 2 x Equipe + 1</div>
+  <h4 id="title">WIP Monitor Settings</h4>
+
+  <div class="toggle-group" style="margin-top: 0; margin-bottom: 10px;">
+    <label style="margin-bottom: 0;">
+      <input type="checkbox" id="languageToggle">
+      <span id="languageToggleLabel">Use Portuguese (PT-BR)</span>
+    </label>
   </div>
 
-  <div class="divider">OU</div>
+  <button id="apply-template" type="button">Use sample configuration</button>
 
   <div class="form-group">
-    <label>WIP Direto (Fixo):</label>
-    <input type="number" id="directWip" min="1" placeholder="Insira o limite">
+    <label id="labelTeamSize">Team Size:</label>
+    <input type="number" id="equipeSize" min="1" placeholder="Number of people">
+    <div class="hint" id="hintFormula">Formula mode: 2 x team + 1</div>
   </div>
 
-  <div class="divider">MELHORIAS (OPCIONAIS)</div>
+  <div class="divider" id="dividerOr">OR</div>
+
+  <div class="form-group">
+    <label id="labelDirectWip">Direct WIP Limit:</label>
+    <input type="number" id="directWip" min="1" placeholder="Fixed limit">
+  </div>
+
+  <div class="divider" id="dividerBoard">BOARD TARGETING</div>
+
+  <div class="form-group">
+    <label id="labelBoardKeyword">Board URL keyword:</label>
+    <input type="text" id="boardName" placeholder="Example: Sda.Arms">
+    <div class="hint" id="hintBoardKeyword">Used to detect the current board URL.</div>
+  </div>
+
+  <div class="form-group">
+    <label id="labelBoardRoute">Optional route keyword:</label>
+    <input type="text" id="boardPathFilter" placeholder="Example: maintenance/features">
+    <div class="hint" id="hintBoardRoute">Leave empty to work on any route inside the board.</div>
+  </div>
+
+  <div class="form-group">
+    <label id="labelWipColumns">WIP columns (comma-separated):</label>
+    <input type="text" id="wipColumns" placeholder="In Progress, Code Review, Ready for QA">
+    <div class="hint" id="hintWipColumns">Only these columns are included in WIP calculation.</div>
+  </div>
+
+  <div class="divider" id="dividerSpecialRule">SPECIAL RULE</div>
+
+  <div class="form-group">
+    <label id="labelSpecialPeople">Special people (comma-separated):</label>
+    <input type="text" id="specialPeople" placeholder="Person A, Person B">
+    <div class="hint" id="hintSpecialPeople">Required only when special rule is enabled.</div>
+  </div>
+
+  <div class="inline-grid">
+    <div class="form-group">
+      <label id="labelSpecialTag">Special tag prefix:</label>
+      <input type="text" id="specialTagPrefix" placeholder="#spa">
+    </div>
+    <div class="form-group">
+      <label id="labelBlockTag">Block tag:</label>
+      <input type="text" id="blockTag" placeholder="#blck">
+    </div>
+  </div>
+
+  <div class="explanation-box">
+    <p id="specialRulePeopleExplanation">Special people rule: for each configured person, all cards matching the special tag prefix count as 1 block in WIP (instead of counting each card separately).</p>
+    <p id="specialRuleBlockExplanation">Block tag rule: cards containing the block tag are excluded from card highlight alarms, but they still count in WIP totals.</p>
+  </div>
+
+  <div class="divider" id="dividerThresholds">ALERT THRESHOLDS</div>
+
+  <div class="inline-grid">
+    <div class="form-group">
+      <label id="labelAgingWarning">Aging warning:</label>
+      <input type="number" id="agingWarningDays" min="1" placeholder="10">
+    </div>
+    <div class="form-group">
+      <label id="labelAgingHigh">Aging high:</label>
+      <input type="number" id="agingHighDays" min="1" placeholder="15">
+    </div>
+  </div>
+
+  <div class="inline-grid">
+    <div class="form-group">
+      <label id="labelAgingCritical">Aging critical:</label>
+      <input type="number" id="agingCriticalDays" min="1" placeholder="20">
+    </div>
+    <div class="form-group">
+      <label id="labelTargetDateWarning">Target date warning:</label>
+      <input type="number" id="targetDateWarningDays" min="0" placeholder="3">
+    </div>
+  </div>
+
+  <div class="divider" id="dividerFeatures">FEATURES</div>
 
   <div class="toggle-group">
     <label>
       <input type="checkbox" id="toggleDetails">
-      Permitir clique no indicador para ver o detalhamento do gargalo por coluna.
+      <span id="labelToggleDetails">Enable click on indicator to show column details.</span>
     </label>
-    <label style="margin-bottom: 0;">
+    <label>
       <input type="checkbox" id="toggleHighlight">
-      Destacar cards alarmantes (Aging > 10 ou Prazo curto/vencido).
+      <span id="labelToggleHighlight">Highlight cards by aging and target date thresholds.</span>
     </label>
     <label style="margin-bottom: 0;">
       <input type="checkbox" id="toggleSpecialRule">
-      Aplicar regra especial para pessoas configuradas no cálculo do WIP.
+      <span id="labelToggleSpecialRule">Enable special rule for configured people and tag prefix.</span>
     </label>
   </div>
 
-  <div class="divider">CONFIGURAÇÃO DO BOARD</div>
-
-  <div class="form-group">
-    <label>Nome do Board:</label>
-    <input type="text" id="boardName" placeholder="Informe o board">
-    <div style="font-size: 11px; color: #666; margin-top: 4px;">Usado para identificar o board no Azure DevOps.</div>
-  </div>
-
-  <div class="form-group">
-    <label>Pessoas Especiais (separadas por vírgula):</label>
-    <input type="text" id="specialPeople" placeholder="Ex: Pessoa 1, Pessoa 2">
-    <div style="font-size: 11px; color: #666; margin-top: 4px;">A regra aceita mais de uma pessoa quando habilitada.</div>
-  </div>
-
-  <div class="form-group">
-    <label>Colunas WIP (separadas por vírgula):</label>
-    <input type="text" id="wipColumns" placeholder="Ex: Desenvolvimento, Ready to CR">
-    <div style="font-size: 11px; color: #666; margin-top: 4px;">Informe as colunas que entram no cálculo.</div>
-  </div>
-
-  <button id="saveBtn">Salvar Configuração</button>
-  <div id="status">Configuração salva com sucesso!</div>
-  <div id="error-msg" class="error">Preencha o WIP!</div>
+  <button id="saveBtn">Save configuration</button>
+  <div id="status">Configuration saved successfully!</div>
+  <div id="error-msg" class="error">Please fill in the required fields.</div>
 
   <script src="popup.js"></script>
 </body>

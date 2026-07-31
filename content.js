@@ -1,17 +1,72 @@
 // content.js
 
 // ============================================================================
-// 1. CONFIGURAÇÃO VISUAL DE ALERTA E PAINEL (CSS)
+// 1. VISUAL ALERT AND PANEL STYLES (CSS)
 // ============================================================================
-// O código abaixo cria um "estilo" (CSS) e injeta na página do Azure DevOps.
-// Ele controla as animações chamativas e o painel oculto de gargalos.
+// Inject styles used by the floating indicator, alert states, and details panel.
+const I18N = {
+  en: {
+    outdatedExtension: 'Your extension is outdated. Please update it. The download link is in the console.',
+    indicatorConfigureLimit: 'WIP: {{current}} (configure limit in extension)',
+    indicatorTotal: 'Total Board WIP: {{current}} / {{limit}}',
+    indicatorColumnBottlenecks: 'Column bottlenecks:',
+    indicatorMissingConfig: '⚙️ Configure board keyword and WIP columns in the extension popup.',
+    alertTitle: 'Critical alert:',
+    agingCritical: 'Aging is critical ({{days}} days)',
+    agingHigh: 'Aging is high ({{days}} days)',
+    agingWarning: 'Aging is warning ({{days}} days)',
+    targetDate: 'Target date: {{status}}',
+    targetOverdue: 'OVERDUE',
+    targetDaysLeft: '{{days}} day(s) left',
+  },
+  pt: {
+    outdatedExtension: 'Sua extensão está desatualizada. Por favor, atualize. O link de download está no console.',
+    indicatorConfigureLimit: 'WIP: {{current}} (configure o limite na extensão)',
+    indicatorTotal: 'WIP Total do Board: {{current}} / {{limit}}',
+    indicatorColumnBottlenecks: 'Gargalos por Coluna:',
+    indicatorMissingConfig: '⚙️ Configure a palavra-chave do board e as colunas WIP no popup da extensão.',
+    alertTitle: 'Alerta crítico:',
+    agingCritical: 'Aging muito alto ({{days}} dias)',
+    agingHigh: 'Aging alto ({{days}} dias)',
+    agingWarning: 'Aging em atenção ({{days}} dias)',
+    targetDate: 'Prazo: {{status}}',
+    targetOverdue: 'ATRASADO',
+    targetDaysLeft: 'Faltam {{days}} dia(s)',
+  },
+};
+
+function getLanguageCode(value) {
+  return value === 'pt' ? 'pt' : 'en';
+}
+
+function formatMessage(template, tokens = {}) {
+  return template.replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (_, token) => String(tokens[token] ?? ''));
+}
+
+function getLanguagePack(languageCode) {
+  const lang = I18N[getLanguageCode(languageCode)] || I18N.en;
+  return {
+    t(key, tokens) {
+      return formatMessage(lang[key] || I18N.en[key] || key, tokens);
+    },
+  };
+}
+
+function getStorageValues(keys) {
+  return new Promise(resolve => {
+    chrome.storage.sync.get(keys, values => resolve(values || {}));
+  });
+}
+
 async function getVersion() {
+  const languageData = await getStorageValues(['language']);
+  const i18n = getLanguagePack(languageData.language);
   const web = await fetch('https://raw.githubusercontent.com/mateussmeneses/wip-board-azure/refs/heads/master/version.json').then(r => r.json());
   const local = await fetch(chrome.runtime.getURL('version.json')).then(r => r.json());
 
   const isUpdated = web.version === local.version;
   if (isUpdated) return;
-  alert("Sua extensão está desatualizada, por favor atualize. O link está no console");
+  alert(i18n.t('outdatedExtension'));
   console.clear();
   console.warn("https://codeload.github.com/mateussmeneses/wip-board-azure/zip/refs/heads/master");
 }
@@ -23,7 +78,7 @@ if (!document.getElementById('wip-alarm-style')) {
   const style = document.createElement('style');
   style.id = 'wip-alarm-style';
   style.innerHTML = `
-    /* Animação para o Indicador flutuante quando o WIP estiver estourado */
+    /* Floating indicator animation when WIP exceeds limit */
     @keyframes pulse-critical {
       0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.8); }
       70% { box-shadow: 0 0 0 15px rgba(220, 53, 69, 0); }
@@ -49,7 +104,7 @@ if (!document.getElementById('wip-alarm-style')) {
       text-transform: uppercase;
     }
 
-    /* Animação laranja chamativa para os CARDS com Aging/Prazo crítico (Melhoria 2) */
+    /* Orange animation for cards with critical aging/target-date conditions */
     @keyframes pulse-card {
       0% { box-shadow: 0 0 0 0 rgba(245, 139, 31, 0.6); }
       70% { box-shadow: 0 0 0 8px rgba(245, 139, 31, 0); }
@@ -76,12 +131,12 @@ if (!document.getElementById('wip-alarm-style')) {
       background: linear-gradient(90deg, rgba(251, 146, 60, 0.1), rgba(255, 255, 255, 0)) !important;
     }
     
-    /* Layout do Painel de detalhes que vai abrir ao clicar no indicador (Melhoria 1) */
+    /* Layout for the details panel toggled from the indicator */
     #wip-details-panel {
-      display: none; /* Começa escondido */
+      display: none; /* Hidden by default */
       margin-top: 10px;
       padding: 10px;
-      border-top: 1px solid rgba(0,0,0,0.1); /* Linha sutil separando o título do painel */
+      border-top: 1px solid rgba(0,0,0,0.1); /* Subtle separator under panel header */
       font-size: 13px;
       font-weight: normal;
       text-transform: none;
@@ -100,7 +155,7 @@ if (!document.getElementById('wip-alarm-style')) {
       color: #111827;
       border: 1px solid #fed7aa;
     }
-    /* Como cada linha do painel vai se comportar (Nome da Coluna na esquerda, Número na direita) */
+    /* Per-row layout: column name on left, count on right */
     .wip-detail-row {
       display: flex;
       justify-content: space-between;
@@ -108,6 +163,8 @@ if (!document.getElementById('wip-alarm-style')) {
     }
     .wip-detail-name { color: inherit; }
     .wip-detail-count { font-weight: bold; background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; }
+
+
   `;
   document.head.appendChild(style);
 }
@@ -118,7 +175,7 @@ function normalizeText(value) {
 }
 
 function normalizeColumnName(value) {
-  // Normaliza nomes de coluna para comparação resiliente contra variações de renderização do Azure.
+  // Normalize column names to handle Azure rendering variations.
   return normalizeText(value)
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -128,7 +185,7 @@ function normalizeColumnName(value) {
 }
 
 function getHeaderColumnDisplayName(header) {
-  // Tenta obter o nome real da coluna a partir de diferentes pontos do header.
+  // Read a reliable column name from common header locations.
   const ariaLabel = header?.getAttribute('aria-label') || '';
   const editableLabel = header?.querySelector('.click-edit-field')?.textContent || '';
 
@@ -146,7 +203,7 @@ function isConfiguredWipColumn(columnName, configuredColumns) {
     const normalizedConfigured = normalizeColumnName(configured);
     if (!normalizedConfigured) return false;
 
-    // Aceita match exato e aproximação por inclusão para lidar com sufixos no Azure.
+    // Accept exact and inclusive matching to tolerate Azure suffixes.
     return normalizedConfigured === normalizedColumn
       || normalizedConfigured.includes(normalizedColumn)
       || normalizedColumn.includes(normalizedConfigured);
@@ -154,7 +211,7 @@ function isConfiguredWipColumn(columnName, configuredColumns) {
 }
 
 function isCardVisible(card) {
-  // O board do Azure pode manter cards no DOM mesmo filtrados; contamos apenas os visíveis.
+  // Azure can keep filtered cards in DOM; count only cards currently visible.
   if (!card) return false;
   const style = window.getComputedStyle(card);
   if (style.display === 'none' || style.visibility === 'hidden') return false;
@@ -178,7 +235,7 @@ const spaTagCache = {
 };
 
 function buildSpaTagIndexFromPageSource(specialTagPrefix) {
-  // Fallback: alguns boards não exibem o campo Tags no card, mas trazem os dados no HTML serializado.
+  // Fallback: some boards hide Tags in card fields but keep data in serialized HTML.
   const now = Date.now();
   if (now - spaTagCache.builtAt < 5000 && spaTagCache.byItemId.size > 0) {
     return spaTagCache.byItemId;
@@ -215,7 +272,7 @@ function cardHasSpaTagFromSource(card, specialTagPrefix) {
 }
 
 function getBoardContext(data) {
-  // Normaliza as opções salvas no popup em um único ponto de leitura.
+  // Normalize popup settings in one place so runtime logic stays consistent.
   const normalizedSpecialPeople = Array.isArray(data.specialPeople) && data.specialPeople.length
     ? data.specialPeople.map(person => normalizeText(person)).filter(Boolean)
     : [];
@@ -225,42 +282,62 @@ function getBoardContext(data) {
     : []).map(column => normalizeColumnName(column)).filter(Boolean);
 
   const currentBoardName = normalizeText(data.boardName || '');
+  const boardPathFilter = normalizeText(data.boardPathFilter || '');
+  const specialTagPrefix = normalizeText(data.specialTagPrefix || '#spa').replace(/^#?/, '#');
+  const blockTag = normalizeText(data.blockTag || '#blck').replace(/^#?/, '#');
 
-  const isConfigured = Boolean(currentBoardName)
-    && normalizedColumns.length > 0
-    && normalizedSpecialPeople.length > 0;
+  const agingWarningDays = Number.isFinite(Number(data.agingWarningDays)) ? Number(data.agingWarningDays) : 10;
+  const agingHighDays = Number.isFinite(Number(data.agingHighDays)) ? Number(data.agingHighDays) : 15;
+  const agingCriticalDays = Number.isFinite(Number(data.agingCriticalDays)) ? Number(data.agingCriticalDays) : 20;
+  const targetDateWarningDays = Number.isFinite(Number(data.targetDateWarningDays)) ? Number(data.targetDateWarningDays) : 3;
+  const language = getLanguageCode(data.language);
+
+  // WIP requires board URL keyword and at least one configured WIP column.
+  const isConfigured = Boolean(currentBoardName) && normalizedColumns.length > 0;
 
   return {
     isConfigured,
     isHighlightActive: data.highlightCards === true,
     isDetailsActive: data.showDetails === true,
     currentBoardName,
-    colunasWip: normalizedColumns,
+    boardPathFilter,
+    wipColumns: normalizedColumns,
     isSpecialRuleActive: data.specialRuleEnabled === true,
     specialPeople: normalizedSpecialPeople,
-    specialTagPrefix: '#spa',
+    specialTagPrefix,
+    blockTag,
+    alarmConfig: {
+      agingWarningDays,
+      agingHighDays,
+      agingCriticalDays,
+      targetDateWarningDays,
+    },
+    language,
   };
 }
 
-function isAllowedBoard(currentBoardName) {
-  // Garante que o indicador só seja renderizado quando a URL atual corresponder ao board desejado.
-  return !!currentBoardName && window.location.href.toLowerCase().includes(currentBoardName);
+function isAllowedBoard(currentBoardName, boardPathFilter) {
+  // Render only when URL matches configured board keyword and optional route keyword.
+  const currentUrl = window.location.href.toLowerCase();
+  if (!currentBoardName || !currentUrl.includes(currentBoardName)) return false;
+  if (boardPathFilter && !currentUrl.includes(boardPathFilter)) return false;
+  return true;
 }
 
-function applyWipIndicatorState(indicator, current, limit, isDetailsActive, breakdown) {
-  // Monta o estado visual do WIP total sem depender de reload.
+function applyWipIndicatorState(indicator, current, limit, isDetailsActive, breakdown, i18n) {
+  // Build indicator visual state without requiring page reload.
   let titleHTML = '';
   let panelHTML = '';
   const isCriticalState = limit !== null && current > limit;
 
   if (limit === null) {
-    titleHTML = `<span>WIP: ${current} (Configure o limite na extensão)</span>`;
+    titleHTML = `<span>${i18n.t('indicatorConfigureLimit', { current })}</span>`;
     indicator.className = '';
     indicator.style.backgroundColor = '#fff3cd';
     indicator.style.color = '#856404';
     indicator.style.border = '2px solid #ffeeba';
   } else {
-    titleHTML = `<span>WIP Total do Board: ${current} / ${limit}</span>`;
+    titleHTML = `<span>${i18n.t('indicatorTotal', { current, limit })}</span>`;
 
     if (isDetailsActive) {
       titleHTML += ` <span style="font-size: 10px; opacity: 0.8;">▼</span>`;
@@ -280,7 +357,7 @@ function applyWipIndicatorState(indicator, current, limit, isDetailsActive, brea
 
   if (isDetailsActive && breakdown.length > 0) {
     panelHTML = `<div id="wip-details-panel">
-      <div style="font-size: 11px; margin-bottom: 5px; opacity: 0.8;">Gargalos por Coluna:</div>
+      <div style="font-size: 11px; margin-bottom: 5px; opacity: 0.8;">${i18n.t('indicatorColumnBottlenecks')}</div>
     `;
 
     breakdown.forEach(col => {
@@ -306,15 +383,15 @@ function applyWipIndicatorState(indicator, current, limit, isDetailsActive, brea
   }
 }
 
-function getCardSeverityClass(agingValue) {
-  if (agingValue !== null && agingValue >= 20) return 'card-alerta-critico';
-  if (agingValue !== null && agingValue >= 15) return 'card-alerta-alto';
-  if (agingValue !== null && agingValue >= 10) return 'card-alerta-medio';
+function getCardSeverityClass(agingValue, alarmConfig) {
+  if (agingValue !== null && agingValue >= alarmConfig.agingCriticalDays) return 'card-alerta-critico';
+  if (agingValue !== null && agingValue >= alarmConfig.agingHighDays) return 'card-alerta-alto';
+  if (agingValue !== null && agingValue >= alarmConfig.agingWarningDays) return 'card-alerta-medio';
   return 'card-alerta-baixo';
 }
 
-function analyzeCard(card) {
-  // Lê os campos do card que alimentam os alarmes visuais.
+function analyzeCard(card, blockTag) {
+  // Read card fields used by visual alarms.
   let agingValue = null;
   let targetDateDays = null;
   let hasBlockTag = false;
@@ -344,7 +421,7 @@ function analyzeCard(card) {
       }
     }
 
-    if (label === 'tags' && val.toLowerCase().includes('#blck')) {
+    if (label === 'tags' && val.toLowerCase().includes(blockTag)) {
       hasBlockTag = true;
     }
   });
@@ -353,7 +430,7 @@ function analyzeCard(card) {
 }
 
 function analyzeSpecialRule(card, specialTagPrefix) {
-  // Considera qualquer variação do prefixo (spa, spa.ui, spaapi) como tag especial única por card.
+  // Accept variations for the configured tag prefix (ex: #spa, #spa.ui, #spaapi).
   const tagsText = Array.from(card.querySelectorAll('.field-container'))
     .filter(field => {
       const labelEl = field.querySelector('.label');
@@ -365,21 +442,21 @@ function analyzeSpecialRule(card, specialTagPrefix) {
   const normalizedPrefix = normalizeText(specialTagPrefix).replace(/^#/, '');
   const tagRoot = normalizedPrefix.split(/[._-]/)[0] || 'spa';
   const tagRegex = new RegExp(`(^|[\\s,;])#?${escapeRegex(tagRoot)}(?:[._-]?[a-z0-9]+)*($|[\\s,;])`, 'i');
-  // Primeiro tenta pelo campo visível de Tags; se não existir, usa fallback por itemId no HTML serializado.
+  // First try visible tag field. If unavailable, use serialized HTML fallback by item id.
   const hasSpecialTag = tagRegex.test(tagsText) || cardHasSpaTagFromSource(card, specialTagPrefix);
 
   return { hasSpecialTag };
 }
 
-function applyCardAlarm(card, isHighlightActive) {
-  // Aplica ou remove os estilos do card conforme o resultado da análise.
+function applyCardAlarm(card, isHighlightActive, alarmConfig, blockTag, i18n) {
+  // Apply or remove card-level alarm style using configured thresholds.
   if (!isHighlightActive) {
     card.classList.remove('card-alerta-critico', 'card-alerta-baixo', 'card-alerta-medio', 'card-alerta-alto');
     card.removeAttribute('title');
     return;
   }
 
-  const { agingValue, targetDateDays, hasBlockTag } = analyzeCard(card);
+  const { agingValue, targetDateDays, hasBlockTag } = analyzeCard(card, blockTag);
 
   if (hasBlockTag) {
     card.classList.remove('card-alerta-critico', 'card-alerta-baixo', 'card-alerta-medio', 'card-alerta-alto');
@@ -391,28 +468,30 @@ function applyCardAlarm(card, isHighlightActive) {
   const criticalReasons = [];
 
   if (agingValue !== null) {
-    if (agingValue >= 20) {
+    if (agingValue >= alarmConfig.agingCriticalDays) {
       isCritical = true;
-      criticalReasons.push(`Aging muito alto (${agingValue} dias)`);
-    } else if (agingValue >= 15) {
+      criticalReasons.push(i18n.t('agingCritical', { days: agingValue }));
+    } else if (agingValue >= alarmConfig.agingHighDays) {
       isCritical = true;
-      criticalReasons.push(`Aging alto (${agingValue} dias)`);
-    } else if (agingValue >= 10) {
+      criticalReasons.push(i18n.t('agingHigh', { days: agingValue }));
+    } else if (agingValue >= alarmConfig.agingWarningDays) {
       isCritical = true;
-      criticalReasons.push(`Aging em atenção (${agingValue} dias)`);
+      criticalReasons.push(i18n.t('agingWarning', { days: agingValue }));
     }
   }
 
-  if (targetDateDays !== null && targetDateDays <= 3) {
+  if (targetDateDays !== null && targetDateDays <= alarmConfig.targetDateWarningDays) {
     isCritical = true;
-    const statusPrazo = targetDateDays < 0 ? 'ATRASADO' : `Faltam ${targetDateDays} dia(s)`;
-    criticalReasons.push(`Prazo: ${statusPrazo}`);
+    const targetStatus = targetDateDays < 0
+      ? i18n.t('targetOverdue')
+      : i18n.t('targetDaysLeft', { days: targetDateDays });
+    criticalReasons.push(i18n.t('targetDate', { status: targetStatus }));
   }
 
   if (isCritical) {
     card.classList.remove('card-alerta-critico', 'card-alerta-baixo', 'card-alerta-medio', 'card-alerta-alto');
-    card.classList.add(getCardSeverityClass(agingValue));
-    card.setAttribute('title', 'Alerta Crítico:\n' + criticalReasons.join('\n'));
+    card.classList.add(getCardSeverityClass(agingValue, alarmConfig));
+    card.setAttribute('title', i18n.t('alertTitle') + '\n' + criticalReasons.join('\n'));
   } else {
     card.classList.remove('card-alerta-critico', 'card-alerta-baixo', 'card-alerta-medio', 'card-alerta-alto');
     card.removeAttribute('title');
@@ -420,72 +499,99 @@ function applyCardAlarm(card, isHighlightActive) {
 }
 
 // ============================================================================
-// 2. FUNÇÃO PRINCIPAL DE CÁLCULO E ANÁLISE
+// 2. MAIN WIP CALCULATION AND ANALYSIS
 // ============================================================================
-// Esta é a função principal que varre o quadro do Azure, conta os cards e checa datas
+// Main runtime flow: scan board, count cards, apply rules, render indicator.
 function updateWipBoard() {
-  
-  // VALIDAÇÃO 1: Evita erros caso a extensão seja recarregada no navegador enquanto a aba está aberta
+
+  // Guard clause: extension can be reloaded while tab is still open.
   if (!chrome.runtime?.id) return;
 
-  // VALIDAÇÃO 2 (Correção do Bug do Roadmap):
-  // O Azure DevOps não recarrega a página ao trocar de aba, apenas muda a URL.
-  // Checamos se a URL atual contém "Maintenance/Features". Se não, escondemos o indicador e paramos a função.
-  if (!window.location.href.includes('Maintenance/Features')) {
-    const indicator = document.getElementById('custom-wip-indicator');
-    if (indicator) indicator.style.display = 'none';
-    return;
-  }
-
-  // Pede os dados e as configurações (toggles) que o usuário escolheu no popup
-  chrome.storage.sync.get(['useEquipe', 'equipeSize', 'directWip', 'showDetails', 'highlightCards', 'specialRuleEnabled', 'boardName', 'specialPeople', 'wipColumns'], (data) => {
+  // Read all user settings from extension storage.
+  chrome.storage.sync.get([
+    'useEquipe',
+    'equipeSize',
+    'directWip',
+    'showDetails',
+    'highlightCards',
+    'specialRuleEnabled',
+    'boardName',
+    'boardPathFilter',
+    'specialPeople',
+    'wipColumns',
+    'specialTagPrefix',
+    'blockTag',
+    'agingWarningDays',
+    'agingHighDays',
+    'agingCriticalDays',
+    'targetDateWarningDays',
+    'language',
+  ], (data) => {
     
-    // --- Lógica do Limite ---
-    let limit = null; // Iniciamos vazio para identificar se a pessoa ainda não configurou
+    // Calculate limit based on selected mode.
+    let limit = null;
     
     if (data.useEquipe === true && data.equipeSize) {
-      limit = (2 * data.equipeSize) + 1; // Calcula a fórmula
+      limit = (2 * data.equipeSize) + 1;
     } else if (data.useEquipe === false && data.directWip) {
-      limit = data.directWip; // Usa o fixo
+      limit = data.directWip;
     }
 
-    const { isConfigured, isHighlightActive, isDetailsActive, currentBoardName, colunasWip, isSpecialRuleActive, specialPeople, specialTagPrefix } = getBoardContext(data);
+    const {
+      isConfigured,
+      isHighlightActive,
+      isDetailsActive,
+      currentBoardName,
+      boardPathFilter,
+      wipColumns,
+      isSpecialRuleActive,
+      specialPeople,
+      specialTagPrefix,
+      blockTag,
+      alarmConfig,
+      language,
+    } = getBoardContext(data);
+    const i18n = getLanguagePack(language);
 
     if (!isConfigured) {
-      displayWip(0, null, [], false);
-      const indicator = document.getElementById('custom-wip-indicator');
-      if (indicator) {
-        indicator.innerHTML = '<div><span>Configure o board e as colunas no popup para iniciar.</span></div>';
+      let indicator = document.getElementById('custom-wip-indicator');
+      if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'custom-wip-indicator';
+        indicator.style.cssText = 'position:fixed;top:15px;left:50%;transform:translateX(-50%);padding:8px 20px;border-radius:20px;font-size:13px;font-weight:bold;z-index:999999;background:#fff3cd;color:#856404;border:2px solid #ffc107;box-shadow:0 4px 12px rgba(0,0,0,.15);font-family:inherit;cursor:default;';
+        document.body.appendChild(indicator);
       }
+      indicator.style.display = 'block';
+      indicator.innerHTML = `<div>${i18n.t('indicatorMissingConfig')}</div>`;
       return;
     }
     
     let totalCards = 0; // Soma bruta baseada nos cards visíveis
-    const specialStatsByPerson = new Map(); // Controle por pessoa para aplicar regra de redução por pessoa.
+    const specialStatsByPerson = new Map(); // Per-person counters used by the special WIP reduction rule.
     const allWipCards = [];
     let columnsBreakdown = []; // Array que vai guardar o subtotal de CADA coluna para mostrarmos no painel
 
-    // Buscamos na página as caixas de título das colunas e as caixas de conteúdo
+    // Locate board column headers and bodies from the current page.
     const headers = document.querySelectorAll('.kanban-board-column-header');
     const columnBodies = document.querySelectorAll('.kanban-board-column');
 
-    // Se o board configurado não estiver na URL atual, não mostramos o indicador.
-    if (!isAllowedBoard(currentBoardName)) {
+    // Hide indicator when current URL does not match configured board/route filters.
+    if (!isAllowedBoard(currentBoardName, boardPathFilter)) {
       const indicator = document.getElementById('custom-wip-indicator');
       if (indicator) indicator.style.display = 'none';
       return;
     }
 
-    // Mapeia os índices de coluna que realmente entram na regra de WIP.
+    // Build column index map for columns included in WIP.
     const wipColumnsMeta = [];
     headers.forEach((header, index) => {
       const displayName = getHeaderColumnDisplayName(header);
-      if (isConfiguredWipColumn(displayName, colunasWip)) {
+      if (isConfiguredWipColumn(displayName, wipColumns)) {
         wipColumnsMeta.push({ index, displayName });
       }
     });
 
-    // Analisa apenas as colunas configuradas como WIP.
+    // Analyze cards only in configured WIP columns.
     wipColumnsMeta.forEach(({ index, displayName }) => {
       const columnContainer = columnBodies[index];
       const cardsInColumn = columnContainer
@@ -518,13 +624,13 @@ function updateWipBoard() {
       });
     });
 
-    // --- LÓGICA DA MELHORIA 2: AVALIAR OS CARDS SOMENTE NAS COLUNAS WIP ---
+    // Evaluate card-level alarms only in WIP columns.
     allWipCards.forEach(card => {
-      applyCardAlarm(card, isHighlightActive);
+      applyCardAlarm(card, isHighlightActive, alarmConfig, blockTag, i18n);
     });
-    // -----------------------------------------------------------------------------
     
-    // REGRA DE NEGÓCIO FINAL (WIP): por pessoa especial, os cards spa* contam como 1 bloco.
+    
+    // Final WIP business rule: per special person, all matching special-tag cards count as 1 block.
     let finalWip = totalCards;
     if (isSpecialRuleActive && specialStatsByPerson.size > 0) {
       let specialOriginalTotal = 0;
@@ -538,19 +644,19 @@ function updateWipBoard() {
       finalWip = totalCards - specialOriginalTotal + specialAdjustedTotal;
     }
 
-    // Envia todas as variáveis construídas para a função desenhar a tela
-    displayWip(finalWip, limit, columnsBreakdown, isDetailsActive);
+    // Render final indicator state.
+    displayWip(finalWip, limit, columnsBreakdown, isDetailsActive, i18n);
   });
 }
 
 // ============================================================================
-// 3. CRIAÇÃO VISUAL DO INDICADOR E PAINEL DE GARGALOS
+// 3. INDICATOR RENDERING AND DETAILS PANEL
 // ============================================================================
-// Recebe o WIP atual, o Limite, o Resumo das Colunas e se o usuário quer usar o clique
-function displayWip(current, limit, breakdown, isDetailsActive) {
+// Render floating indicator with optional click-to-open details panel.
+function displayWip(current, limit, breakdown, isDetailsActive, i18n) {
   let indicator = document.getElementById('custom-wip-indicator');
   
-  // Cria a "caixinha" caso ela ainda não exista na página
+  // Create floating indicator once, then reuse.
   if (!indicator) {
     indicator = document.createElement('div');
     indicator.id = 'custom-wip-indicator';
@@ -569,12 +675,12 @@ function displayWip(current, limit, breakdown, isDetailsActive) {
       font-family: inherit;
     `;
     
-    // --- LÓGICA MISTA DE MOUSE (ARRASTAR vs CLICAR) ---
-    // Precisamos saber se o usuário apenas "clicou" para abrir o painel, ou se ele clicou e "arrastou"
+    // --- MOUSE BEHAVIOR (DRAG vs CLICK) ---
+    // Distinguish between click-to-toggle panel and drag-to-reposition.
     let isDragging = false;
     let startX = 0, startY = 0, offsetX = 0, offsetY = 0;
 
-    // Quando o mouse afunda no botão...
+    // Pointer down starts possible drag flow.
     indicator.addEventListener('mousedown', (e) => {
       e.preventDefault();
       isDragging = false; // Presumimos inicialmente que é um clique simples
@@ -584,19 +690,19 @@ function displayWip(current, limit, breakdown, isDetailsActive) {
       offsetX = rect.left;
       offsetY = rect.top;
 
-      // Passa a observar o mouse se movendo e quando ele é solto
+      // Track pointer move and release.
       document.addEventListener('mousemove', onMouseMove);
       document.addEventListener('mouseup', onMouseUp);
     });
 
-    // Se o mouse se mover enquanto segurado...
+    // During pointer move, switch to drag mode after a small threshold.
     function onMouseMove(e) {
-      // Se mover mais de 5 pixels, decretamos que foi um arrasto (ignora tremidinhas)
+      // Ignore tiny jitter and only drag after threshold.
       if (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5) {
         isDragging = true;
       }
       
-      // Calcula a nova posição, limitando pelas beiradas da tela
+      // Keep indicator inside viewport bounds.
       let newLeft = offsetX + (e.clientX - startX);
       let newTop = offsetY + (e.clientY - startY);
       const maxLeft = window.innerWidth - indicator.offsetWidth;
@@ -607,16 +713,16 @@ function displayWip(current, limit, breakdown, isDetailsActive) {
       indicator.style.transform = 'scale(1)'; 
     }
 
-    // Quando o mouse for solto...
+    // On pointer up, complete drag or toggle details panel.
     function onMouseUp(e) {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
       
-      // Se NÃO foi um arrasto E o botão está autorizado a receber cliques (Toggle 1 ativado)
+      // Toggle details only on click behavior and when details feature is enabled.
       if (!isDragging && indicator.dataset.clickable === "true") {
         const panel = document.getElementById('wip-details-panel');
         if (panel) {
-          // Inverte o display (esconde se estiver visível, mostra se estiver escondido)
+          // Toggle panel display state.
           panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
         }
       }
@@ -625,18 +731,18 @@ function displayWip(current, limit, breakdown, isDetailsActive) {
     document.body.appendChild(indicator);
   }
 
-  // Controle visual: Se puder clicar, vira 'mãozinha', se não puder, vira ícone de 'mover'
+  // Cursor reflects current interaction mode.
   indicator.dataset.clickable = isDetailsActive;
   indicator.style.cursor = isDetailsActive ? 'pointer' : 'move';
 
-  // Garante que será visível (para tratar o bug de sumir no Roadmap)
+  // Always ensure indicator is visible when current page is eligible.
   indicator.style.display = 'block';
 
-  applyWipIndicatorState(indicator, current, limit, isDetailsActive, breakdown);
+  applyWipIndicatorState(indicator, current, limit, isDetailsActive, breakdown, i18n);
 }
 
 function startBoardObservation() {
-  // Só começa a observar quando o body já existe, evitando falha no primeiro carregamento.
+  // Start observer only after body exists to avoid first-load race conditions.
   if (!document.body) {
     window.addEventListener('load', startBoardObservation, { once: true });
     return;
@@ -647,11 +753,12 @@ function startBoardObservation() {
 }
 
 function bootstrapBoardRender(attempt = 0) {
-  // Faz pequenas tentativas até o Azure terminar de montar o board sem exigir F5.
+  // Retry briefly while Azure is still mounting board DOM.
   updateWipBoard();
 
   const hasBoardHeaders = document.querySelectorAll('.kanban-board-column-header').length > 0;
   if (hasBoardHeaders || attempt >= 10) {
+    // Board is ready.
     return;
   }
 
@@ -659,7 +766,7 @@ function bootstrapBoardRender(attempt = 0) {
 }
 
 function ensureBoardMounted() {
-  // O Azure monta a board de forma assíncrona; aqui repetimos a tentativa até os headers existirem.
+  // Azure mounts board asynchronously, so retry until column headers are present.
   const hasBoardHeaders = document.querySelectorAll('.kanban-board-column-header').length > 0;
   if (hasBoardHeaders) {
     updateWipBoard();
@@ -681,31 +788,33 @@ function ensureBoardMounted() {
 }
 
 
+
+
+
+
 // ============================================================================
-// 4. OBSERVERS E GATILHOS INICIAIS
+// 4. OBSERVERS AND INITIAL TRIGGERS
 // ============================================================================
 
-// O MutationObserver vigia a página "escondido". 
-// Se alguém mover um card ou editar um responsável, ele detecta.
+// MutationObserver watches board mutations (moves, edits, dynamic updates).
 let observerTimeout;
 const observer = new MutationObserver(() => {
   clearTimeout(observerTimeout);
-  // O atraso de 300ms garante que ele não trave o navegador calculando centenas de vezes durante um movimento de mouse
+  // Debounce to avoid expensive recalculation bursts during continuous DOM changes.
   observerTimeout = setTimeout(updateWipBoard, 300);
 });
 
-// Listener Extra: Se a pessoa alterar as opções de Equipe ou Checkboxes no Popup, 
-// este aviso chega até aqui e a página atualiza as cores/limites imediatamente, sem precisar dar F5.
+// Sync runtime behavior when user updates popup settings.
 chrome.storage.onChanged.addListener(() => {
   updateWipBoard();
 });
 
-// A primeira função executada ao carregar a página
+// Main init entrypoint.
 function init() {
   startBoardObservation();
 }
 
-// Verifica se o navegador está ocupado carregando. Se sim, espera; se não, roda direto.
+// Run init immediately when ready, or wait for DOM content event.
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
