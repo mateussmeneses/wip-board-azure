@@ -51,6 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
       labelAgingHigh: 'Aging high:',
       labelAgingCritical: 'Aging critical:',
       labelTargetDateWarning: 'Target date warning:',
+      agingRuleExplanation: 'Aging rule: when a card reaches the configured warning/high/critical aging thresholds, visual card alarms are applied based on severity.',
+      targetDateRuleExplanation: 'Target date rule: when a card has Target Date with remaining days less than or equal to the configured threshold, it is marked as alert. Overdue cards are also alerted.',
       dividerFeatures: 'FEATURES',
       labelToggleDetails: 'Enable click on indicator to show column details.',
       labelToggleHighlight: 'Highlight cards by aging and target date thresholds.',
@@ -103,6 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
       labelAgingHigh: 'Aging alto:',
       labelAgingCritical: 'Aging crítico:',
       labelTargetDateWarning: 'Alerta de prazo:',
+      agingRuleExplanation: 'Regra de Aging: quando um card atinge os limites configurados de atenção/alto/crítico, os alertas visuais do card são aplicados conforme a severidade.',
+      targetDateRuleExplanation: 'Regra de Prazo: quando um card tem Target Date com dias restantes menor ou igual ao limite configurado, ele entra em alerta. Cards atrasados também entram em alerta.',
       dividerFeatures: 'FUNCIONALIDADES',
       labelToggleDetails: 'Permitir clique no indicador para mostrar detalhes por coluna.',
       labelToggleHighlight: 'Destacar cards por limites de aging e data alvo.',
@@ -166,6 +170,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('labelAgingHigh').textContent = messages.labelAgingHigh;
     document.getElementById('labelAgingCritical').textContent = messages.labelAgingCritical;
     document.getElementById('labelTargetDateWarning').textContent = messages.labelTargetDateWarning;
+    document.getElementById('agingRuleExplanation').textContent = messages.agingRuleExplanation;
+    document.getElementById('targetDateRuleExplanation').textContent = messages.targetDateRuleExplanation;
     document.getElementById('dividerFeatures').textContent = messages.dividerFeatures;
     document.getElementById('labelToggleDetails').textContent = messages.labelToggleDetails;
     document.getElementById('labelToggleHighlight').textContent = messages.labelToggleHighlight;

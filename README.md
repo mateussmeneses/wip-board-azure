@@ -45,6 +45,14 @@ For each configured person, cards that match the configured special tag prefix a
 - Block tag (`#blck` by default):
 Cards containing the configured block tag are excluded from card highlight alarms. They are not excluded from WIP counting.
 
+## Aging and target date semantics
+
+- Aging thresholds (warning/high/critical):
+When a card reaches each configured aging level, visual highlighting severity increases accordingly.
+
+- Target date warning days:
+If a card has a Target Date and remaining days are less than or equal to the configured threshold, the card is flagged as alert. Overdue cards are always flagged.
+
 ## How to load
 
 1. Open Chrome in Developer Mode.
