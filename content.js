@@ -59,16 +59,37 @@ function getStorageValues(keys) {
 }
 
 async function getVersion() {
-  const languageData = await getStorageValues(['language']);
-  const i18n = getLanguagePack(languageData.language);
-  const web = await fetch('https://raw.githubusercontent.com/mateussmeneses/wip-board-azure/refs/heads/master/version.json').then(r => r.json());
-  const local = await fetch(chrome.runtime.getURL('version.json')).then(r => r.json());
+  try {
+    const languageData = await getStorageValues(['language']);
+    const i18n = getLanguagePack(languageData.language);
 
-  const isUpdated = web.version === local.version;
-  if (isUpdated) return;
-  alert(i18n.t('outdatedExtension'));
-  console.clear();
-  console.warn("https://codeload.github.com/mateussmeneses/wip-board-azure/zip/refs/heads/master");
+    // Remote check is best-effort. If network fails, skip warning to avoid false positives.
+    const webResponse = await fetch('https://raw.githubusercontent.com/mateussmeneses/wip-board-azure/refs/heads/master/version.json', {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' },
+    });
+
+    if (!webResponse.ok) {
+      console.debug('[WIP-Board] Version check skipped (remote unavailable).', webResponse.status);
+      return;
+    }
+
+    const web = await webResponse.json();
+    const local = await fetch(chrome.runtime.getURL('version.json'), { cache: 'no-store' }).then(r => r.json());
+
+    const webVersion = String(web?.version || '').trim();
+    const localVersion = String(local?.version || '').trim();
+
+    // Only notify when both versions are valid and explicitly different.
+    if (!webVersion || !localVersion || webVersion === localVersion) return;
+
+    alert(i18n.t('outdatedExtension'));
+    console.clear();
+    console.warn('https://codeload.github.com/mateussmeneses/wip-board-azure/zip/refs/heads/master');
+  } catch (err) {
+    // Silent fallback: version check should never break runtime flow.
+    console.debug('[WIP-Board] Version check skipped (error).', err);
+  }
 }
 
 getVersion()
