@@ -18,6 +18,29 @@ const I18N = {
     targetDate: 'Target date: {{status}}',
     targetOverdue: 'OVERDUE',
     targetDaysLeft: '{{days}} day(s) left',
+    // Daily Snapshot Capture (roadmap T1.2).
+    snapshotPanelTitle: 'Daily Snapshot',
+    snapshotCapture: 'Capture snapshot',
+    snapshotLatest: 'View last snapshot',
+    snapshotHistory: 'View history',
+    snapshotLocalOnly: 'Snapshots are stored only on this browser (not shared with the team).',
+    snapshotCapturing: 'Capturing…',
+    snapshotCaptured: 'Snapshot captured: {{items}} work items across {{columns}} columns.',
+    snapshotCapturedIncomplete: 'Snapshot captured, but flagged incomplete ({{reasons}}).',
+    snapshotNone: 'No snapshot captured yet for this board.',
+    snapshotLatestInfo: 'Last capture: {{when}} — {{items}} work items.',
+    snapshotIncompleteBadge: 'incomplete',
+    snapshotCompleteBadge: 'complete',
+    snapshotHistoryEmpty: 'No snapshots in history for this board.',
+    snapshotHistoryItem: '{{when}} — {{items}} items ({{status}})',
+    snapshotColumnCount: '{{name}}: {{count}}',
+    snapshotError: 'Snapshot failed: {{message}}',
+    snapshotScopeMissing: 'Cannot capture: board organization/project not detected on this page.',
+    reasonEmptyBoard: 'empty board',
+    reasonHiddenItems: 'hidden/filtered cards',
+    reasonNoColumns: 'no columns',
+    reasonDuplicateIds: 'duplicate ids',
+    reasonMissingIds: 'cards without id',
   },
   pt: {
     outdatedExtension: 'Sua extensão está desatualizada. Por favor, atualize. O link de download está no console.',
@@ -32,6 +55,29 @@ const I18N = {
     targetDate: 'Prazo: {{status}}',
     targetOverdue: 'ATRASADO',
     targetDaysLeft: 'Faltam {{days}} dia(s)',
+    // Captura de Snapshot Diário (roadmap T1.2).
+    snapshotPanelTitle: 'Snapshot Diário',
+    snapshotCapture: 'Capturar snapshot',
+    snapshotLatest: 'Ver último snapshot',
+    snapshotHistory: 'Ver histórico',
+    snapshotLocalOnly: 'Os snapshots ficam salvos apenas neste navegador (não são compartilhados com a equipe).',
+    snapshotCapturing: 'Capturando…',
+    snapshotCaptured: 'Snapshot capturado: {{items}} work items em {{columns}} colunas.',
+    snapshotCapturedIncomplete: 'Snapshot capturado, mas marcado como incompleto ({{reasons}}).',
+    snapshotNone: 'Nenhum snapshot capturado ainda para este board.',
+    snapshotLatestInfo: 'Última captura: {{when}} — {{items}} work items.',
+    snapshotIncompleteBadge: 'incompleto',
+    snapshotCompleteBadge: 'completo',
+    snapshotHistoryEmpty: 'Sem snapshots no histórico deste board.',
+    snapshotHistoryItem: '{{when}} — {{items}} itens ({{status}})',
+    snapshotColumnCount: '{{name}}: {{count}}',
+    snapshotError: 'Falha no snapshot: {{message}}',
+    snapshotScopeMissing: 'Não é possível capturar: organização/projeto do board não detectados nesta página.',
+    reasonEmptyBoard: 'board vazio',
+    reasonHiddenItems: 'cards ocultos/filtrados',
+    reasonNoColumns: 'sem colunas',
+    reasonDuplicateIds: 'ids duplicados',
+    reasonMissingIds: 'cards sem id',
   },
 };
 
@@ -217,7 +263,102 @@ if (!document.getElementById('wip-alarm-style')) {
     .wip-detail-name { color: inherit; }
     .wip-detail-count { font-weight: bold; background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; }
 
-
+    /* Daily Snapshot panel (roadmap T1.2): a discrete, collapsible side panel
+       anchored bottom-right so it never overlaps the board content. */
+    #wip-snapshot-panel {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 999998;
+      width: 280px;
+      font-family: inherit;
+      font-size: 13px;
+      color: #1f2937;
+    }
+    #wip-snapshot-toggle {
+      width: 100%;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #0078d4;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    #wip-snapshot-toggle:hover { background: #005a9e; }
+    #wip-snapshot-body {
+      display: none;
+      margin-top: 8px;
+      padding: 12px;
+      background: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    #wip-snapshot-panel.open #wip-snapshot-body { display: block; }
+    #wip-snapshot-panel .wip-snap-note {
+      font-size: 11px;
+      color: #666;
+      margin: 0 0 10px 0;
+    }
+    #wip-snapshot-panel .wip-snap-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    #wip-snapshot-panel .wip-snap-btn {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 7px 10px;
+      border-radius: 6px;
+      border: 1px solid #0078d4;
+      background: #f0f9ff;
+      color: #0369a1;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 0;
+    }
+    #wip-snapshot-panel .wip-snap-btn:hover { background: #e0f2fe; }
+    #wip-snapshot-panel .wip-snap-btn:disabled { opacity: 0.6; cursor: default; }
+    #wip-snapshot-panel .wip-snap-status {
+      font-size: 12px;
+      margin: 8px 0 0 0;
+      min-height: 16px;
+    }
+    #wip-snapshot-panel .wip-snap-status.ok { color: #1e8e3e; }
+    #wip-snapshot-panel .wip-snap-status.err { color: #cc292b; }
+    #wip-snapshot-panel .wip-snap-output {
+      margin-top: 8px;
+      max-height: 180px;
+      overflow-y: auto;
+      font-size: 12px;
+      border-top: 1px solid #eee;
+      padding-top: 8px;
+    }
+    #wip-snapshot-panel .wip-snap-output:empty { display: none; }
+    #wip-snapshot-panel .wip-snap-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 2px 0;
+    }
+    #wip-snapshot-panel .wip-snap-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 1px 6px;
+      border-radius: 10px;
+      text-transform: uppercase;
+    }
+    #wip-snapshot-panel .wip-snap-badge.complete { background: #e6f4ea; color: #1e8e3e; }
+    #wip-snapshot-panel .wip-snap-badge.incomplete { background: #fff3cd; color: #856404; }
   `;
   document.head.appendChild(style);
 }
@@ -606,6 +747,325 @@ function setIndicatorHtml(indicator, html) {
 }
 
 // ============================================================================
+// 1d. DAILY SNAPSHOT CAPTURE (roadmap T1.2)
+// ============================================================================
+// A discrete, collapsible side panel that lets the user EXPLICITLY capture the
+// current board state, review the last capture and browse a short history.
+//
+// Hard constraints honored here:
+//   - Capture happens ONLY on an explicit button click. It is never triggered by
+//     a DOM mutation and adds no work to the MutationObserver path.
+//   - The capture is strictly read-only: it reads the already-available board
+//     model and persists locally. It never edits a work item in Azure DevOps.
+//   - Persistence is local (chrome.storage.local) and is labeled as such — it is
+//     never presented as shared across the team.
+//   - Incomplete captures (hidden/filtered cards, empty board, duplicates) are
+//     surfaced honestly, never silently saved as complete.
+
+const SnapshotStore =
+  (typeof WIPBoardSnapshotStore !== 'undefined' && WIPBoardSnapshotStore) || null;
+const SnapshotCapture =
+  (typeof WIPBoardSnapshotCapture !== 'undefined' && WIPBoardSnapshotCapture) || null;
+
+// A single store instance per page, created lazily so a missing module (older
+// manifest) degrades to "panel unavailable" instead of throwing at load.
+let snapshotStoreInstance = null;
+function getSnapshotStore() {
+  if (snapshotStoreInstance) return snapshotStoreInstance;
+  if (!SnapshotStore || typeof SnapshotStore.createStore !== 'function') return null;
+  try {
+    snapshotStoreInstance = SnapshotStore.createStore();
+  } catch (err) {
+    console.debug('[WIP-Board] Snapshot store unavailable.', err);
+    snapshotStoreInstance = null;
+  }
+  return snapshotStoreInstance;
+}
+
+function resolveSnapshotScope(boardModel, context) {
+  // Organization/project come from the reader model (parsed from card hrefs);
+  // team/board come from the configured board keyword + optional route filter so
+  // different teams/boards never collide in storage. Returns null when the
+  // mandatory org/project cannot be detected, so capture refuses rather than
+  // writing an ambiguous record.
+  const firstScoped = (boardModel.items || []).find(
+    item =>
+      item &&
+      typeof item.organization === 'string' &&
+      item.organization &&
+      typeof item.project === 'string' &&
+      item.project
+  );
+  if (!firstScoped) return null;
+
+  const board = context.currentBoardName || firstScoped.project;
+  const team = context.boardPathFilter || context.currentBoardName || 'default';
+
+  return {
+    organization: firstScoped.organization,
+    project: firstScoped.project,
+    team: team,
+    board: board,
+  };
+}
+
+function formatSnapshotWhen(capturedAt) {
+  // capturedAt is the store's { iso, localDay, ... }. Render a short local string.
+  if (!capturedAt) return '';
+  try {
+    const d = new Date(capturedAt.iso || capturedAt.epochMs);
+    return d.toLocaleString();
+  } catch (e) {
+    return capturedAt.localDay || '';
+  }
+}
+
+function describeIncompleteReasons(reasons, i18n) {
+  const map = {
+    EMPTY_BOARD: 'reasonEmptyBoard',
+    HIDDEN_ITEMS: 'reasonHiddenItems',
+    NO_COLUMNS: 'reasonNoColumns',
+    DUPLICATE_IDS: 'reasonDuplicateIds',
+    MISSING_IDS: 'reasonMissingIds',
+  };
+  return (reasons || [])
+    .map(code => (map[code] ? i18n.t(map[code]) : code))
+    .join(', ');
+}
+
+function setSnapshotStatus(message, kind) {
+  const status = document.getElementById('wip-snapshot-status');
+  if (!status) return;
+  status.textContent = message || '';
+  status.className = 'wip-snap-status' + (kind ? ' ' + kind : '');
+}
+
+function setSnapshotOutput(html) {
+  const output = document.getElementById('wip-snapshot-output');
+  if (!output) return;
+  // Diff-before-write mirrors the indicator guard so repeated renders of the
+  // same content do not churn the observed subtree.
+  setIndicatorHtml(output, html || '');
+}
+
+function renderSnapshotColumns(columns, i18n) {
+  if (!Array.isArray(columns) || columns.length === 0) return '';
+  return columns
+    .map(col => {
+      const name = String(col.name == null ? '' : col.name).replace(/[<>]/g, '');
+      return `<div class="wip-snap-row"><span>${name}</span><span class="wip-detail-count">${col.count || 0}</span></div>`;
+    })
+    .join('');
+}
+
+async function handleCaptureSnapshot(context, i18n) {
+  const store = getSnapshotStore();
+  if (!store || !SnapshotCapture) {
+    setSnapshotStatus(i18n.t('snapshotError', { message: 'module unavailable' }), 'err');
+    return;
+  }
+
+  setSnapshotStatus(i18n.t('snapshotCapturing'), null);
+
+  let boardModel;
+  try {
+    boardModel = readBoardModel();
+  } catch (err) {
+    setSnapshotStatus(i18n.t('snapshotError', { message: err && err.message ? err.message : String(err) }), 'err');
+    return;
+  }
+
+  const scope = resolveSnapshotScope(boardModel, context);
+  if (!scope) {
+    setSnapshotStatus(i18n.t('snapshotScopeMissing'), 'err');
+    return;
+  }
+
+  const capture = SnapshotCapture.buildCapture(boardModel, scope, {
+    source: { origin: 'dom-reader' },
+  });
+
+  try {
+    await store.createSnapshot(capture.storeInput);
+  } catch (err) {
+    setSnapshotStatus(i18n.t('snapshotError', { message: err && err.message ? err.message : String(err) }), 'err');
+    return;
+  }
+
+  if (capture.complete) {
+    setSnapshotStatus(
+      i18n.t('snapshotCaptured', { items: capture.counts.items, columns: capture.counts.columns }),
+      'ok'
+    );
+  } else {
+    setSnapshotStatus(
+      i18n.t('snapshotCapturedIncomplete', {
+        reasons: describeIncompleteReasons(capture.incompleteReasons, i18n),
+      }),
+      'ok'
+    );
+  }
+
+  setSnapshotOutput(renderSnapshotColumns(capture.columns, i18n));
+}
+
+async function handleViewLatestSnapshot(context, i18n) {
+  const store = getSnapshotStore();
+  if (!store) return;
+
+  let boardModel;
+  try {
+    boardModel = readBoardModel();
+  } catch (err) {
+    setSnapshotStatus(i18n.t('snapshotError', { message: err && err.message ? err.message : String(err) }), 'err');
+    return;
+  }
+  const scope = resolveSnapshotScope(boardModel, context);
+  if (!scope) {
+    setSnapshotStatus(i18n.t('snapshotScopeMissing'), 'err');
+    return;
+  }
+
+  let latest;
+  try {
+    latest = await store.getLatestSnapshot(scope);
+  } catch (err) {
+    setSnapshotStatus(i18n.t('snapshotError', { message: err && err.message ? err.message : String(err) }), 'err');
+    return;
+  }
+
+  if (!latest) {
+    setSnapshotStatus(i18n.t('snapshotNone'), null);
+    setSnapshotOutput('');
+    return;
+  }
+
+  const badgeKey = latest.source && latest.source.complete ? 'complete' : 'incomplete';
+  const badgeText = latest.source && latest.source.complete
+    ? i18n.t('snapshotCompleteBadge')
+    : i18n.t('snapshotIncompleteBadge');
+  setSnapshotStatus(
+    i18n.t('snapshotLatestInfo', { when: formatSnapshotWhen(latest.capturedAt), items: latest.itemCount }),
+    'ok'
+  );
+  const badge = `<div class="wip-snap-row"><span class="wip-snap-badge ${badgeKey}">${badgeText}</span></div>`;
+  setSnapshotOutput(badge + renderSnapshotColumns(latest.columns, i18n));
+}
+
+async function handleViewHistory(context, i18n) {
+  const store = getSnapshotStore();
+  if (!store) return;
+
+  let boardModel;
+  try {
+    boardModel = readBoardModel();
+  } catch (err) {
+    setSnapshotStatus(i18n.t('snapshotError', { message: err && err.message ? err.message : String(err) }), 'err');
+    return;
+  }
+  const scope = resolveSnapshotScope(boardModel, context);
+  if (!scope) {
+    setSnapshotStatus(i18n.t('snapshotScopeMissing'), 'err');
+    return;
+  }
+
+  let snapshots;
+  try {
+    snapshots = await store.getSnapshots(scope);
+  } catch (err) {
+    setSnapshotStatus(i18n.t('snapshotError', { message: err && err.message ? err.message : String(err) }), 'err');
+    return;
+  }
+
+  if (!snapshots.length) {
+    setSnapshotStatus(i18n.t('snapshotHistoryEmpty'), null);
+    setSnapshotOutput('');
+    return;
+  }
+
+  setSnapshotStatus('', null);
+  const rows = snapshots
+    .map(snap => {
+      const status = snap.source && snap.source.complete
+        ? i18n.t('snapshotCompleteBadge')
+        : i18n.t('snapshotIncompleteBadge');
+      const text = i18n.t('snapshotHistoryItem', {
+        when: formatSnapshotWhen(snap.capturedAt),
+        items: snap.itemCount,
+        status: status,
+      }).replace(/[<>]/g, '');
+      return `<div class="wip-snap-row"><span>${text}</span></div>`;
+    })
+    .join('');
+  setSnapshotOutput(rows);
+}
+
+function ensureSnapshotPanel(context, i18n) {
+  // Build the panel once; refresh its labels on every call so a language change
+  // is reflected without a reload. Returns early when the modules are missing so
+  // the core WIP indicator keeps working regardless.
+  if (!SnapshotStore || !SnapshotCapture || !document.body) return;
+
+  let panel = document.getElementById('wip-snapshot-panel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'wip-snapshot-panel';
+    panel.innerHTML = `
+      <button id="wip-snapshot-toggle" type="button">
+        <span id="wip-snapshot-title"></span>
+        <span id="wip-snapshot-caret">▴</span>
+      </button>
+      <div id="wip-snapshot-body">
+        <p class="wip-snap-note" id="wip-snapshot-note"></p>
+        <div class="wip-snap-actions">
+          <button class="wip-snap-btn" id="wip-snapshot-capture" type="button"></button>
+          <button class="wip-snap-btn" id="wip-snapshot-latest" type="button"></button>
+          <button class="wip-snap-btn" id="wip-snapshot-history" type="button"></button>
+        </div>
+        <p class="wip-snap-status" id="wip-snapshot-status"></p>
+        <div class="wip-snap-output" id="wip-snapshot-output"></div>
+      </div>
+    `;
+    document.body.appendChild(panel);
+
+    panel.querySelector('#wip-snapshot-toggle').addEventListener('click', () => {
+      panel.classList.toggle('open');
+      const caret = panel.querySelector('#wip-snapshot-caret');
+      if (caret) caret.textContent = panel.classList.contains('open') ? '▾' : '▴';
+    });
+  }
+
+  // Bind actions against the CURRENT context/i18n every refresh so config and
+  // language changes take effect. Replacing the handler avoids stacking listeners.
+  bindSnapshotButton('wip-snapshot-capture', () => handleCaptureSnapshot(context, i18n));
+  bindSnapshotButton('wip-snapshot-latest', () => handleViewLatestSnapshot(context, i18n));
+  bindSnapshotButton('wip-snapshot-history', () => handleViewHistory(context, i18n));
+
+  // Localized, static labels.
+  setTextById('wip-snapshot-title', i18n.t('snapshotPanelTitle'));
+  setTextById('wip-snapshot-note', i18n.t('snapshotLocalOnly'));
+  setTextById('wip-snapshot-capture', i18n.t('snapshotCapture'));
+  setTextById('wip-snapshot-latest', i18n.t('snapshotLatest'));
+  setTextById('wip-snapshot-history', i18n.t('snapshotHistory'));
+}
+
+function bindSnapshotButton(id, handler) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.onclick = handler;
+}
+
+function setTextById(id, text) {
+  const el = document.getElementById(id);
+  if (el && el.textContent !== text) el.textContent = text;
+}
+
+function hideSnapshotPanel() {
+  const panel = document.getElementById('wip-snapshot-panel');
+  if (panel) panel.style.display = 'none';
+}
+
+// ============================================================================
 // 2. MAIN WIP CALCULATION AND ANALYSIS
 // ============================================================================
 // Main runtime flow: scan board, count cards, apply rules, render indicator.
@@ -679,6 +1139,8 @@ function updateWipBoard() {
       }
       indicator.style.display = 'block';
       setIndicatorHtml(indicator, `<div>${i18n.t('indicatorMissingConfig')}</div>`);
+      // Snapshot capture needs a configured board scope; keep the panel hidden.
+      hideSnapshotPanel();
       return;
     }
     
@@ -686,6 +1148,7 @@ function updateWipBoard() {
     if (!isAllowedBoard(currentBoardName, boardPathFilter)) {
       const indicator = document.getElementById('custom-wip-indicator');
       if (indicator) indicator.style.display = 'none';
+      hideSnapshotPanel();
       return;
     }
 
@@ -769,6 +1232,8 @@ function updateWipBoard() {
     // board changes still arrive once the observer reconnects on the next
     // microtask. The WIP math above is complete and unchanged; only the write
     // phase is wrapped.
+    const snapshotContext = { currentBoardName, boardPathFilter };
+
     withObserverPaused(() => {
       // Evaluate card-level alarms only in WIP columns.
       allWipCards.forEach(card => {
@@ -777,6 +1242,12 @@ function updateWipBoard() {
 
       // Render final indicator state.
       displayWip(finalWip, limit, columnsBreakdown, isDetailsActive, i18n);
+
+      // Mount/refresh the Daily Snapshot panel (roadmap T1.2). Built inside the
+      // paused write phase so its one-time creation + diff-guarded label refresh
+      // never re-arm the observer (keeps the R1 fix intact). Capture itself only
+      // ever runs on an explicit button click, never from this recompute path.
+      ensureSnapshotPanel(snapshotContext, i18n);
     });
   });
 }

@@ -314,6 +314,25 @@
     return out;
   }
 
+  // Keep only the stable, non-sensitive column fields. Returns null when no
+  // column structure was supplied so the field is simply absent on older data.
+  function normalizeColumns(columns) {
+    if (!Array.isArray(columns)) return null;
+    const out = columns.map(function (raw, index) {
+      if (!raw || typeof raw !== 'object') return null;
+      const col = {
+        id: isUsable(raw.id) ? raw.id : null,
+        name: isUsable(raw.name) ? raw.name : null,
+        order: typeof raw.order === 'number' ? raw.order : index,
+        isDoneColumn: raw.isDoneColumn === true,
+        count: typeof raw.count === 'number' ? raw.count : 0,
+      };
+      if (typeof raw.role === 'string') col.role = raw.role;
+      return col;
+    }).filter(Boolean);
+    return out;
+  }
+
   function deepFreeze(obj) {
     if (obj && typeof obj === 'object' && !Object.isFrozen(obj)) {
       Object.keys(obj).forEach(function (key) {
@@ -536,6 +555,12 @@
             complete: input.complete === true,
           },
           items: items,
+          // Optional per-column structure (id, name, order, role, isDoneColumn,
+          // count) captured alongside the items so history can show how many
+          // work items sat in each column without re-deriving. Covers ALL board
+          // columns, not only WIP-configured ones (roadmap T1.2). Absent when the
+          // caller did not provide it.
+          columns: normalizeColumns(input.columns),
           // itemCount is a convenience aggregate for retention/UX; not authority.
           itemCount: items.length,
         };

@@ -97,10 +97,34 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   behind no UI yet. Suite: `test/snapshot-store.test.js` (26 tests) green; full
   suite 88 tests pass. Mock: `test/helpers/mock-chrome-storage.js` (zero deps).
 
-### T1.2 — Capture daily snapshot of column-per-id
-- Scope: once per day per board, record each item id's current column + state.
-- Acceptance: re-opening the board same day does not duplicate; next day adds one.
-- Tests: date-boundary unit tests.
+### T1.2 — Capture daily snapshot of column-per-id — DONE
+- Scope: record each item id's current column + state on explicit user action.
+- Acceptance: a capture persists and reloads; history lists prior captures;
+  different boards stay isolated; captures at different times are both kept.
+- Tests: fixture-driven capture + persistence unit tests.
+- Status: `src/data/snapshot-capture.js` (`WIPBoardSnapshotCapture`) is a pure,
+  Chrome-free and DOM-free bridge from the `WIPBoardReader` model to the
+  `WIPBoardSnapshotStore`. It captures ALL board columns (not only WIP-configured
+  ones), labels terminal/done columns from the board's own `data-done` flag (no
+  hardcoded names; an optional keyword list recognizes the "approved"/start-of-flow
+  role), preserves stable ids and available metadata, and emits an honest
+  completeness verdict — empty board, hidden/filtered cards, duplicate ids and
+  missing ids each flag the capture `incomplete` so it is never silently saved as
+  complete. The store now persists an optional per-column structure (id, name,
+  order, role, isDoneColumn, count) alongside the item list so history can show
+  work-item counts per column. `content.js` adds a discrete, collapsible
+  bottom-right panel (§1d) with three explicit actions — Capture snapshot, View
+  last snapshot, View history — plus success/failure messages, all localized
+  EN/PT. Capture runs ONLY on a button click: it is read-only (never edits a work
+  item), never triggered by a DOM mutation, and the panel is mounted inside the
+  existing `withObserverPaused()` write phase so it adds no MutationObserver
+  cycle. Local storage is labeled as not shared with the team. Suite: 109 tests
+  pass (88 prior + 21 new in `test/snapshot-capture.test.js`). The daily
+  dedup/"one per day" rule and automatic daily commitment comparison are
+  intentionally deferred to T1.3.
+- Pending real-browser validation: see the Chrome checklist in
+  `docs/DAILY_SNAPSHOT_T1_2.md` (not yet executed in a live Chrome against a real
+  Azure DevOps board).
 
 ### T1.3 — Commitment model (expected vs actual)
 - Scope: per work item, store `startColumn` and `expectedColumn`; compare to the
