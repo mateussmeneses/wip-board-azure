@@ -134,3 +134,54 @@ Address R1 as its own small task **after** `board-dom-reader` is wired into the 
 path, so the reader can expose a stable render signature that makes the "diff
 before writing" option trivial. Until then, R1 remains a known, bounded
 inefficiency, not a correctness bug.
+
+## 7. Post-integration note (module wiring task)
+
+The module-integration task (roadmap T0.3/T0.4) wired `WIPBoardCore` and
+`WIPBoardReader` into `content.js` but, per its own constraints, **did not change
+the observer**. The behavior below is re-stated against the integrated runtime so
+the later R1 fix starts from an accurate baseline.
+
+### 7.1 Mutations the runtime itself produces
+
+| Write site (integrated content.js) | Operation | Emits a record under the current observer config? |
+|---|---|---|
+| `displayWip` → `applyWipIndicatorState` | `indicator.innerHTML = ...` (unconditional) | **Yes, every run** (childList) |
+| `applyWipIndicatorState` | `indicator.className`, `indicator.style.*` | Yes when the value changes (attributes — not watched, see below) |
+| `displayWip` | `indicator.dataset.clickable` | Yes when it changes (attribute) |
+| `applyCardAlarm` | `classList.add/remove('card-alerta-*')`, `title` attr | Only on genuine state change |
+
+The reader integration did **not** add or remove any write site: the indicator is
+still rebuilt via `innerHTML`, and card alarms are still applied to the live DOM
+nodes resolved by `resolveLiveCard`.
+
+### 7.2 Which of those are observable by the current configuration
+
+The observer is `observer.observe(document.body, { childList: true, subtree: true })`.
+It watches **only** `childList` (node add/remove), not `attributes`. Therefore:
+
+- **Observable:** the `innerHTML` rewrite (it replaces child nodes) and the initial
+  creation/append of `#custom-wip-indicator`.
+- **Not observable:** `className`, `style`, `dataset`, and `title` attribute writes —
+  they change attributes, and `attributes` is not enabled. `classList` add/remove on
+  cards is likewise an attribute mutation and is **not** a `childList` record.
+
+So the single observable self-mutation that matters is the indicator `innerHTML`
+rewrite.
+
+### 7.3 Which can cause recurring recomputation
+
+Only the `innerHTML` rewrite. It fires a `childList` record on every
+`updateWipBoard()` run even when the computed HTML is identical, which re-arms the
+300 ms debounce and seeds the next run — a persistent ~3 Hz background recompute on
+any configured board, with no user interaction (see §4).
+
+### 7.4 Reproducible test
+
+`test/mutation-observer-r1.test.js` reproduces the cycle deterministically (no DOM
+engine needed): it models a node whose `innerHTML` setter always emits a
+`childList` record and asserts that three identical renders emit three records
+(problem present today), while a diff-before-write guard emits only one (the
+acceptance target for the future fix). The observer itself is left unchanged by
+this task; the test is red-by-design against the current render and documents the
+exact condition the later fix must satisfy.

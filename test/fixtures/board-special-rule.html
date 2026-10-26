@@ -1,0 +1,122 @@
+<!--
+  Sanitized Azure DevOps board fixture (special-rule + block-tag scenarios).
+
+  No real Azure DevOps data: organization, project, titles and assignee names
+  are synthetic. This fixture exercises the WIP business rules end to end so the
+  integration/regression tests can prove the runtime (WIPBoardReader +
+  WIPBoardCore) matches the legacy inline scan exactly.
+
+  Columns:
+    - Desenvolvimento (WIP column, data-done=false)
+    - Code Review     (WIP column, data-done=false)
+    - Closed          (NOT a WIP column, data-done=true)
+
+  Cards (all visible unless noted):
+    3001  Dev, Alice,  tags "#spa; x"   -> special tagged (Alice)
+    3002  Dev, Alice,  tags "#spa.ui"   -> special tagged (Alice), prefix variation
+    3003  Dev, Alice,  no special tag   -> special untagged (Alice)
+    3004  Dev, Bob,    tags "#blck"     -> blocked (counts in WIP, no alarm)
+    3005  CR,  Carol,  aging 25         -> non-special, critical aging
+    3006  CR,  Alice,  tags "#spaapi"   -> special tagged (Alice), suffix variation
+    3007  Closed, Dave                  -> outside WIP columns, must be ignored
+-->
+<div class="flex-column flex-grow kanban-board padding-horizontal-16 body-s">
+  <div class="flex-row kanban-board-column-header-container margin-bottom-4 font-size-ml">
+    <span class="flex-row flex-grow kanban-board-column-header" aria-label="Desenvolvimento">
+      <span class="flex-row flex-grow justify-space-between"><div class="flex-row"><span class="click-edit-field disabled">Desenvolvimento</span></div><span><span class="board-column-item-count font-size-l">4</span></span></span>
+    </span>
+    <span class="flex-row flex-grow kanban-board-column-header" aria-label="Code Review">
+      <span class="flex-row flex-grow justify-space-between"><div class="flex-row"><span class="click-edit-field disabled">Code Review</span></div><span><span class="board-column-item-count font-size-l">2</span></span></span>
+    </span>
+    <span class="flex-row flex-grow kanban-board-column-header" aria-label="Closed">
+      <span class="flex-row flex-grow justify-space-between"><div class="flex-row"><span class="click-edit-field disabled">Closed</span></div><span><span class="board-column-item-count font-size-l">1</span></span></span>
+    </span>
+  </div>
+
+  <!-- Column: Desenvolvimento -->
+  <div class="flex-column flex-grow kanban-board-column padding-bottom-8" data-column="col-dev-01" data-done="false">
+    <div data-itemid="3001" aria-label="Issue, Alice tagged one, Column Desenvolvimento" role="group" aria-roledescription="Card" class="wit-card depth-8 flex-row boards-card body-s" tabindex="0">
+      <div class="card-content flex-column flex-grow">
+        <span class="flex-row full-width"><div class="rhythm-horizontal-8"><span aria-hidden="true" class="work-item-type-icon normal bowtie-icon bowtie-symbol-defect flex-noshrink"></span><span class="font-weight-semibold selectable-text">3001</span><a class="title" href="/acme-org/Demo.Project/_workitems/edit/3001"><span class="title-text">Alice tagged one</span></a></div></span>
+        <div class="work-item-state-name"><span>Active</span></div>
+        <div class="identity-display-name"><span>Alice Dev</span></div>
+        <div class="flex-row flex-wrap fields">
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis first-field"><div class="label text-ellipsis">Aging</div><div class="editable-field value not-editing"><div class="text-ellipsis">4</div></div></div>
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis"><div class="label text-ellipsis">Tags</div><div class="editable-field value not-editing"><div class="text-ellipsis"> #spa; x</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div data-itemid="3002" aria-label="Issue, Alice tagged two, Column Desenvolvimento" role="group" aria-roledescription="Card" class="wit-card depth-8 flex-row boards-card body-s" tabindex="0">
+      <div class="card-content flex-column flex-grow">
+        <span class="flex-row full-width"><div class="rhythm-horizontal-8"><span aria-hidden="true" class="work-item-type-icon normal bowtie-icon bowtie-symbol-defect flex-noshrink"></span><span class="font-weight-semibold selectable-text">3002</span><a class="title" href="/acme-org/Demo.Project/_workitems/edit/3002"><span class="title-text">Alice tagged two</span></a></div></span>
+        <div class="work-item-state-name"><span>Active</span></div>
+        <div class="identity-display-name"><span>Alice Dev</span></div>
+        <div class="flex-row flex-wrap fields">
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis first-field"><div class="label text-ellipsis">Aging</div><div class="editable-field value not-editing"><div class="text-ellipsis">2</div></div></div>
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis"><div class="label text-ellipsis">Tags</div><div class="editable-field value not-editing"><div class="text-ellipsis"> #spa.ui</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div data-itemid="3003" aria-label="Issue, Alice untagged, Column Desenvolvimento" role="group" aria-roledescription="Card" class="wit-card depth-8 flex-row boards-card body-s" tabindex="0">
+      <div class="card-content flex-column flex-grow">
+        <span class="flex-row full-width"><div class="rhythm-horizontal-8"><span aria-hidden="true" class="work-item-type-icon normal bowtie-icon bowtie-symbol-defect flex-noshrink"></span><span class="font-weight-semibold selectable-text">3003</span><a class="title" href="/acme-org/Demo.Project/_workitems/edit/3003"><span class="title-text">Alice untagged</span></a></div></span>
+        <div class="work-item-state-name"><span>Active</span></div>
+        <div class="identity-display-name"><span>Alice Dev</span></div>
+        <div class="flex-row flex-wrap fields">
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis first-field"><div class="label text-ellipsis">Aging</div><div class="editable-field value not-editing"><div class="text-ellipsis">1</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div data-itemid="3004" aria-label="Issue, Bob blocked, Column Desenvolvimento" role="group" aria-roledescription="Card" class="wit-card depth-8 flex-row boards-card body-s" tabindex="0">
+      <div class="card-content flex-column flex-grow">
+        <span class="flex-row full-width"><div class="rhythm-horizontal-8"><span aria-hidden="true" class="work-item-type-icon normal bowtie-icon bowtie-symbol-defect flex-noshrink"></span><span class="font-weight-semibold selectable-text">3004</span><a class="title" href="/acme-org/Demo.Project/_workitems/edit/3004"><span class="title-text">Bob blocked</span></a></div></span>
+        <div class="work-item-state-name"><span>Active</span></div>
+        <div class="identity-display-name"><span>Bob Dev</span></div>
+        <div class="flex-row flex-wrap fields">
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis first-field"><div class="label text-ellipsis">Aging</div><div class="editable-field value not-editing"><div class="text-ellipsis">30</div></div></div>
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis"><div class="label text-ellipsis">Tags</div><div class="editable-field value not-editing"><div class="text-ellipsis">#blck</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Column: Code Review -->
+  <div class="flex-column flex-grow kanban-board-column padding-bottom-8" data-column="col-cr-02" data-done="false">
+    <div data-itemid="3005" aria-label="Issue, Carol critical aging, Column Code Review" role="group" aria-roledescription="Card" class="wit-card depth-8 flex-row boards-card body-s" tabindex="0">
+      <div class="card-content flex-column flex-grow">
+        <span class="flex-row full-width"><div class="rhythm-horizontal-8"><span aria-hidden="true" class="work-item-type-icon normal bowtie-icon bowtie-symbol-defect flex-noshrink"></span><span class="font-weight-semibold selectable-text">3005</span><a class="title" href="/acme-org/Demo.Project/_workitems/edit/3005"><span class="title-text">Carol critical aging</span></a></div></span>
+        <div class="work-item-state-name"><span>Active</span></div>
+        <div class="identity-display-name"><span>Carol Dev</span></div>
+        <div class="flex-row flex-wrap fields">
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis first-field"><div class="label text-ellipsis">Aging</div><div class="editable-field value not-editing"><div class="text-ellipsis">25</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div data-itemid="3006" aria-label="Issue, Alice tagged three, Column Code Review" role="group" aria-roledescription="Card" class="wit-card depth-8 flex-row boards-card body-s" tabindex="0">
+      <div class="card-content flex-column flex-grow">
+        <span class="flex-row full-width"><div class="rhythm-horizontal-8"><span aria-hidden="true" class="work-item-type-icon normal bowtie-icon bowtie-symbol-defect flex-noshrink"></span><span class="font-weight-semibold selectable-text">3006</span><a class="title" href="/acme-org/Demo.Project/_workitems/edit/3006"><span class="title-text">Alice tagged three</span></a></div></span>
+        <div class="work-item-state-name"><span>Active</span></div>
+        <div class="identity-display-name"><span>Alice Dev</span></div>
+        <div class="flex-row flex-wrap fields">
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis first-field"><div class="label text-ellipsis">Aging</div><div class="editable-field value not-editing"><div class="text-ellipsis">5</div></div></div>
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis"><div class="label text-ellipsis">Tags</div><div class="editable-field value not-editing"><div class="text-ellipsis"> #spaapi</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Column: Closed (NOT a WIP column) -->
+  <div class="flex-column flex-grow kanban-board-column padding-bottom-8" data-column="col-closed-03" data-done="true">
+    <div data-itemid="3007" aria-label="Issue, Dave done, Column Closed" role="group" aria-roledescription="Card" class="wit-card depth-8 flex-row boards-card body-s" tabindex="0">
+      <div class="card-content flex-column flex-grow">
+        <span class="flex-row full-width"><div class="rhythm-horizontal-8"><span aria-hidden="true" class="work-item-type-icon normal bowtie-icon bowtie-symbol-defect flex-noshrink"></span><span class="font-weight-semibold selectable-text">3007</span><a class="title" href="/acme-org/Demo.Project/_workitems/edit/3007"><span class="title-text">Dave done</span></a></div></span>
+        <div class="work-item-state-name"><span>Closed</span></div>
+        <div class="identity-display-name"><span>Dave Dev</span></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -35,13 +35,17 @@ const I18N = {
   },
 };
 
-function getLanguageCode(value) {
-  return value === 'pt' ? 'pt' : 'en';
-}
-
-function formatMessage(template, tokens = {}) {
-  return template.replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (_, token) => String(tokens[token] ?? ''));
-}
+// Pure helpers (i18n, text normalization, WIP math, alarm severity) are provided
+// by the WIPBoardCore module (src/core/wip-logic.js), loaded before this file by
+// the manifest content_scripts order. Binding them locally keeps call sites short
+// and removes the previously duplicated inline implementations (roadmap T0.3).
+const Core = (typeof WIPBoardCore !== 'undefined' && WIPBoardCore) || {};
+const getLanguageCode = Core.getLanguageCode;
+const formatMessage = Core.formatMessage;
+const normalizeText = Core.normalizeText;
+const normalizeColumnName = Core.normalizeColumnName;
+const isConfiguredWipColumn = Core.isConfiguredWipColumn;
+const getCardSeverityClass = Core.getCardSeverityClass;
 
 function getLanguagePack(languageCode) {
   const lang = I18N[getLanguageCode(languageCode)] || I18N.en;
@@ -191,54 +195,10 @@ if (!document.getElementById('wip-alarm-style')) {
 }
 
 
-function normalizeText(value) {
-  return (value || '').toString().trim().toLowerCase();
-}
-
-function normalizeColumnName(value) {
-  // Normalize column names to handle Azure rendering variations.
-  return normalizeText(value)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ')
-    .replace(/[|]/g, ' ')
-    .trim();
-}
-
-function getHeaderColumnDisplayName(header) {
-  // Read a reliable column name from common header locations.
-  const ariaLabel = header?.getAttribute('aria-label') || '';
-  const editableLabel = header?.querySelector('.click-edit-field')?.textContent || '';
-
-  if (editableLabel.trim()) return editableLabel.trim();
-  if (ariaLabel.trim()) return ariaLabel.trim();
-
-  return (header?.textContent || '').trim();
-}
-
-function isConfiguredWipColumn(columnName, configuredColumns) {
-  const normalizedColumn = normalizeColumnName(columnName);
-  if (!normalizedColumn) return false;
-
-  return configuredColumns.some(configured => {
-    const normalizedConfigured = normalizeColumnName(configured);
-    if (!normalizedConfigured) return false;
-
-    // Accept exact and inclusive matching to tolerate Azure suffixes.
-    return normalizedConfigured === normalizedColumn
-      || normalizedConfigured.includes(normalizedColumn)
-      || normalizedColumn.includes(normalizedConfigured);
-  });
-}
-
-function isCardVisible(card) {
-  // Azure can keep filtered cards in DOM; count only cards currently visible.
-  if (!card) return false;
-  const style = window.getComputedStyle(card);
-  if (style.display === 'none' || style.visibility === 'hidden') return false;
-  if (card.closest('[aria-hidden="true"], .is-hidden, .hidden')) return false;
-  return card.getClientRects().length > 0;
-}
+// Column name resolution and card visibility are now owned by WIPBoardReader
+// (src/data/board-dom-reader.js). The runtime consumes the normalized model, so
+// the former inline getHeaderColumnDisplayName() and isCardVisible() helpers were
+// removed as proven-equivalent duplicates (roadmap T0.4).
 
 function getCardAssignees(card) {
   return Array.from(card.querySelectorAll('.identity-display-name span'))
@@ -404,13 +364,6 @@ function applyWipIndicatorState(indicator, current, limit, isDetailsActive, brea
   }
 }
 
-function getCardSeverityClass(agingValue, alarmConfig) {
-  if (agingValue !== null && agingValue >= alarmConfig.agingCriticalDays) return 'card-alerta-critico';
-  if (agingValue !== null && agingValue >= alarmConfig.agingHighDays) return 'card-alerta-alto';
-  if (agingValue !== null && agingValue >= alarmConfig.agingWarningDays) return 'card-alerta-medio';
-  return 'card-alerta-baixo';
-}
-
 function analyzeCard(card, blockTag) {
   // Read card fields used by visual alarms.
   let agingValue = null;
@@ -432,14 +385,8 @@ function analyzeCard(card, blockTag) {
     }
 
     if (label === 'target date' && val) {
-      const parts = val.split('/');
-      if (parts.length === 3) {
-        const targetDate = new Date(parts[2], parts[1] - 1, parts[0]);
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        const diffTime = targetDate - today;
-        targetDateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      }
+      // Delegate dd/mm/yyyy parsing + day math to the pure core helper.
+      targetDateDays = Core.targetDateDaysRemaining(val);
     }
 
     if (label === 'tags' && val.toLowerCase().includes(blockTag)) {
@@ -520,6 +467,52 @@ function applyCardAlarm(card, isHighlightActive, alarmConfig, blockTag, i18n) {
 }
 
 // ============================================================================
+// 1b. BOARD MODEL BRIDGE (WIPBoardReader integration)
+// ============================================================================
+// The runtime consumes the normalized board model from the WIPBoardReader module
+// (src/data/board-dom-reader.js, loaded before this file by the manifest order).
+// These thin bridges keep the model as the source of truth for column structure,
+// visibility and identity, while per-card rule analysis still runs on the live
+// DOM node (needed to mutate alarm classes and to use the serialized-HTML tag
+// fallback that the reader intentionally does not cover).
+
+const Reader = (typeof WIPBoardReader !== 'undefined' && WIPBoardReader) || null;
+
+function readBoardModel() {
+  // Read the live document into the normalized model. The reader's default
+  // visibility predicate mirrors the legacy isCardVisible() behavior.
+  if (Reader && typeof Reader.readBoard === 'function') {
+    return Reader.readBoard(document);
+  }
+  // Defensive fallback (should not happen under the manifest load order): empty.
+  return { columns: [], items: [], counts: { total: 0, visible: 0, hidden: 0 } };
+}
+
+function buildLiveCardIndex() {
+  // Group live card nodes by stable work-item id, in document order, so duplicate
+  // renders (e.g. swimlanes) each resolve to their own distinct DOM node.
+  const byId = new Map();
+  document.querySelectorAll('.kanban-board-column .wit-card').forEach(card => {
+    const id = card.getAttribute('data-itemid');
+    if (!id) return;
+    if (!byId.has(id)) byId.set(id, []);
+    byId.get(id).push(card);
+  });
+  return byId;
+}
+
+function resolveLiveCard(liveCardsById, item) {
+  // Consume one live node per model item id, preserving duplicate handling.
+  const key = item.rawId != null && typeof item.rawId === 'string'
+    ? item.rawId
+    : (item.id != null ? String(item.id) : null);
+  if (key == null) return null;
+  const queue = liveCardsById.get(key);
+  if (!queue || queue.length === 0) return null;
+  return queue.shift();
+}
+
+// ============================================================================
 // 2. MAIN WIP CALCULATION AND ANALYSIS
 // ============================================================================
 // Main runtime flow: scan board, count cards, apply rules, render indicator.
@@ -549,14 +542,12 @@ function updateWipBoard() {
     'language',
   ], (data) => {
     
-    // Calculate limit based on selected mode.
-    let limit = null;
-    
-    if (data.useEquipe === true && data.equipeSize) {
-      limit = (2 * data.equipeSize) + 1;
-    } else if (data.useEquipe === false && data.directWip) {
-      limit = data.directWip;
-    }
+    // Calculate limit based on selected mode (pure core helper, same two modes).
+    const limit = Core.computeWipLimit({
+      useEquipe: data.useEquipe,
+      equipeSize: data.equipeSize,
+      directWip: data.directWip,
+    });
 
     const {
       isConfigured,
@@ -587,15 +578,6 @@ function updateWipBoard() {
       return;
     }
     
-    let totalCards = 0; // Soma bruta baseada nos cards visíveis
-    const specialStatsByPerson = new Map(); // Per-person counters used by the special WIP reduction rule.
-    const allWipCards = [];
-    let columnsBreakdown = []; // Array que vai guardar o subtotal de CADA coluna para mostrarmos no painel
-
-    // Locate board column headers and bodies from the current page.
-    const headers = document.querySelectorAll('.kanban-board-column-header');
-    const columnBodies = document.querySelectorAll('.kanban-board-column');
-
     // Hide indicator when current URL does not match configured board/route filters.
     if (!isAllowedBoard(currentBoardName, boardPathFilter)) {
       const indicator = document.getElementById('custom-wip-indicator');
@@ -603,27 +585,44 @@ function updateWipBoard() {
       return;
     }
 
-    // Build column index map for columns included in WIP.
-    const wipColumnsMeta = [];
-    headers.forEach((header, index) => {
-      const displayName = getHeaderColumnDisplayName(header);
-      if (isConfiguredWipColumn(displayName, wipColumns)) {
-        wipColumnsMeta.push({ index, displayName });
-      }
-    });
+    let totalCards = 0; // Raw sum based on visible cards in WIP columns.
+    const specialStatsByPerson = new Map(); // Per-person counters used by the special WIP reduction rule.
+    const allWipCards = [];
+    let columnsBreakdown = []; // Per-column subtotal shown in the details panel.
 
-    // Analyze cards only in configured WIP columns.
-    wipColumnsMeta.forEach(({ index, displayName }) => {
-      const columnContainer = columnBodies[index];
-      const cardsInColumn = columnContainer
-        ? Array.from(columnContainer.querySelectorAll('.wit-card')).filter(isCardVisible)
-        : [];
+    // Read a normalized, presentation-free model of the board once (data layer).
+    // The reader centralizes selector handling and visibility detection, so the
+    // runtime no longer pairs header/body nodes by fragile ordinal index.
+    const boardModel = readBoardModel();
 
-      const colTotal = cardsInColumn.length;
+    // Map each stable work-item id to its live DOM card node, so per-card rule
+    // analysis and alarm styling keep operating on the real element while the
+    // counting/column structure comes from the normalized model.
+    const liveCardsById = buildLiveCardIndex();
+
+    // Keep only configured WIP columns, preserving the model's column order.
+    const wipColumnsModel = boardModel.columns.filter(column =>
+      isConfiguredWipColumn(column.name, wipColumns)
+    );
+
+    wipColumnsModel.forEach(column => {
+      // Visible items of this column, matched by stable column id + name. All
+      // occurrences are kept (including swimlane duplicates), mirroring the legacy
+      // per-DOM-node count exactly.
+      const columnItems = boardModel.items.filter(item =>
+        item.isVisible &&
+        item.column === column.name &&
+        item.columnId === column.id
+      );
+
+      const colTotal = columnItems.length;
       totalCards += colTotal;
-      columnsBreakdown.push({ name: displayName, count: colTotal });
+      columnsBreakdown.push({ name: column.name, count: colTotal });
 
-      cardsInColumn.forEach(card => {
+      columnItems.forEach(item => {
+        // Resolve the live DOM node for rule analysis and alarm styling.
+        const card = resolveLiveCard(liveCardsById, item);
+        if (!card) return;
         allWipCards.push(card);
 
         if (!isSpecialRuleActive) return;
@@ -651,18 +650,11 @@ function updateWipBoard() {
     });
     
     
-    // Final WIP business rule: per special person, all matching special-tag cards count as 1 block.
+    // Final WIP business rule: per special person, all matching special-tag cards
+    // count as 1 block. Delegated to the pure core helper (identical math).
     let finalWip = totalCards;
     if (isSpecialRuleActive && specialStatsByPerson.size > 0) {
-      let specialOriginalTotal = 0;
-      let specialAdjustedTotal = 0;
-
-      specialStatsByPerson.forEach(({ tagged, untagged }) => {
-        specialOriginalTotal += tagged + untagged;
-        specialAdjustedTotal += untagged + (tagged > 0 ? 1 : 0);
-      });
-
-      finalWip = totalCards - specialOriginalTotal + specialAdjustedTotal;
+      finalWip = Core.applySpecialPersonReduction(totalCards, specialStatsByPerson.values());
     }
 
     // Render final indicator state.

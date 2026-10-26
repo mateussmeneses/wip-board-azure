@@ -14,7 +14,11 @@
         "https://dev.azure.com/*/_boards/board/*",
         "https://*.visualstudio.com/*/_boards/board/*"
       ],
-      "js": ["content.js"],
+      "js": [
+        "src/core/wip-logic.js",
+        "src/data/board-dom-reader.js",
+        "content.js"
+      ],
       "run_at": "document_end"
     }
   ],

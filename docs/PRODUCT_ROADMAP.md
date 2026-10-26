@@ -26,18 +26,32 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   (`total - specialOriginal + specialAdjusted`).
 - Tests: table-driven unit tests; must pass against unmodified logic.
 
-### T0.3 — Extract pure helpers to `src/core` (behavior-preserving)
+### T0.3 — Extract pure helpers to `src/core` (behavior-preserving) — DONE
 - Scope: move i18n packs + pure string/number helpers into ordered content-script
   files under one namespace; `content.js` keeps DOM + orchestration.
 - Acceptance: extension still loads with no console errors; manual checklist in
   `AGENTS.md` passes; T0.2 tests still green.
 - Tests: reuse T0.2 against the extracted modules.
+- Status: `content.js` now consumes `WIPBoardCore` (src/core/wip-logic.js) for i18n,
+  text normalization, WIP limit math, special-person reduction, target-date math and
+  alarm severity. The inline duplicates (`getLanguageCode`, `formatMessage`,
+  `normalizeText`, `normalizeColumnName`, `isConfiguredWipColumn`,
+  `getCardSeverityClass`, inline limit/reduction/target-date math) were removed.
+  `manifest.json` loads the module before `content.js`.
 
-### T0.4 — Normalized work-item model + `board-dom-reader`
+### T0.4 — Normalized work-item model + `board-dom-reader` — DONE
 - Scope: a reader that returns `{ id, type, state, column, assignee, aging, targetDate, tags }[]`
   from the board DOM; WIP calc consumes the model instead of scraping inline.
 - Acceptance: WIP numbers identical to today on the sample board HTML.
-- Tests: parse the committed sample HTML fixture, assert 73 cards and known ids.
+- Tests: parse the committed sample HTML fixture, assert ids and counts.
+- Status: `content.js` now consumes `WIPBoardReader` (src/data/board-dom-reader.js)
+  for column structure, order, stable column id, card→column mapping and visibility.
+  The fragile header/body index pairing and the inline `getHeaderColumnDisplayName` /
+  `isCardVisible` helpers were removed. Per-card rule analysis (special tag with the
+  serialized-HTML fallback, block tag, aging, target date) still runs on the live DOM
+  node, resolved from the model by stable `data-itemid`. Equivalence to the
+  pre-integration scan is proven for every WIP scenario by
+  `test/wip-runtime-integration.test.js`.
 
 ---
 
