@@ -1,0 +1,143 @@
+<!--
+  Sanitized Azure DevOps board fixture (full board).
+
+  This fixture reproduces the real board DOM structure (observed in the raw
+  capture) but ALL sensitive data has been replaced with fake values:
+  organization, project, work item titles and assignee names are synthetic.
+  No real Azure DevOps data from the capture is stored here.
+
+  Structure mirrored from the real DOM:
+    .kanban-board
+      > .kanban-board-column-header-container  (header spans in order)
+      > .kanban-board-column[data-column][data-done]  (one body per column)
+
+  Columns cover the full delivery flow referenced by the task, including
+  Approved, HO and Closed, not only WIP-configured columns.
+-->
+<div class="flex-column flex-grow kanban-board padding-horizontal-16 body-s">
+  <div class="flex-row kanban-board-column-header-container margin-bottom-4 font-size-ml">
+    <span class="flex-row flex-grow kanban-board-column-header" aria-label="Approved">
+      <span class="flex-row flex-grow justify-space-between"><div class="flex-row"><span class="click-edit-field disabled">Approved</span></div><span><span class="board-column-item-count font-size-l">2</span></span></span>
+    </span>
+    <span class="flex-row flex-grow kanban-board-column-header" aria-label="Desenvolvimento">
+      <span class="flex-row flex-grow justify-space-between"><div class="flex-row"><span class="click-edit-field disabled">Desenvolvimento</span></div><span><span class="board-column-item-count font-size-l">2</span></span></span>
+    </span>
+    <span class="flex-row flex-grow kanban-board-column-header" aria-label="Code Review">
+      <span class="flex-row flex-grow justify-space-between"><div class="flex-row"><span class="click-edit-field disabled">Code Review</span></div><span><span class="board-column-item-count font-size-l">1</span></span></span>
+    </span>
+    <span class="flex-row flex-grow kanban-board-column-header" aria-label="HO">
+      <span class="flex-row flex-grow justify-space-between"><div class="flex-row"><span class="click-edit-field disabled">HO</span></div><span><span class="board-column-item-count font-size-l">1</span></span></span>
+    </span>
+    <span class="flex-row flex-grow kanban-board-column-header" aria-label="Closed">
+      <span class="flex-row flex-grow justify-space-between"><div class="flex-row"><span class="click-edit-field disabled">Closed</span></div><span><span class="board-column-item-count font-size-l">1</span></span></span>
+    </span>
+  </div>
+
+  <!-- Column: Approved (data-done=false) -->
+  <div class="flex-column flex-grow kanban-board-column padding-bottom-8" data-column="col-approved-0001" data-done="false">
+    <div data-itemid="1001" aria-label="Issue, Fix sample item one, Column Approved" role="group" aria-roledescription="Card" class="wit-card depth-8 flex-row boards-card body-s" tabindex="0">
+      <div class="card-content flex-column flex-grow">
+        <span class="flex-row full-width"><div class="rhythm-horizontal-8"><span aria-label="Issue" class="fluent-icons-enabled" role="img"><span aria-hidden="true" class="work-item-type-icon normal bowtie-icon bowtie-symbol-defect flex-noshrink"></span></span><span class="font-weight-semibold selectable-text">1001</span><a class="title bolt-link no-underline-link" href="/contoso-org/Sample.Project/_workitems/edit/1001"><span class="title-text word-break">Fix sample item one</span></a></div></span>
+        <div class="flex-column scroll-hidden"><div class="flex-column">
+          <div class="flex-row flex-grow work-item-state-container text-ellipsis"><div class="editable-field card-work-item-state not-editing"><div class="wit-ui-control work-item-state"><div class="work-item-state-name"><span>Approved</span></div></div></div></div>
+          <div class="flex-row"><div class="editable-field editable-card-identity-picker full-width padding-right-4 not-editing is-identity"><div class="wit-ui-control identity-view text-ellipsis card-assigned-to"><div class="identity-display-name"><span>Dev One</span></div></div></div></div>
+        </div>
+        <div class="flex-row flex-wrap fields">
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis first-field"><div class="label text-ellipsis">Aging</div><div class="editable-field value not-editing"><div class="text-ellipsis">3</div></div></div>
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis"><div class="label text-ellipsis">Iteration Path</div><div class="editable-field value not-editing"><div class="text-ellipsis reverse-ellipsis">Sample.Project\Sprint 1</div></div></div>
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis"><div class="label text-ellipsis">Target Date</div><div class="editable-field value not-editing"><div class="text-ellipsis">31/12/2026</div></div></div>
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis"><div class="label text-ellipsis">Tags</div><div class="editable-field value not-editing"><div class="text-ellipsis">#blck; frontend</div></div></div>
+        </div></div>
+      </div>
+    </div>
+
+    <div data-itemid="1002" aria-label="Feature, Build sample feature, Column Approved" role="group" aria-roledescription="Card" class="wit-card depth-8 flex-row boards-card body-s" tabindex="0">
+      <div class="card-content flex-column flex-grow">
+        <span class="flex-row full-width"><div class="rhythm-horizontal-8"><span aria-label="Feature" class="fluent-icons-enabled" role="img"><span aria-hidden="true" class="work-item-type-icon normal bowtie-icon bowtie-symbol-trophy flex-noshrink"></span></span><span class="font-weight-semibold selectable-text">1002</span><a class="title bolt-link no-underline-link" href="/contoso-org/Sample.Project/_workitems/edit/1002"><span class="title-text word-break">Build sample feature</span></a></div></span>
+        <div class="flex-column scroll-hidden"><div class="flex-column">
+          <div class="flex-row flex-grow work-item-state-container text-ellipsis"><div class="work-item-state-name"><span>Approved</span></div></div>
+          <div class="flex-row"><div class="identity-display-name"><span>Unassigned</span></div></div>
+        </div>
+        <div class="flex-row flex-wrap fields">
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis first-field"><div class="label text-ellipsis">Aging</div><div class="editable-field value not-editing"><div class="text-ellipsis">0</div></div></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Column: Desenvolvimento (data-done=false) -->
+  <div class="flex-column flex-grow kanban-board-column padding-bottom-8" data-column="col-dev-0002" data-done="false">
+    <div data-itemid="1003" aria-label="Issue, In progress item, Column Desenvolvimento" role="group" aria-roledescription="Card" class="wit-card depth-8 flex-row boards-card body-s" tabindex="0">
+      <div class="card-content flex-column flex-grow">
+        <span class="flex-row full-width"><div class="rhythm-horizontal-8"><span aria-label="Issue" class="fluent-icons-enabled" role="img"><span aria-hidden="true" class="work-item-type-icon normal bowtie-icon bowtie-symbol-defect flex-noshrink"></span></span><span class="font-weight-semibold selectable-text">1003</span><a class="title bolt-link no-underline-link" href="/contoso-org/Sample.Project/_workitems/edit/1003"><span class="title-text word-break">In progress item</span></a></div></span>
+        <div class="flex-column scroll-hidden"><div class="flex-column">
+          <div class="flex-row flex-grow work-item-state-container text-ellipsis"><div class="work-item-state-name"><span>Active</span></div></div>
+          <div class="flex-row"><div class="identity-display-name"><span>Dev Two</span></div></div>
+        </div>
+        <div class="flex-row flex-wrap fields">
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis first-field"><div class="label text-ellipsis">Aging</div><div class="editable-field value not-editing"><div class="text-ellipsis">12</div></div></div>
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis"><div class="label text-ellipsis">Target Date</div><div class="editable-field value not-editing"><div class="text-ellipsis"></div></div></div>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- Hidden card: filtered out by Azure, kept in DOM. Marked via aria-hidden on an ancestor wrapper. -->
+    <div class="is-hidden" aria-hidden="true">
+      <div data-itemid="1004" aria-label="Issue, Hidden filtered item, Column Desenvolvimento" role="group" aria-roledescription="Card" class="wit-card depth-8 flex-row boards-card body-s" tabindex="0">
+        <div class="card-content flex-column flex-grow">
+          <span class="flex-row full-width"><div class="rhythm-horizontal-8"><span aria-label="Issue" class="fluent-icons-enabled" role="img"><span aria-hidden="true" class="work-item-type-icon normal bowtie-icon bowtie-symbol-defect flex-noshrink"></span></span><span class="font-weight-semibold selectable-text">1004</span><a class="title bolt-link no-underline-link" href="/contoso-org/Sample.Project/_workitems/edit/1004"><span class="title-text word-break">Hidden filtered item</span></a></div></span>
+          <div class="flex-column scroll-hidden"><div class="flex-column">
+            <div class="flex-row flex-grow work-item-state-container text-ellipsis"><div class="work-item-state-name"><span>Active</span></div></div>
+            <div class="flex-row"><div class="identity-display-name"><span>Dev Two</span></div></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Column: Code Review (data-done=false) -->
+  <div class="flex-column flex-grow kanban-board-column padding-bottom-8" data-column="col-cr-0003" data-done="false">
+    <div data-itemid="1005" aria-label="Feature, Review item, Column Code Review" role="group" aria-roledescription="Card" class="wit-card depth-8 flex-row boards-card body-s" tabindex="0">
+      <div class="card-content flex-column flex-grow">
+        <span class="flex-row full-width"><div class="rhythm-horizontal-8"><span aria-label="Feature" class="fluent-icons-enabled" role="img"><span aria-hidden="true" class="work-item-type-icon normal bowtie-icon bowtie-symbol-trophy flex-noshrink"></span></span><span class="font-weight-semibold selectable-text">1005</span><a class="title bolt-link no-underline-link" href="/contoso-org/Sample.Project/_workitems/edit/1005"><span class="title-text word-break">Review item</span></a></div></span>
+        <div class="flex-column scroll-hidden"><div class="flex-column">
+          <div class="flex-row flex-grow work-item-state-container text-ellipsis"><div class="work-item-state-name"><span>Active</span></div></div>
+          <div class="flex-row"><div class="identity-display-name"><span>Dev One</span></div></div>
+        </div>
+        <div class="flex-row flex-wrap fields">
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis first-field"><div class="label text-ellipsis">Aging</div><div class="editable-field value not-editing"><div class="text-ellipsis">21</div></div></div>
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis"><div class="label text-ellipsis">Tags</div><div class="editable-field value not-editing"><div class="text-ellipsis">#spa; backend</div></div></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Column: HO (data-done=false) -->
+  <div class="flex-column flex-grow kanban-board-column padding-bottom-8" data-column="col-ho-0004" data-done="false">
+    <div data-itemid="1006" aria-label="Feature, Handover item, Column HO" role="group" aria-roledescription="Card" class="wit-card depth-8 flex-row boards-card body-s" tabindex="0">
+      <div class="card-content flex-column flex-grow">
+        <span class="flex-row full-width"><div class="rhythm-horizontal-8"><span aria-label="Feature" class="fluent-icons-enabled" role="img"><span aria-hidden="true" class="work-item-type-icon normal bowtie-icon bowtie-symbol-trophy flex-noshrink"></span></span><span class="font-weight-semibold selectable-text">1006</span><a class="title bolt-link no-underline-link" href="/contoso-org/Sample.Project/_workitems/edit/1006"><span class="title-text word-break">Handover item</span></a></div></span>
+        <div class="flex-column scroll-hidden"><div class="flex-column">
+          <div class="flex-row flex-grow work-item-state-container text-ellipsis"><div class="work-item-state-name"><span>Active</span></div></div>
+          <div class="flex-row"><div class="identity-display-name"><span>Dev Three</span></div></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Column: Closed (data-done=true) -->
+  <div class="flex-column flex-grow kanban-board-column padding-bottom-8" data-column="col-closed-0005" data-done="true">
+    <div data-itemid="1007" aria-label="Issue, Completed item, Column Closed" role="group" aria-roledescription="Card" class="wit-card depth-8 flex-row boards-card body-s" tabindex="0">
+      <div class="card-content flex-column flex-grow">
+        <span class="flex-row full-width"><div class="rhythm-horizontal-8"><span aria-label="Issue" class="fluent-icons-enabled" role="img"><span aria-hidden="true" class="work-item-type-icon normal bowtie-icon bowtie-symbol-defect flex-noshrink"></span></span><span class="font-weight-semibold selectable-text">1007</span><a class="title bolt-link no-underline-link" href="/contoso-org/Sample.Project/_workitems/edit/1007"><span class="title-text word-break">Completed item</span></a></div></span>
+        <div class="flex-column scroll-hidden"><div class="flex-column">
+          <div class="flex-row flex-grow work-item-state-container text-ellipsis"><div class="work-item-state-name"><span>Closed</span></div></div>
+          <div class="flex-row"><div class="identity-display-name"><span>Dev One</span></div></div>
+        </div>
+        <div class="flex-row flex-wrap fields">
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis first-field"><div class="label text-ellipsis">Aging</div><div class="editable-field value not-editing"><div class="text-ellipsis">0</div></div></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</div>

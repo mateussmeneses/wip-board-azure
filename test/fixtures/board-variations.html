@@ -1,0 +1,67 @@
+<!--
+  Sanitized Azure DevOps board fixture (DOM variations).
+
+  Covers layout/field variations the reader must tolerate without fragile
+  index assumptions. No real Azure data stored.
+
+  Variations exercised:
+    - No `.kanban-board` wrapper element (root passed directly).
+    - Header column name only in aria-label (no `.click-edit-field`).
+    - Duplicate work item id rendered in two columns (swimlane-style).
+    - Card with NO optional field containers at all (fields UNAVAILABLE).
+    - Card with NO work-item-type icon (type UNAVAILABLE).
+    - Card with a present-but-empty Target Date field.
+    - Card with no assignee element at all (assignee UNAVAILABLE).
+-->
+<div class="board-wrapper-no-kanban-class">
+  <div class="flex-row kanban-board-column-header-container margin-bottom-4">
+    <!-- aria-label only, no editable label span -->
+    <span class="flex-row flex-grow kanban-board-column-header" aria-label="To Do"></span>
+    <span class="flex-row flex-grow kanban-board-column-header" aria-label="Doing"></span>
+  </div>
+
+  <!-- Column: To Do -->
+  <div class="flex-column flex-grow kanban-board-column padding-bottom-8" data-column="var-todo-01" data-done="false">
+    <!-- Duplicate id 2001 (appears again in Doing) -->
+    <div data-itemid="2001" class="wit-card depth-8 flex-row boards-card body-s" aria-label="Issue, Dup item, Column To Do">
+      <div class="card-content flex-column flex-grow">
+        <span class="flex-row full-width"><div class="rhythm-horizontal-8"><span aria-hidden="true" class="work-item-type-icon normal bowtie-icon bowtie-symbol-defect flex-noshrink"></span><a class="title" href="/acme-org/Demo.Project/_workitems/edit/2001"><span class="title-text">Dup item</span></a></div></span>
+        <div class="work-item-state-name"><span>New</span></div>
+        <div class="identity-display-name"><span>Person A</span></div>
+      </div>
+    </div>
+
+    <!-- Card with NO optional fields and NO type icon and NO assignee element -->
+    <div data-itemid="2002" class="wit-card depth-8 flex-row boards-card body-s" aria-label="Column To Do">
+      <div class="card-content flex-column flex-grow">
+        <a class="title" href="/acme-org/Demo.Project/_workitems/edit/2002"><span class="title-text">Minimal card</span></a>
+        <div class="work-item-state-name"><span>New</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Column: Doing -->
+  <div class="flex-column flex-grow kanban-board-column padding-bottom-8" data-column="var-doing-02" data-done="false">
+    <!-- Same id 2001 duplicated here -->
+    <div data-itemid="2001" class="wit-card depth-8 flex-row boards-card body-s" aria-label="Issue, Dup item, Column Doing">
+      <div class="card-content flex-column flex-grow">
+        <span class="flex-row full-width"><div class="rhythm-horizontal-8"><span aria-hidden="true" class="work-item-type-icon normal bowtie-icon bowtie-symbol-defect flex-noshrink"></span><a class="title" href="/acme-org/Demo.Project/_workitems/edit/2001"><span class="title-text">Dup item</span></a></div></span>
+        <div class="work-item-state-name"><span>Active</span></div>
+        <div class="identity-display-name"><span>Person A</span></div>
+      </div>
+    </div>
+
+    <!-- Present-but-empty Target Date; aging present empty -->
+    <div data-itemid="2003" class="wit-card depth-8 flex-row boards-card body-s" aria-label="Feature, Empty fields, Column Doing">
+      <div class="card-content flex-column flex-grow">
+        <span class="flex-row full-width"><div class="rhythm-horizontal-8"><span aria-hidden="true" class="work-item-type-icon normal bowtie-icon bowtie-symbol-trophy flex-noshrink"></span><a class="title" href="/acme-org/Demo.Project/_workitems/edit/2003"><span class="title-text">Empty fields</span></a></div></span>
+        <div class="work-item-state-name"><span>Active</span></div>
+        <div class="identity-display-name"><span>Unassigned</span></div>
+        <div class="flex-row flex-wrap fields">
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis first-field"><div class="label text-ellipsis">Aging</div><div class="editable-field value not-editing"><div class="text-ellipsis"></div></div></div>
+          <div class="field-container flex-row flex-grow flex-center text-ellipsis"><div class="label text-ellipsis">Target Date</div><div class="editable-field value not-editing"><div class="text-ellipsis"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

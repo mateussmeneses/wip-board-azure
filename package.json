@@ -1,0 +1,9 @@
+{
+  "name": "wip-board-azure",
+  "version": "1.3.0",
+  "private": true,
+  "description": "Tooling for the Azure DevOps Board WIP Monitor Chrome extension. The extension itself ships without dependencies or a build step; this manifest only wires the test runner.",
+  "scripts": {
+    "test": "node --test"
+  }
+}
