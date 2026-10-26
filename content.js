@@ -39,8 +39,36 @@ const I18N = {
 // by the WIPBoardCore module (src/core/wip-logic.js), loaded before this file by
 // the manifest content_scripts order. Binding them locally keeps call sites short
 // and removes the previously duplicated inline implementations (roadmap T0.3).
+//
+// Module resilience (roadmap T0.5): WIPBoardCore and WIPBoardReader are REQUIRED
+// dependencies. If the manifest load order is broken, a script fails to parse, or
+// the page strips the namespace, the runtime must NOT silently degrade into
+// "board empty / WIP = 0" (which would hide a real board behind a false zero).
+// Detect the missing module explicitly and surface a diagnostic instead.
+const MODULE_LOAD_ERROR_PREFIX = '[WIP-Board] Required module failed to load';
+
+function assertRequiredModules() {
+  // Returns the resolved modules, or an Error describing exactly what is missing
+  // so the failure is diagnosable from the console rather than appearing as a
+  // mysteriously empty board.
+  const missing = [];
+  if (typeof WIPBoardCore === 'undefined' || !WIPBoardCore) {
+    missing.push('WIPBoardCore (src/core/wip-logic.js)');
+  }
+  if (typeof WIPBoardReader === 'undefined' || !WIPBoardReader) {
+    missing.push('WIPBoardReader (src/data/board-dom-reader.js)');
+  }
+  if (missing.length > 0) {
+    return new Error(
+      `${MODULE_LOAD_ERROR_PREFIX}: ${missing.join(', ')}. ` +
+        'Check manifest.json content_scripts load order.'
+    );
+  }
+  return null;
+}
+
 const Core = (typeof WIPBoardCore !== 'undefined' && WIPBoardCore) || {};
-const getLanguageCode = Core.getLanguageCode;
+const getLanguageCode = Core.getLanguageCode || ((value) => (value === 'pt' ? 'pt' : 'en'));
 const formatMessage = Core.formatMessage;
 const normalizeText = Core.normalizeText;
 const normalizeColumnName = Core.normalizeColumnName;
@@ -357,10 +385,12 @@ function applyWipIndicatorState(indicator, current, limit, isDetailsActive, brea
   }
 
   const wasOpen = document.getElementById('wip-details-panel')?.style.display === 'block';
-  indicator.innerHTML = `<div>${titleHTML}</div>${panelHTML}`;
+  // Diff-before-write (R1): only rewrite the indicator when its markup changed.
+  setIndicatorHtml(indicator, `<div>${titleHTML}</div>${panelHTML}`);
 
   if (wasOpen && isDetailsActive) {
-    document.getElementById('wip-details-panel').style.display = 'block';
+    const panel = document.getElementById('wip-details-panel');
+    if (panel) panel.style.display = 'block';
   }
 }
 
@@ -481,11 +511,27 @@ const Reader = (typeof WIPBoardReader !== 'undefined' && WIPBoardReader) || null
 function readBoardModel() {
   // Read the live document into the normalized model. The reader's default
   // visibility predicate mirrors the legacy isCardVisible() behavior.
-  if (Reader && typeof Reader.readBoard === 'function') {
-    return Reader.readBoard(document);
+  //
+  // Resilience (roadmap T0.5): do NOT swallow a missing/broken reader into an
+  // empty model. An empty model is indistinguishable from a genuinely empty
+  // board and would silently report WIP = 0 for a populated board. The caller
+  // guards against the module being absent; here we only guard against the
+  // reader THROWING at read time (e.g. unexpected DOM), re-raising with context
+  // so the failure is diagnosable instead of masked as "board empty".
+  if (!Reader || typeof Reader.readBoard !== 'function') {
+    throw new Error(
+      `${MODULE_LOAD_ERROR_PREFIX}: WIPBoardReader.readBoard is unavailable.`
+    );
   }
-  // Defensive fallback (should not happen under the manifest load order): empty.
-  return { columns: [], items: [], counts: { total: 0, visible: 0, hidden: 0 } };
+  try {
+    return Reader.readBoard(document);
+  } catch (err) {
+    const wrapped = new Error(
+      `[WIP-Board] WIPBoardReader.readBoard threw while reading the board: ${err && err.message ? err.message : err}`
+    );
+    wrapped.cause = err;
+    throw wrapped;
+  }
 }
 
 function buildLiveCardIndex() {
@@ -513,6 +559,53 @@ function resolveLiveCard(liveCardsById, item) {
 }
 
 // ============================================================================
+// 1c. OBSERVER STABILITY (R1 fix)
+// ============================================================================
+// Root cause (docs/AUDIT_R1_MUTATION_OBSERVER.md): updateWipBoard() rewrites the
+// floating indicator's innerHTML unconditionally on every run. The indicator
+// lives inside document.body, which the MutationObserver watches with
+// { childList: true, subtree: true }, so each rewrite emits a childList record,
+// re-arms the 300 ms debounce and seeds the next run — a persistent ~3 Hz
+// background recompute even on an idle board.
+//
+// Fix — two complementary, minimal guards; WIP semantics are untouched:
+//   1. withObserverPaused(): disconnect the observer around the DOM write phase
+//      and reconnect on the next microtask, so the extension's own writes are
+//      never observed. Real external board changes still trigger recomputation.
+//   2. setIndicatorHtml(): diff-before-write guard so an unchanged indicator is
+//      not rewritten at all. This removes the no-op churn even in the brief
+//      windows where the observer is connected (initial run, error indicator).
+
+function withObserverPaused(write) {
+  // `observer` is declared in section 4; this function only runs at runtime,
+  // well after module evaluation, so the reference is always resolved.
+  if (typeof observer === 'undefined' || !observer) {
+    write();
+    return;
+  }
+  observer.disconnect();
+  try {
+    write();
+  } finally {
+    // Reconnect on the next microtask so the just-written nodes are not
+    // re-observed as "new" when observation resumes.
+    Promise.resolve().then(() => {
+      if (document.body) {
+        observer.observe(document.body, { childList: true, subtree: true });
+      }
+    });
+  }
+}
+
+function setIndicatorHtml(indicator, html) {
+  // Diff-before-write: skip the DOM mutation when the rendered markup is
+  // identical. Returns true when a write actually happened.
+  if (indicator.innerHTML === html) return false;
+  indicator.innerHTML = html;
+  return true;
+}
+
+// ============================================================================
 // 2. MAIN WIP CALCULATION AND ANALYSIS
 // ============================================================================
 // Main runtime flow: scan board, count cards, apply rules, render indicator.
@@ -520,6 +613,17 @@ function updateWipBoard() {
 
   // Guard clause: extension can be reloaded while tab is still open.
   if (!chrome.runtime?.id) return;
+
+  // Resilience (roadmap T0.5): fail loud, not silent. If a required module did
+  // not load, show a diagnostic indicator and stop. This prevents the runtime
+  // from presenting a real board as empty (WIP = 0) just because a dependency
+  // is missing.
+  const moduleError = assertRequiredModules();
+  if (moduleError) {
+    console.error(moduleError.message);
+    showRuntimeErrorIndicator(moduleError.message);
+    return;
+  }
 
   // Read all user settings from extension storage.
   chrome.storage.sync.get([
@@ -574,7 +678,7 @@ function updateWipBoard() {
         document.body.appendChild(indicator);
       }
       indicator.style.display = 'block';
-      indicator.innerHTML = `<div>${i18n.t('indicatorMissingConfig')}</div>`;
+      setIndicatorHtml(indicator, `<div>${i18n.t('indicatorMissingConfig')}</div>`);
       return;
     }
     
@@ -590,10 +694,18 @@ function updateWipBoard() {
     const allWipCards = [];
     let columnsBreakdown = []; // Per-column subtotal shown in the details panel.
 
-    // Read a normalized, presentation-free model of the board once (data layer).
-    // The reader centralizes selector handling and visibility detection, so the
-    // runtime no longer pairs header/body nodes by fragile ordinal index.
-    const boardModel = readBoardModel();
+    let boardModel;
+    try {
+      // Read a normalized, presentation-free model of the board once (data layer).
+      // The reader centralizes selector handling and visibility detection, so the
+      // runtime no longer pairs header/body nodes by fragile ordinal index.
+      boardModel = readBoardModel();
+    } catch (err) {
+      // A reader failure must be visible, never silently coerced to WIP = 0.
+      console.error(err && err.message ? err.message : err);
+      showRuntimeErrorIndicator(err && err.message ? err.message : String(err));
+      return;
+    }
 
     // Map each stable work-item id to its live DOM card node, so per-card rule
     // analysis and alarm styling keep operating on the real element while the
@@ -644,12 +756,6 @@ function updateWipBoard() {
       });
     });
 
-    // Evaluate card-level alarms only in WIP columns.
-    allWipCards.forEach(card => {
-      applyCardAlarm(card, isHighlightActive, alarmConfig, blockTag, i18n);
-    });
-    
-    
     // Final WIP business rule: per special person, all matching special-tag cards
     // count as 1 block. Delegated to the pure core helper (identical math).
     let finalWip = totalCards;
@@ -657,14 +763,50 @@ function updateWipBoard() {
       finalWip = Core.applySpecialPersonReduction(totalCards, specialStatsByPerson.values());
     }
 
-    // Render final indicator state.
-    displayWip(finalWip, limit, columnsBreakdown, isDetailsActive, i18n);
+    // R1 fix: perform all DOM writes with the observer paused, so the
+    // extension's own mutations (card alarm classes/title + indicator rewrite)
+    // do not retrigger the observer and seed a recompute cycle. Real external
+    // board changes still arrive once the observer reconnects on the next
+    // microtask. The WIP math above is complete and unchanged; only the write
+    // phase is wrapped.
+    withObserverPaused(() => {
+      // Evaluate card-level alarms only in WIP columns.
+      allWipCards.forEach(card => {
+        applyCardAlarm(card, isHighlightActive, alarmConfig, blockTag, i18n);
+      });
+
+      // Render final indicator state.
+      displayWip(finalWip, limit, columnsBreakdown, isDetailsActive, i18n);
+    });
   });
 }
 
 // ============================================================================
 // 3. INDICATOR RENDERING AND DETAILS PANEL
 // ============================================================================
+
+function showRuntimeErrorIndicator(message) {
+  // Diagnostic indicator used when a required module is missing or the reader
+  // throws. It is intentionally distinct from the WIP indicator states so a
+  // real failure is never mistaken for a legitimately empty board (WIP = 0).
+  if (!document.body) return;
+  let indicator = document.getElementById('custom-wip-indicator');
+  if (!indicator) {
+    indicator = document.createElement('div');
+    indicator.id = 'custom-wip-indicator';
+    indicator.style.cssText = 'position:fixed;top:15px;left:50%;transform:translateX(-50%);padding:8px 20px;border-radius:20px;font-size:13px;font-weight:bold;z-index:999999;background:#fde8e8;color:#9b1c1c;border:2px solid #f98080;box-shadow:0 4px 12px rgba(0,0,0,.15);font-family:inherit;cursor:default;';
+    document.body.appendChild(indicator);
+  }
+  indicator.className = '';
+  indicator.style.backgroundColor = '#fde8e8';
+  indicator.style.color = '#9b1c1c';
+  indicator.style.border = '2px solid #f98080';
+  indicator.style.display = 'block';
+  // Short, actionable message; full detail is in the console.
+  const safeMessage = String(message || 'WIP Board runtime error').replace(/[<>]/g, '');
+  setIndicatorHtml(indicator, `<div>⚠️ ${safeMessage}</div>`);
+}
+
 // Render floating indicator with optional click-to-open details panel.
 function displayWip(current, limit, breakdown, isDetailsActive, i18n) {
   let indicator = document.getElementById('custom-wip-indicator');

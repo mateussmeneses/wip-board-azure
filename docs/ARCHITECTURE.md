@@ -158,24 +158,22 @@ These are observations from reading `content.js` today. None is fixed by this
 document; they are recorded so later tasks can address them deliberately and so the
 delivery modules do not inherit them.
 
-### R1 — MutationObserver self-retrigger loop (medium)
+### R1 — MutationObserver self-retrigger loop (RESOLVED — roadmap T0.5)
 
 `observer` watches `document.body` with `{ childList: true, subtree: true }` and runs
-`updateWipBoard` on every mutation (debounced 300 ms). But `updateWipBoard` itself
-mutates the DOM it is watching: `applyCardAlarm` adds/removes `card-alerta-*` classes
-and sets/removes the card `title` attribute, and `displayWip` rewrites the indicator
-`innerHTML`. Each of those mutations is a new observer event, which re-schedules
-`updateWipBoard`.
+`updateWipBoard` on every mutation (debounced 300 ms). The root cause was that
+`updateWipBoard` mutated the DOM it was watching: `displayWip` rewrote the indicator
+`innerHTML` **unconditionally**, emitting a `childList` record on every run even when
+the HTML was identical, which re-armed the debounce and seeded the next run — a
+persistent ~3 Hz background recompute (see `docs/AUDIT_R1_MUTATION_OBSERVER.md` §4).
 
-Today this does **not** runaway because the 300 ms debounce coalesces the self-induced
-mutations and the computation is idempotent (re-applying the same class is a no-op that
-still fires a mutation but converges). The practical effect is an extra recompute cycle
-after every legitimate board change, i.e. wasted work rather than an infinite loop.
-
-Mitigations for a later task (not applied here): disconnect the observer around the
-write phase and reconnect after, or scope the observer to the board container and
-exclude the indicator node, or diff before writing so no-op class/title writes are
-skipped. Any fix must keep WIP semantics and pass the characterization tests.
+**Fix (T0.5):** the write phase of `updateWipBoard` (card alarms + `displayWip`) now
+runs inside `withObserverPaused()`, which disconnects the observer, performs the
+writes, and reconnects on the next microtask. In addition, `setIndicatorHtml()` diffs
+before writing so an unchanged indicator is never rewritten. WIP semantics are
+untouched and the observer configuration is unchanged, so real Azure updates are still
+observed. Proven by `test/mutation-observer-r1.test.js` (BEFORE vs AFTER) and
+`test/runtime-stability.test.js`.
 
 ### R2 — DOM selector fragility (medium)
 

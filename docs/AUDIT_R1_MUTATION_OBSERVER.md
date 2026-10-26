@@ -185,3 +185,56 @@ engine needed): it models a node whose `innerHTML` setter always emits a
 acceptance target for the future fix). The observer itself is left unchanged by
 this task; the test is red-by-design against the current render and documents the
 exact condition the later fix must satisfy.
+
+## 8. Resolution (roadmap T0.5) — IMPLEMENTED
+
+The fix proposed in §5 was implemented in `content.js`. R1 is now **resolved**.
+
+### 8.1 Root cause (confirmed)
+
+`updateWipBoard()` rewrote the floating indicator via an **unconditional**
+`indicator.innerHTML = ...` on every run. The indicator lives inside
+`document.body`, watched with `{ childList: true, subtree: true }`, so each
+rewrite emitted a `childList` record even when the HTML was identical. That record
+re-armed the 300 ms debounce and seeded the next run — a persistent ~3 Hz
+background recompute with no user interaction.
+
+### 8.2 Fix (two complementary guards; WIP semantics untouched)
+
+1. **Pause the observer around the write phase.** `withObserverPaused(write)`
+   calls `observer.disconnect()`, runs the write, then reconnects on the next
+   microtask (`Promise.resolve().then(...)`). The mutation-producing tail of
+   `updateWipBoard()` — `allWipCards.forEach(applyCardAlarm)` **and**
+   `displayWip(...)` — is wrapped in it. The extension's own writes are no longer
+   observed; real external board changes still trigger a recompute once the
+   observer reconnects.
+2. **Diff-before-write on the indicator.** `setIndicatorHtml(indicator, html)`
+   skips the assignment when the markup is unchanged, so even in the brief windows
+   where the observer is connected (initial render, error indicator) there is no
+   no-op churn. All three indicator write sites now go through it.
+
+The MutationObserver configuration itself (`document.body`,
+`{ childList: true, subtree: true }`) is unchanged, so no dynamic Azure update is
+missed.
+
+### 8.3 Before/after (observable records per update cycle)
+
+| Scenario | Before | After |
+|---|---|---|
+| Idle board, N identical recomputes | N observable `childList` records (self-sustaining) | 0 |
+| One real card move | 1 (move) + 1 (self-write) = recompute re-seeded | 1 (move only) |
+| M consecutive real moves | M + M self-writes | M |
+| Genuine WIP change | write + self-retrigger | 1 write, no retrigger |
+
+Proven by `test/mutation-observer-r1.test.js` (BEFORE vs AFTER cases) and
+`test/runtime-stability.test.js` (single move, multiple moves, idle board,
+self-induced mutations).
+
+### 8.4 Module resilience (same task)
+
+`content.js` no longer lets a missing/broken module masquerade as an empty board.
+`assertRequiredModules()` checks `WIPBoardCore` and `WIPBoardReader` at the top of
+`updateWipBoard()` and renders a red diagnostic indicator (plus `console.error`)
+instead of computing WIP = 0. `readBoardModel()` throws with context if the reader
+is unavailable or throws, and `updateWipBoard()` surfaces that as the diagnostic
+indicator rather than a silent zero. Covered by `test/runtime-stability.test.js`.

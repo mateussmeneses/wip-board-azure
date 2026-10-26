@@ -53,14 +53,49 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   pre-integration scan is proven for every WIP scenario by
   `test/wip-runtime-integration.test.js`.
 
+### T0.5 — Runtime stability: fix R1 observer loop + module resilience — DONE
+- Scope: resolve risk R1 (MutationObserver self-retrigger) and harden the module
+  wiring so a missing/broken `WIPBoardCore`/`WIPBoardReader` cannot silently read as
+  an empty board. No WIP-semantics change; observer config unchanged; MV3 preserved.
+- Acceptance: a single external board change triggers exactly one recompute; an idle
+  board triggers none; a missing module surfaces a diagnostic instead of WIP = 0; all
+  automated tests pass.
+- Tests: `test/mutation-observer-r1.test.js` (rewritten BEFORE/AFTER) and
+  `test/runtime-stability.test.js` (single/multiple moves, config change, indicator
+  render, self-induced mutations, empty board, reload, missing modules).
+- Status: `content.js` wraps the write phase (`applyCardAlarm` loop + `displayWip`) in
+  `withObserverPaused()` (disconnect → write → reconnect on the next microtask) and
+  routes every indicator write through `setIndicatorHtml()` (diff-before-write).
+  `assertRequiredModules()` + a hardened `readBoardModel()` fail loud with a red
+  diagnostic indicator instead of a silent zero. Suite: 62 tests pass.
+
 ---
 
 ## Phase 1 — Daily Commitment (P1, DOM-only MVP)
 
-### T1.1 — `snapshot-store` on `chrome.storage.local`
-- Scope: write/read snapshots keyed `board::yyyy-mm-dd`; bounded retention (e.g. 30 days).
+### T1.1 — `snapshot-store` on `chrome.storage.local` — DONE
+- Scope: write/read snapshots keyed by org/project/team/board + id; bounded
+  retention (count-based and optional age-based).
 - Acceptance: a snapshot persists and reloads; retention prunes old entries.
 - Tests: unit tests with a mocked storage.
+- Status: `src/data/snapshot-store.js` persists two distinct record kinds on
+  `chrome.storage.local` via an injectable adapter — immutable (deep-frozen)
+  **snapshots** of observed board state and mutable **commitments** that carry a
+  revision history. Keys embed the full org/project/team/board scope so data
+  from different teams/boards cannot collide. `capturedAt` preserves the UTC
+  instant, the timezone offset and a local calendar day. The comparison engine
+  (`diffStates`) is a pure, Chrome-free function: items absent from a later state
+  are reported as `missing`, never silently treated as "done" (reliability rule),
+  and a planned-vs-observed classification (`on-track`/`behind`/`missing`) is
+  produced when an expected-column resolver is supplied. Only non-sensitive
+  fields (id, column, state, assignee display name, type) are stored — no tokens,
+  cookies, credentials or raw HTML. Schema is versioned (`SCHEMA_VERSION`) with a
+  forward `migrateRecord` hook applied on read. Retention is configurable
+  (`maxSnapshotsPerBoard`, `maxCommitmentsPerBoard`, `maxAgeDays`) and `purge`
+  supports day-based and full-scope deletion. The runtime (`content.js`,
+  `manifest.json`) is intentionally NOT modified in this task; the module ships
+  behind no UI yet. Suite: `test/snapshot-store.test.js` (26 tests) green; full
+  suite 88 tests pass. Mock: `test/helpers/mock-chrome-storage.js` (zero deps).
 
 ### T1.2 — Capture daily snapshot of column-per-id
 - Scope: once per day per board, record each item id's current column + state.
