@@ -463,9 +463,9 @@ test('store schema is v2 and migrateRecord adds evaluation:null to a v1 commitme
 
 // --- 19. retention cannot silently break a referenced snapshot ----------------
 
-test('retention integrity: pruning old snapshots leaves history honest about the gap', async () => {
-  // A store that keeps only 1 snapshot per board. After two captures, the first
-  // (the commitment's base) is pruned; the commitment persists.
+test('retention integrity: referenced planning snapshots survive pruning', async () => {
+  // A store that keeps only 1 ordinary snapshot per board. Once referenced by
+  // a commitment, a planning baseline is protected from automatic retention.
   const { api } = freshStore({ retention: { maxSnapshotsPerBoard: 1 }, now: fixedClock(1000) });
 
   const base = await api.createSnapshot({
@@ -476,7 +476,7 @@ test('retention integrity: pruning old snapshots leaves history honest about the
     scope: SCOPE_A, baseSnapshotId: base.id, createdAt: new Date(1000),
     items: [{ id: 1, startColumn: 'Approved', expectedColumn: 'HO' }],
   });
-  // Second capture prunes the first (retention = 1).
+  // Second capture must NOT prune the referenced baseline (retention = 1).
   await api.createSnapshot({
     scope: SCOPE_A, capturedAt: new Date(5000), complete: true, columns: columnsOf(),
     items: [{ id: 1, column: 'HO' }],
@@ -484,12 +484,12 @@ test('retention integrity: pruning old snapshots leaves history honest about the
 
   const snapshots = await api.getSnapshots(SCOPE_A);
   const commitments = await api.getCommitments(SCOPE_A);
-  assert.equal(snapshots.length, 1); // base was pruned
+  assert.equal(snapshots.length, 2); // newest + referenced planning baseline
+  assert.ok(snapshots.some(s => s.id === base.id));
 
   const view = history.buildHistoryView({ snapshots, commitments });
   assert.equal(view.records.length, 1);
-  // The base is gone, so the record is honestly flagged rather than fabricated.
-  assert.ok(view.records[0].reliability.reasons.includes('NO_BASE_SNAPSHOT'));
+  assert.ok(!view.records[0].reliability.reasons.includes('NO_BASE_SNAPSHOT'));
 });
 
 // --- 20. persistence after reload + recordCommitmentEvaluation ----------------

@@ -192,3 +192,21 @@ test('backoff is bounded by maxDelayMs and honors Retry-After', () => {
 test('createTransport requires an injected fetch', () => {
   assert.throws(() => Transport.createTransport({}), TypeError);
 });
+
+test('transport rejects external hosts and disallows POST outside WIQL', async () => {
+  const mock = createMockFetch([]);
+  const t = makeTransport(mock);
+  for (const url of [
+    'https://evil.example/org/_apis/wit/wiql',
+    'http://dev.azure.com/org/_apis/wit/wiql',
+    'https://dev.azure.com.evil.example/org/_apis/wit/wiql',
+  ]) {
+    await assert.rejects(() => t.send({ method:'GET', url }),
+      (e) => e.category === ErrorCategory.DISALLOWED);
+  }
+  await assert.rejects(() => t.send({
+    method:'POST',url:'https://dev.azure.com/org/proj/_apis/wit/workitems?api-version=7.1',
+    allowWiqlPost:true,body:'{}'
+  }), (e) => e.category === ErrorCategory.DISALLOWED);
+  assert.equal(mock.callCount(),0);
+});

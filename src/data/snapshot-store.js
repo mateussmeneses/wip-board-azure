@@ -836,8 +836,23 @@
     // --- retention -------------------------------------------------------------
 
     function pruneSnapshots(scope) {
-      return prune(SNAPSHOT_PREFIX, scope, retention.maxSnapshotsPerBoard, byCapturedDesc, function (r) {
-        return r.capturedAt && r.capturedAt.epochMs;
+      // Protect baselines and evaluation snapshots referenced by daily plans.
+      return adapter.get(null).then(function (all) {
+        const protectedKeys = new Set();
+        Object.keys(all).filter(function (key) {
+          return scopeMatchesKey(key, COMMITMENT_PREFIX, scope);
+        }).forEach(function (key) {
+          const commitment = migrateRecord(all[key]);
+          if (!commitment || commitment.kind !== 'commitment') return;
+          if (commitment.baseSnapshotId != null) {
+            protectedKeys.add(snapshotKey(scope, commitment.baseSnapshotId));
+          }
+          if (commitment.evaluation && commitment.evaluation.laterSnapshotId != null) {
+            protectedKeys.add(snapshotKey(scope, commitment.evaluation.laterSnapshotId));
+          }
+        });
+        return prune(SNAPSHOT_PREFIX, scope, retention.maxSnapshotsPerBoard, byCapturedDesc,
+          function (r) { return r.capturedAt && r.capturedAt.epochMs; }, protectedKeys);
       });
     }
 
@@ -849,7 +864,7 @@
 
     // Shared pruning: keep the newest `max` per board and drop records older than
     // maxAgeDays. Deleting a record only removes that scope's keys (isolation).
-    function prune(prefix, scope, max, sorter, epochOf) {
+    function prune(prefix, scope, max, sorter, epochOf, protectedKeys) {
       return adapter.get(null).then(function (all) {
         const entries = Object.keys(all)
           .filter(function (key) {
@@ -883,9 +898,13 @@
           });
         }
 
-        if (toRemove.length === 0) return { removed: 0 };
-        return adapter.remove(toRemove).then(function () {
-          return { removed: toRemove.length };
+        // Retention cannot remove snapshots referenced by retained commitments.
+        const removable = protectedKeys ? toRemove.filter(function (key) {
+          return !protectedKeys.has(key);
+        }) : toRemove;
+        if (removable.length === 0) return { removed: 0 };
+        return adapter.remove(removable).then(function () {
+          return { removed: removable.length };
         });
       });
     }

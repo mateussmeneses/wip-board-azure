@@ -1522,6 +1522,8 @@ const ProjectedBoard =
 // so a missing module degrades to "history section unavailable", never a crash.
 const DailyHistory =
   (typeof WIPBoardDailyHistory !== 'undefined' && WIPBoardDailyHistory) || null;
+const DailySession =
+  (typeof WIPBoardDailySession !== 'undefined' && WIPBoardDailySession) || null;
 
 // A single store instance per page, created lazily so a missing module (older
 // manifest) degrades to "panel unavailable" instead of throwing at load.
@@ -1552,17 +1554,32 @@ function resolveSnapshotScope(boardModel, context) {
       typeof item.project === 'string' &&
       item.project
   );
-  if (!firstScoped) return null;
+  // The Azure board URL still identifies its org and project when the board
+  // is empty, filtered or has no visible cards. Do not require a card href
+  // merely to resolve a stable storage scope.
+  let organization = firstScoped && firstScoped.organization;
+  let project = firstScoped && firstScoped.project;
+  if (!organization || !project) {
+    try {
+      const url = new URL(window.location.href);
+      const parts = url.pathname.split('/').filter(Boolean).map(decodeURIComponent);
+      if (url.hostname === 'dev.azure.com' && parts.length >= 2) {
+        organization = parts[0];
+        project = parts[1];
+      } else if (url.hostname.endsWith('.visualstudio.com') && parts.length >= 1) {
+        organization = url.hostname.slice(0, -'.visualstudio.com'.length);
+        project = parts[0];
+      }
+    } catch (_) {
+      return null;
+    }
+  }
+  if (!organization || !project) return null;
 
-  const board = context.currentBoardName || firstScoped.project;
+  const board = context.currentBoardName || project;
   const team = context.boardPathFilter || context.currentBoardName || 'default';
 
-  return {
-    organization: firstScoped.organization,
-    project: firstScoped.project,
-    team: team,
-    board: board,
-  };
+  return { organization, project, team, board };
 }
 
 function formatSnapshotWhen(capturedAt) {
@@ -1794,7 +1811,7 @@ function resetCommitmentPicker() {
 // commitment, and render the searchable list. Runs ONLY on an explicit click.
 async function handleOpenPicker(context, i18n) {
   const store = getSnapshotStore();
-  if (!store || !DailyCommitment || !CommitmentPicker || !SnapshotCapture) {
+  if (!store || !DailyCommitment || !CommitmentPicker || !SnapshotCapture || !DailySession) {
     setCommitmentStatus(i18n.t('commitmentError', { message: 'module unavailable' }), 'err');
     return;
   }
@@ -1817,7 +1834,7 @@ async function handleOpenPicker(context, i18n) {
   try {
     base = await store.getLatestSnapshot(scope);
     const commitments = await store.getCommitments(scope);
-    existing = commitments && commitments.length ? commitments[0] : null;
+    existing = DailySession && base ? DailySession.matchingCommitment(commitments, base) : null;
   } catch (err) {
     setCommitmentStatus(i18n.t('commitmentError', { message: err && err.message ? err.message : String(err) }), 'err');
     return;
@@ -2000,7 +2017,7 @@ function collectPickerSelection() {
 
 async function handleSaveCommitment(context, i18n) {
   const store = getSnapshotStore();
-  if (!store || !DailyCommitment || !CommitmentPicker) {
+  if (!store || !DailyCommitment || !CommitmentPicker || !DailySession) {
     setCommitmentStatus(i18n.t('commitmentError', { message: 'module unavailable' }), 'err');
     return;
   }
@@ -2030,7 +2047,11 @@ async function handleSaveCommitment(context, i18n) {
 
   let base;
   try {
-    base = await store.getLatestSnapshot(scope);
+    // The plan must use the exact baseline shown when the picker was opened.
+    // Captures made in another tab after opening the picker cannot change it.
+    base = commitmentPickerState.base
+      ? await store.getSnapshotById(scope, commitmentPickerState.base.id)
+      : null;
   } catch (err) {
     setCommitmentStatus(i18n.t('commitmentError', { message: err && err.message ? err.message : String(err) }), 'err');
     return;
@@ -2047,12 +2068,14 @@ async function handleSaveCommitment(context, i18n) {
   }
 
   try {
-    // Reuse an existing commitment for this board when present: a new daily plan
-    // is a REVISION (versioned history preserved), not a duplicate record.
-    const existing = await store.getCommitments(scope);
+    // Edit only an existing commitment from THIS planning snapshot. A new
+    // snapshot represents a new daily and must create a distinct commitment,
+    // otherwise old plans are overwritten and Daily History cannot work.
+    const commitments = await store.getCommitments(scope);
+    const existing = DailySession ? DailySession.matchingCommitment(commitments, base) : null;
     let saved;
-    if (existing && existing.length) {
-      saved = await store.reviseCommitment(scope, existing[0].id, built.items);
+    if (existing) {
+      saved = await store.reviseCommitment(scope, existing.id, built.items);
       setCommitmentStatus(
         i18n.t('commitmentRevised', { revision: saved.revision, items: built.items.length }),
         'ok'
@@ -2201,7 +2224,7 @@ const projectedBoardState = {
 
 async function handleShowProjectedBoard(context, i18n) {
   const store = getSnapshotStore();
-  if (!store || !ProjectedBoard || !DailyCommitment) {
+  if (!store || !ProjectedBoard || !DailyCommitment || !DailySession) {
     setProjectedStatus(i18n.t('projectedError', { message: 'module unavailable' }), 'err');
     return;
   }
@@ -2224,9 +2247,13 @@ async function handleShowProjectedBoard(context, i18n) {
   let base;
   let commitmentRecord;
   try {
-    base = await store.getLatestSnapshot(scope);
+    const snapshots = await store.getSnapshots(scope);
     const commitments = await store.getCommitments(scope);
-    commitmentRecord = commitments && commitments.length ? commitments[0] : null;
+    const session = DailySession ? DailySession.activeSession(commitments, snapshots) : null;
+    // A saved plan must ALWAYS use its own immutable baseline.
+    // Without a plan, the newest snapshot can be displayed alone.
+    commitmentRecord = session ? session.commitment : null;
+    base = session ? session.base : (snapshots.length ? snapshots[0] : null);
   } catch (err) {
     setProjectedStatus(i18n.t('projectedError', { message: err && err.message ? err.message : String(err) }), 'err');
     return;
@@ -2399,6 +2426,8 @@ const comparisonState = {
   selectedLaterId: null,
   initial: null,
   commitment: null,
+  revision: null, // historical evaluation may pin an earlier plan revision
+  isHistorical: false,
   filter: 'all',
 };
 
@@ -2407,7 +2436,7 @@ const DailyComparison =
 
 async function handleRunComparison(context, i18n) {
   const store = getSnapshotStore();
-  if (!store || !DailyComparison || !DailyCommitment) {
+  if (!store || !DailyComparison || !DailyCommitment || !DailySession) {
     setComparisonStatus(i18n.t('comparisonError', { message: 'module unavailable' }), 'err');
     return;
   }
@@ -2435,9 +2464,10 @@ async function handleRunComparison(context, i18n) {
   let snapshots;
   try {
     snapshots = await store.getSnapshots(scope);
-    initial = snapshots && snapshots.length ? snapshots[snapshots.length - 1] : null;
     const commitments = await store.getCommitments(scope);
-    commitmentRecord = commitments && commitments.length ? commitments[0] : null;
+    const session = DailySession ? DailySession.activeSession(commitments, snapshots) : null;
+    initial = session ? session.base : null;
+    commitmentRecord = session ? session.commitment : null;
   } catch (err) {
     setComparisonStatus(i18n.t('comparisonError', { message: errText(err) }), 'err');
     return;
@@ -2461,6 +2491,8 @@ async function handleRunComparison(context, i18n) {
 
   comparisonState.initial = initial;
   comparisonState.commitment = commitmentRecord;
+  comparisonState.revision = null; // latest plan by default; history pins a revision explicitly
+  comparisonState.isHistorical = false;
   comparisonState.laterSnapshots = laterSnapshots;
   // Keep a previously chosen later snapshot if still valid, else default to the
   // newest valid one. Never auto-select an incompatible/other-board snapshot.
@@ -2470,6 +2502,29 @@ async function handleRunComparison(context, i18n) {
     : (laterSnapshots.length ? laterSnapshots[0].id : null);
 
   recomputeComparison(i18n);
+  // This is an explicit evaluation action: archive which observed snapshot and
+  // which plan revision were used. Historical views never overwrite this pin.
+  await persistCurrentEvaluation(i18n);
+}
+
+// Explicitly persist the evaluation identity; it is NOT stored on filter/render.
+async function persistCurrentEvaluation(i18n) {
+  if (comparisonState.isHistorical || !comparisonState.commitment ||
+      !comparisonState.selectedLaterId) return;
+  const store = getSnapshotStore();
+  if (!store) return;
+  try {
+    await store.recordCommitmentEvaluation(
+      comparisonState.commitment.scope,
+      comparisonState.commitment.id,
+      {
+        laterSnapshotId: comparisonState.selectedLaterId,
+        revision: comparisonState.commitment.revision,
+      }
+    );
+  } catch (err) {
+    setComparisonStatus(i18n.t('comparisonError', { message: errText(err) }), 'err');
+  }
 }
 
 // Build the view-model from the selected later snapshot. Pure; no board read.
@@ -2484,6 +2539,7 @@ function recomputeComparison(i18n) {
   const vm = DailyComparison.buildComparison({
     initialSnapshot: initial,
     commitment: commitment,
+    revision: comparisonState.revision,
     laterSnapshot: later,
   });
 
@@ -2705,6 +2761,7 @@ function bindComparisonInteractions(i18n) {
     select.onchange = () => {
       comparisonState.selectedLaterId = idFromDom(select.value);
       recomputeComparison(i18n);
+      void persistCurrentEvaluation(i18n);
     };
   }
   const output = document.getElementById('wip-comparison-output');
@@ -3041,8 +3098,13 @@ function openHistoryRecordInComparison(btn, i18n) {
   // comparison algorithm is introduced here.
   comparisonState.initial = initial;
   comparisonState.commitment = commitment;
+  comparisonState.revision = rec.revisionInEffect != null ? rec.revisionInEffect : null;
+  comparisonState.isHistorical = true;
   comparisonState.laterSnapshots = DailyComparison.selectComparableSnapshots(historyState.snapshots, initial);
-  comparisonState.selectedLaterId = laterId || (comparisonState.laterSnapshots.length ? comparisonState.laterSnapshots[0].id : null);
+  // Do not substitute an unrelated later snapshot for an unevaluated daily.
+  comparisonState.selectedLaterId =
+    laterId && comparisonState.laterSnapshots.some(s => String(s.id) === String(laterId))
+      ? laterId : null;
   comparisonState.filter = 'all';
   recomputeComparison(i18n);
 
@@ -3241,7 +3303,7 @@ function ensureSnapshotPanel(context, i18n) {
     // The visual picker (roadmap T1.4) needs both the engine and the pure picker
     // view-model. If either is missing, the whole sub-section is hidden so the
     // core WIP indicator and the snapshot panel keep working.
-    if (DailyCommitment && CommitmentPicker) {
+    if (DailyCommitment && CommitmentPicker && DailySession) {
       commitSection.style.display = 'block';
       bindSnapshotButton('wip-commit-pick', () => handleOpenPicker(context, i18n));
       bindSnapshotButton('wip-commit-save', () => handleSaveCommitment(context, i18n));
@@ -3272,7 +3334,7 @@ function ensureSnapshotPanel(context, i18n) {
   // and the commitment engine are present; bound against the current context.
   const projectedSection = document.getElementById('wip-projected-section');
   if (projectedSection) {
-    if (ProjectedBoard && DailyCommitment) {
+    if (ProjectedBoard && DailyCommitment && DailySession) {
       projectedSection.style.display = 'block';
       bindSnapshotButton('wip-projected-show', () => handleShowProjectedBoard(context, i18n));
       bindSnapshotButton('wip-projected-tab-initial', () => setProjectedView('initial', i18n));
@@ -3301,7 +3363,7 @@ function ensureSnapshotPanel(context, i18n) {
   // context/i18n every refresh so config and language changes take effect.
   const comparisonSection = document.getElementById('wip-comparison-section');
   if (comparisonSection) {
-    if (DailyComparison && DailyCommitment) {
+    if (DailyComparison && DailyCommitment && DailySession) {
       comparisonSection.style.display = 'block';
       bindSnapshotButton('wip-comparison-run', () => handleRunComparison(context, i18n));
       setTextById('wip-comparison-title', i18n.t('comparisonSectionTitle'));
