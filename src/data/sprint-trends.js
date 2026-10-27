@@ -299,6 +299,7 @@
       stagnation: stagnation,
       config: riskConfig,
       hasBaseline: !!baseline,
+      lateBaseline: lateBaseline,
     });
 
     return {
@@ -350,6 +351,7 @@
       progress = SprintProgress.computeProgress({
         baseline: baseline,
         currentItems: items,
+        currentComplete: obs && obs.complete === true,
         flowConfig: flowConfig,
         capturedAt: obs.capturedAt,
       });
@@ -369,9 +371,11 @@
     } else {
       reliability = Reliability.UNAVAILABLE;
     }
-    // A capture flagged incomplete can never be "sufficient".
-    if (obs && obs.complete === false && reliability === Reliability.SUFFICIENT) {
-      reliability = Reliability.PARTIAL;
+    // Neither an incomplete capture nor missing item positions may be
+    // promoted to sufficient by a persisted reliability label.
+    if ((obs && obs.complete !== true) ||
+        (progress && progress.reliability !== Reliability.SUFFICIENT)) {
+      if (reliability === Reliability.SUFFICIENT) reliability = Reliability.PARTIAL;
     }
 
     const completed = b ? b.completed : 0;
@@ -519,16 +523,37 @@
 
     let prevSet = null;
     let prevEpoch = null;
+    let prevComplete = false;
     ordered.forEach(function (entry, index) {
       const curSet = idSetOf(entry.observation);
+      const curComplete = !!(entry.observation && entry.observation.complete === true);
       if (index === 0) {
         prevSet = curSet;
         prevEpoch = entry.epoch;
+        prevComplete = curComplete;
         // Seed removed-baseline tracking from the very first observation: a
         // planned id already absent at the first capture was removed before the
         // observation window; mark it so a later reappearance is a "return".
-        plannedSet.forEach(function (id) { if (!curSet.has(id)) everRemovedBaseline.add(id); });
+        if (curComplete) {
+          plannedSet.forEach(function (id) { if (!curSet.has(id)) everRemovedBaseline.add(id); });
+        }
         return;
+      }
+
+      // An incomplete capture cannot establish either additions or removals
+      // between observations. Skip this interval instead of fabricating churn.
+      if (!prevComplete || !curComplete) {
+        intervals.push({
+          fromEpochMs: prevEpoch, toEpochMs: entry.epoch,
+          fromIso: new Date(prevEpoch).toISOString(),
+          toIso: new Date(entry.epoch).toISOString(),
+          detection: 'insufficient-data', reliable: false,
+          added: [], removed: [], returned: [], stillPlannedCount: null,
+        });
+        prevSet = curSet;
+        prevEpoch = entry.epoch;
+        prevComplete = curComplete;
+        continue;
       }
 
       const added = [];
@@ -565,6 +590,7 @@
         // is "detected in interval" (goal section 6): the exact instant is
         // unknown, only the window is.
         detection: 'in-interval',
+        reliable: true,
         added: added.sort(numAsc),
         removed: removed.sort(numAsc),
         returned: returned.sort(numAsc),
@@ -573,6 +599,7 @@
 
       prevSet = curSet;
       prevEpoch = entry.epoch;
+      prevComplete = curComplete;
     });
 
     return intervals;
@@ -659,7 +686,8 @@
 
     // Hard gate: no baseline, no history, or too few reliable observations =>
     // Insufficient Data (goal section 7 preference).
-    if (!ctx.hasBaseline || ctx.baselineTotal === 0 || !ctx.latest || reliableCount < cfg.minReliableObservations) {
+    if (!ctx.hasBaseline || ctx.baselineTotal === 0 || !ctx.latest ||
+        ctx.lateBaseline === true || reliableCount < cfg.minReliableObservations) {
       return {
         level: Risk.INSUFFICIENT_DATA,
         signals: signals,
@@ -682,6 +710,14 @@
         signals: [{ code: 'unknown-share-high', weight: 'blocking', value: round2(unknownShare * 100) }],
         reliableObservations: reliableCount,
         reason: 'too-many-unknown-items',
+      };
+    }
+    if (latest.reliability !== Reliability.SUFFICIENT) {
+      return {
+        level: Risk.INSUFFICIENT_DATA,
+        signals: [{ code: 'latest-observation-incomplete', weight: 'blocking' }],
+        reliableObservations: reliableCount,
+        reason: 'latest-observation-incomplete',
       };
     }
     if (unknownShare >= cfg.unknownShareAttentionFraction) {
