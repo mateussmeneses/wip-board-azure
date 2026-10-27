@@ -345,3 +345,53 @@ test('computeElapsedTime labels the basis as calendar-days', () => {
   assert.equal(t.basis, 'calendar-days');
   assert.equal(t.reliable, true);
 });
+
+test('incomplete capture cannot fabricate removals in the scope timeline', () => {
+  const base = baselineOf(planned(3));
+  const history = [
+    observation(1, scopeWith(3, 1)),
+    observation(2, [{ id: 1, column: 'Closed' }], {
+      complete: false, reliability: Reliability.PARTIAL,
+    }),
+  ];
+  const r = SprintTrends.computeTrends({
+    sprint, baseline: base, history, now: new Date(START + 2 * DAY),
+  });
+  assert.equal(r.scopeTimeline[0].reliable, false);
+  assert.equal(r.scopeTimeline[0].removed.length, 0);
+  assert.equal(r.latest.unknown, 2);
+  assert.equal(r.latest.removed, 0);
+  assert.equal(r.risk.level, Risk.INSUFFICIENT_DATA);
+});
+
+test('incomplete newest observation cannot yield on-track from earlier good readings', () => {
+  const base = baselineOf(planned(3));
+  const history = [
+    observation(1, scopeWith(3, 3)),
+    observation(2, scopeWith(3, 3)),
+    observation(3, [{ id: 1, column: 'Closed' }], {
+      complete: false, reliability: Reliability.PARTIAL,
+    }),
+  ];
+  const r = SprintTrends.computeTrends({ sprint, baseline: base, history,
+    now: new Date(START + 3 * DAY) });
+  assert.equal(r.risk.level, Risk.INSUFFICIENT_DATA);
+  assert.equal(r.scopeTimeline[1].reliable, false);
+});
+
+test('historic observations tied to an older baseline revision are not replayed against current', () => {
+  const base = baselineOf(planned(3));
+  const stored = { baseline: base, revision: 1 };
+  const history = [
+    observation(1, scopeWith(3, 2), { baselineRef: { revision: 0 } }),
+    observation(2, scopeWith(3, 3), { baselineRef: { revision: 1 } }),
+  ];
+  const r = SprintTrends.computeTrends({
+    sprint, baseline: stored, history, now: new Date(START + 2 * DAY),
+  });
+  assert.equal(r.series[0].baselineCompletionPct, null);
+  assert.equal(r.series[0].reliability, Reliability.UNAVAILABLE);
+  assert.equal(r.series[1].baselineCompletionPct, 100);
+  assert.ok(r.limitations.includes('baseline-revision-mismatch'));
+  assert.equal(r.risk.level, Risk.INSUFFICIENT_DATA);
+});

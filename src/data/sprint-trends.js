@@ -230,6 +230,8 @@
     const baseline = i.baseline && i.baseline.baseline && Array.isArray(i.baseline.baseline.plannedIds)
       ? i.baseline.baseline
       : (i.baseline && Array.isArray(i.baseline.plannedIds) ? i.baseline : null);
+    const baselineRevision = i.baseline && i.baseline.baseline &&
+      typeof i.baseline.revision === 'number' ? i.baseline.revision : null;
 
     const flow = SprintBaseline.resolveFlow(i.flowConfig || (baseline && baseline.flow));
     const flowView = {
@@ -264,7 +266,7 @@
 
     // Build the per-observation series by REUSING the T2.3 progress engine.
     const series = ordered.map(function (entry) {
-      return buildSeriesPoint(entry, baseline, i.flowConfig || (baseline && baseline.flow), flow);
+      return buildSeriesPoint(entry, baseline, i.flowConfig || (baseline && baseline.flow), flow, baselineRevision);
     });
 
     // Late baseline (goal section 2/9): the first observation predates the
@@ -281,6 +283,9 @@
       limitations.push('late-baseline');
     }
 
+    if (series.some(function (p) { return p.baselineRevisionMismatch; })) {
+      limitations.push('baseline-revision-mismatch');
+    }
     const anyPartial = series.some(function (p) { return p.reliability !== Reliability.SUFFICIENT; });
     if (anyPartial) limitations.push('incomplete-observations');
 
@@ -299,6 +304,7 @@
       stagnation: stagnation,
       config: riskConfig,
       hasBaseline: !!baseline,
+      lateBaseline: lateBaseline,
     });
 
     return {
@@ -339,17 +345,23 @@
   }
 
   // Build one time-series point from an observation by reusing the T2.3 engine.
-  function buildSeriesPoint(entry, baseline, flowConfig, flow) {
+  function buildSeriesPoint(entry, baseline, flowConfig, flow, baselineRevision) {
     const obs = entry.observation;
     const items = observationItems(obs);
 
     // When there is no baseline we still emit a point describing the observed
     // scope, but completion against the baseline is null (nothing to measure).
+    const ref = obs && obs.baselineRef;
+    const baselineRevisionMismatch = baselineRevision != null && ref &&
+      typeof ref.revision === 'number' && ref.revision !== baselineRevision;
+    // Never replay an older observation against a newer baseline version:
+    // the denominator and membership would be historically false.
     let progress = null;
-    if (baseline) {
+    if (baseline && !baselineRevisionMismatch) {
       progress = SprintProgress.computeProgress({
         baseline: baseline,
         currentItems: items,
+        currentComplete: obs && obs.complete === true,
         flowConfig: flowConfig,
         capturedAt: obs.capturedAt,
       });
@@ -369,9 +381,12 @@
     } else {
       reliability = Reliability.UNAVAILABLE;
     }
-    // A capture flagged incomplete can never be "sufficient".
-    if (obs && obs.complete === false && reliability === Reliability.SUFFICIENT) {
-      reliability = Reliability.PARTIAL;
+    if (baselineRevisionMismatch) reliability = Reliability.UNAVAILABLE;
+    // Neither an incomplete capture nor missing item positions may be
+    // promoted to sufficient by a persisted reliability label.
+    if ((obs && obs.complete !== true) ||
+        (progress && progress.reliability !== Reliability.SUFFICIENT)) {
+      if (reliability === Reliability.SUFFICIENT) reliability = Reliability.PARTIAL;
     }
 
     const completed = b ? b.completed : 0;
@@ -390,6 +405,7 @@
       notCompleted: notCompleted < 0 ? 0 : notCompleted,
       unknown: unknown,
       baselineTotal: b ? b.total : 0,
+      baselineRevisionMismatch: !!baselineRevisionMismatch,
       // Current scope and scope deltas at this instant.
       currentScope: progress ? progress.current.total : items.length,
       added: sc ? sc.added : 0,
@@ -519,15 +535,36 @@
 
     let prevSet = null;
     let prevEpoch = null;
+    let prevComplete = false;
     ordered.forEach(function (entry, index) {
       const curSet = idSetOf(entry.observation);
+      const curComplete = !!(entry.observation && entry.observation.complete === true);
       if (index === 0) {
         prevSet = curSet;
         prevEpoch = entry.epoch;
+        prevComplete = curComplete;
         // Seed removed-baseline tracking from the very first observation: a
         // planned id already absent at the first capture was removed before the
         // observation window; mark it so a later reappearance is a "return".
-        plannedSet.forEach(function (id) { if (!curSet.has(id)) everRemovedBaseline.add(id); });
+        if (curComplete) {
+          plannedSet.forEach(function (id) { if (!curSet.has(id)) everRemovedBaseline.add(id); });
+        }
+        return;
+      }
+
+      // An incomplete capture cannot establish either additions or removals
+      // between observations. Skip this interval instead of fabricating churn.
+      if (!prevComplete || !curComplete) {
+        intervals.push({
+          fromEpochMs: prevEpoch, toEpochMs: entry.epoch,
+          fromIso: new Date(prevEpoch).toISOString(),
+          toIso: new Date(entry.epoch).toISOString(),
+          detection: 'insufficient-data', reliable: false,
+          added: [], removed: [], returned: [], stillPlannedCount: null,
+        });
+        prevSet = curSet;
+        prevEpoch = entry.epoch;
+        prevComplete = curComplete;
         return;
       }
 
@@ -565,6 +602,7 @@
         // is "detected in interval" (goal section 6): the exact instant is
         // unknown, only the window is.
         detection: 'in-interval',
+        reliable: true,
         added: added.sort(numAsc),
         removed: removed.sort(numAsc),
         returned: returned.sort(numAsc),
@@ -573,6 +611,7 @@
 
       prevSet = curSet;
       prevEpoch = entry.epoch;
+      prevComplete = curComplete;
     });
 
     return intervals;
@@ -657,9 +696,23 @@
       return p.reliability === Reliability.SUFFICIENT;
     }).length;
 
+    // A large unknown share is an explicit evidence-quality reason, even when
+    // those unknowns also reduce the number of reliable observations.
+    if (ctx.hasBaseline && ctx.baselineTotal > 0 && ctx.latest &&
+        ctx.latest.unknown / ctx.baselineTotal >= cfg.unknownShareAtRiskFraction) {
+      return {
+        level: Risk.INSUFFICIENT_DATA,
+        signals: [{ code: 'unknown-share-high', weight: 'blocking',
+          value: round2(ctx.latest.unknown / ctx.baselineTotal * 100) }],
+        reliableObservations: reliableCount,
+        reason: 'too-many-unknown-items',
+      };
+    }
+
     // Hard gate: no baseline, no history, or too few reliable observations =>
     // Insufficient Data (goal section 7 preference).
-    if (!ctx.hasBaseline || ctx.baselineTotal === 0 || !ctx.latest || reliableCount < cfg.minReliableObservations) {
+    if (!ctx.hasBaseline || ctx.baselineTotal === 0 || !ctx.latest ||
+        ctx.lateBaseline === true || reliableCount < cfg.minReliableObservations) {
       return {
         level: Risk.INSUFFICIENT_DATA,
         signals: signals,
@@ -682,6 +735,14 @@
         signals: [{ code: 'unknown-share-high', weight: 'blocking', value: round2(unknownShare * 100) }],
         reliableObservations: reliableCount,
         reason: 'too-many-unknown-items',
+      };
+    }
+    if (latest.reliability !== Reliability.SUFFICIENT) {
+      return {
+        level: Risk.INSUFFICIENT_DATA,
+        signals: [{ code: 'latest-observation-incomplete', weight: 'blocking' }],
+        reliableObservations: reliableCount,
+        reason: 'latest-observation-incomplete',
       };
     }
     if (unknownShare >= cfg.unknownShareAttentionFraction) {
