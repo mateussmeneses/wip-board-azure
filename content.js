@@ -3874,6 +3874,10 @@ function ensureSnapshotPanel(context, i18n) {
     });
   }
 
+  // A panel hidden on an earlier (non-board) route must become visible again
+  // when navigating to a different Azure board without reloading the SPA.
+  if (panel.style.display === 'none') panel.style.display = '';
+
   // Bind actions against the CURRENT context/i18n every refresh so config and
   // language changes take effect. Replacing the handler avoids stacking listeners.
   bindSnapshotButton('wip-snapshot-capture', () => handleCaptureSnapshot(context, i18n));
@@ -4110,6 +4114,16 @@ function hideSnapshotPanel() {
 // 2. MAIN WIP CALCULATION AND ANALYSIS
 // ============================================================================
 // Main runtime flow: scan board, count cards, apply rules, render indicator.
+function mountSnapshotPanelForBoard(context, i18n) {
+  // Delivery snapshots work on every real Azure board, even when WIP rules are
+  // targeted at only one of the user's three boards.
+  if (!BoardIdentity || !BoardIdentity.resolveBoardScope(window.location.href)) {
+    hideSnapshotPanel();
+    return;
+  }
+  withObserverPaused(() => ensureSnapshotPanel(context, i18n));
+}
+
 function updateWipBoard() {
 
   // Guard clause: extension can be reloaded while tab is still open.
@@ -4172,6 +4186,13 @@ function updateWipBoard() {
       language,
     } = getBoardContext(data);
     const i18n = getLanguagePack(language);
+    const snapshotContext = {
+      currentBoardName,
+      boardPathFilter,
+      azureApiEnabled: data.azureApiEnabled === true,
+      sprintStartColumn: typeof data.sprintStartColumn === 'string' ? data.sprintStartColumn : '',
+      sprintEndColumn: typeof data.sprintEndColumn === 'string' ? data.sprintEndColumn : '',
+    };
 
     if (!isConfigured) {
       let indicator = document.getElementById('custom-wip-indicator');
@@ -4183,8 +4204,8 @@ function updateWipBoard() {
       }
       indicator.style.display = 'block';
       setIndicatorHtml(indicator, `<div>${i18n.t('indicatorMissingConfig')}</div>`);
-      // Snapshot capture needs a configured board scope; keep the panel hidden.
-      hideSnapshotPanel();
+      // WIP configuration is separate from Daily/Sprint board histories.
+      mountSnapshotPanelForBoard(snapshotContext, i18n);
       return;
     }
     
@@ -4192,7 +4213,7 @@ function updateWipBoard() {
     if (!isAllowedBoard(currentBoardName, boardPathFilter)) {
       const indicator = document.getElementById('custom-wip-indicator');
       if (indicator) indicator.style.display = 'none';
-      hideSnapshotPanel();
+      mountSnapshotPanelForBoard(snapshotContext, i18n);
       return;
     }
 
@@ -4276,16 +4297,6 @@ function updateWipBoard() {
     // board changes still arrive once the observer reconnects on the next
     // microtask. The WIP math above is complete and unchanged; only the write
     // phase is wrapped.
-    const snapshotContext = {
-      currentBoardName,
-      boardPathFilter,
-      // Sprint Intelligence (T2.2): the API feature flag (default false) and the
-      // optional, per-board flow boundaries. Read-only; the API stays unwired.
-      azureApiEnabled: data.azureApiEnabled === true,
-      sprintStartColumn: typeof data.sprintStartColumn === 'string' ? data.sprintStartColumn : '',
-      sprintEndColumn: typeof data.sprintEndColumn === 'string' ? data.sprintEndColumn : '',
-    };
-
     withObserverPaused(() => {
       // Evaluate card-level alarms only in WIP columns.
       allWipCards.forEach(card => {
