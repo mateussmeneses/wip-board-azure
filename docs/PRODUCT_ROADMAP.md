@@ -337,11 +337,36 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
 
 ## Phase 2 — Sprint Intelligence (P2, needs API)
 
-### T2.1 — `ado-api-client` (read-only, feature-flagged)
+### T2.1 — `ado-api-client` (read-only, feature-flagged) — DONE (offline)
 - Depends on `DATA_ACCESS_SPIKE.md` section 3 passing on a live tenant.
 - Scope: same-origin `fetch` wrapper; iterations + workitemsbatch; graceful fallback.
 - Acceptance: with flag off, nothing changes; with flag on + signed in, iterations load.
 - Tests: client unit tests with mocked `fetch`; fallback path tested.
+- Status: implemented under `src/api/` as seven small, injectable modules —
+  `ado-url.js` (host-allow-listed, traversal-safe URL builders; only read
+  endpoints + the WIQL POST are expressible), `ado-errors.js` (one typed error
+  model: status→category, retryability, credential-free safe projection),
+  `ado-contracts.js` (pure normalization keeping `System.State` DISTINCT from the
+  board column and preserving absent fields as the `UNAVAILABLE` sentinel the
+  snapshot store already recognizes), `ado-auth.js` (injectable provider; default
+  same-origin session cookie with NO stored token; Entra OAuth left as a seam),
+  `ado-transport.js` (injectable `fetch`; read-only method policy; timeout;
+  bounded jittered retry/backoff for 429/5xx/network/timeout only — never 401/403/
+  404, never infinite), `ado-feature-flag.js` (the single gate: `azureApiEnabled`
+  default false; `canMakeRequests` needs BOTH flag on AND available auth;
+  fail-safe to disabled), and `ado-client.js` (composition root: scope validation,
+  ≤ 200-id batching, id dedupe, current-iteration selection, every method gated).
+  With the flag off (default) every method rejects with `DISALLOWED` and issues
+  NO fetch, so the DOM runtime and the R1 observer are untouched and no auth error
+  can reach the WIP indicator. The integration is wired into NO content script
+  yet (no incomplete UI). Read-only is structural: no mutating URL builder, and
+  the transport rejects any non-GET except the WIQL query POST. Suite: 318 tests
+  pass (228 prior + 90 new across `test/ado-url`, `ado-errors`, `ado-contracts`,
+  `ado-auth`, `ado-feature-flag`, `ado-transport`, `ado-client`,
+  `ado-manifest-safety`, with mocked fetch/auth/storage; no live network). Live,
+  signed-in access to a real tenant is NOT proven (`liveAccessProven = false`);
+  it remains gated on the `DATA_ACCESS_SPIKE.md §3` spike. See
+  `docs/ADO_API_CLIENT_T2_1.md`.
 
 ### T2.2 — Sprint summary
 - Scope: current iteration period, goal, initial scope, completed items, %
