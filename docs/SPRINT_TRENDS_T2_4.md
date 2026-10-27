@@ -11,7 +11,7 @@
 
 | Module | Namespace | Responsibility |
 |---|---|---|
-| `src/data/sprint-trends.js` | `WIPBoardSprintTrends` | PURE, Chrome/DOM/network-free trend + risk engine. Reuses the T2.3 progress engine per observation; reimplements no classification. |
+| `src/features/sprint/sprint-trends.js` | `WIPBoardSprintTrends` | PURE, Chrome/DOM/network-free trend + risk engine. Reuses the T2.3 progress engine per observation; reimplements no classification. |
 | `src/data/sprint-observation-store.js` | `WIPBoardSprintObservationStore` | chrome.storage.local persistence of successive sprint-state observations. The smallest additional contract, mirroring the snapshot/goal stores. |
 
 `content.js` adds a "Sprint trends & risk / Tendências e risco da sprint"

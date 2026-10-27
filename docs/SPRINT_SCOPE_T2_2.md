@@ -10,10 +10,10 @@
 
 | Module | Namespace | Responsibility |
 |---|---|---|
-| `src/data/sprint-scope.js` | `WIPBoardSprintScope` | Sprint identity normalization; inclusive period/day math; scope-item building (state kept distinct from board column; Feature/Epic flagged). |
-| `src/data/sprint-baseline.js` | `WIPBoardSprintBaseline` | Immutable baseline of planned ids + start column/state; scope-change detection against that fixed reference; configurable flow boundaries. |
+| `src/features/sprint/sprint-scope.js` | `WIPBoardSprintScope` | Sprint identity normalization; inclusive period/day math; scope-item building (state kept distinct from board column; Feature/Epic flagged). |
+| `src/features/sprint/sprint-baseline.js` | `WIPBoardSprintBaseline` | Immutable baseline of planned ids + start column/state; scope-change detection against that fixed reference; configurable flow boundaries. |
 | `src/data/sprint-goal-store.js` | `WIPBoardSprintGoalStore` | chrome.storage.local persistence of the goal (with revision history) and the baseline (saved once; explicit re-baseline archives the prior). |
-| `src/data/sprint-intelligence.js` | `WIPBoardSprintIntelligence` | Availability resolution + composed UI view-model; carries no fabricated sprint in any unavailable state. |
+| `src/features/sprint/sprint-intelligence.js` | `WIPBoardSprintIntelligence` | Availability resolution + composed UI view-model; carries no fabricated sprint in any unavailable state. |
 
 `content.js` adds a compact, bilingual "Sprint Intelligence" sub-section inside
 the existing snapshot panel; `manifest.json` loads the four modules before

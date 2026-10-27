@@ -28,7 +28,7 @@ The projection NEVER changes Azure DevOps. It is math over stored data only.
 
 ---
 
-## 2. Engine — `src/data/projected-board.js` (`WIPBoardProjectedBoard`)
+## 2. Engine — `src/features/daily/projected-board.js` (`WIPBoardProjectedBoard`)
 
 A pure, Chrome-free and DOM-free module. One public entry point:
 
@@ -153,7 +153,7 @@ WIP number: nothing in the projected board reads or writes the WIP calculation.
 Validate in a real Chrome against a real Azure DevOps board:
 
 1. Extension loads in `chrome://extensions` with no errors after adding
-   `src/data/projected-board.js` to the manifest.
+   `src/features/daily/projected-board.js` to the manifest.
 2. On a configured board, open the Daily Snapshot panel; the "Projected board
    (simulation)" sub-section is visible below the commitment picker.
 3. Capture a snapshot, choose work items with destinations, save the commitment.

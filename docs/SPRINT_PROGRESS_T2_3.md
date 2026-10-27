@@ -10,7 +10,7 @@
 
 | Module | Namespace | Responsibility |
 |---|---|---|
-| `src/data/sprint-progress.js` | `WIPBoardSprintProgress` | Progress calculation + six-state classification + reliability verdict + late-baseline flag. Reuses the T2.2 scope/baseline engines; reimplements nothing. |
+| `src/features/sprint/sprint-progress.js` | `WIPBoardSprintProgress` | Progress calculation + six-state classification + reliability verdict + late-baseline flag. Reuses the T2.2 scope/baseline engines; reimplements nothing. |
 
 `content.js` adds a "Sprint progress" sub-section INSIDE the existing Sprint
 Intelligence block; `manifest.json` loads the module before `content.js`.
