@@ -377,7 +377,7 @@ test('a commitment picked on board A does not pre-select rows on board B', async
 test('commitment-picker module is DOM-free and Chrome-free by design', () => {
   const fs = require('node:fs');
   const path = require('node:path');
-  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'data', 'commitment-picker.js'), 'utf8');
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'features', 'daily', 'commitment-picker.js'), 'utf8');
   assert.equal(/\bdocument\b/.test(src), false);
   assert.equal(/MutationObserver/.test(src), false);
   assert.equal(/\bchrome\./.test(src), false);

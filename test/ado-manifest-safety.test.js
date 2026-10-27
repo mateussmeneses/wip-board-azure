@@ -47,7 +47,7 @@ test('the API modules are NOT yet wired into the content-script runtime', () => 
     assert.ok(!file.startsWith('src/api/'), 'unexpected API module in content scripts: ' + file);
   });
   // The existing Daily runtime files are still registered (no regression).
-  ['content.js', 'src/data/snapshot-store.js', 'src/data/daily-history.js'].forEach(function (file) {
+  ['content.js', 'src/data/snapshot-store.js', 'src/features/daily/daily-history.js'].forEach(function (file) {
     assert.ok(allJs.includes(file), 'missing expected runtime file: ' + file);
   });
 });

@@ -371,7 +371,7 @@ test('end to end: commit against a base snapshot, compare to a later snapshot', 
 test('daily-commitment module is DOM-free and Chrome-free by design', () => {
   const fs = require('node:fs');
   const path = require('node:path');
-  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'data', 'daily-commitment.js'), 'utf8');
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'features', 'daily', 'daily-commitment.js'), 'utf8');
   assert.equal(/\bdocument\b/.test(src), false);
   assert.equal(/MutationObserver/.test(src), false);
   assert.equal(/\bchrome\./.test(src), false);

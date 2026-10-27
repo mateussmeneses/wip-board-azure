@@ -555,7 +555,7 @@ test('the view-model delegates classification to the injected engine (reuse, not
 test('the comparison module source references no WIP number, DOM, Chrome or storage', () => {
   const fs = require('node:fs');
   const path = require('node:path');
-  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'data', 'daily-comparison.js'), 'utf8');
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'features', 'daily', 'daily-comparison.js'), 'utf8');
   assert.equal(/\bdocument\b/.test(src), false, 'must not touch the DOM');
   assert.equal(/\bMutationObserver\b/.test(src), false, 'must not use MutationObserver');
   assert.equal(/chrome\.(storage|runtime)/.test(src), false, 'must not call chrome APIs');
