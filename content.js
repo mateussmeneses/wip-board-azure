@@ -141,6 +141,44 @@ const I18N = {
     navProjected: 'Projected board',
     navActual: 'Actual result',
     navComparison: 'Commitment comparison',
+    // Daily History (roadmap T1.7): historical analysis of past dailies.
+    historySectionTitle: 'Daily History',
+    historyHelp: 'Review the dailies recorded for this board. Each record keeps its original plan, snapshots and result. Nothing is recomputed from the current board state.',
+    historyRefresh: 'Load history',
+    historyFromLabel: 'From:',
+    historyToLabel: 'To:',
+    historyApplyFilter: 'Apply period',
+    historyClearFilter: 'Clear period',
+    historyLoading: 'Loading history…',
+    historyError: 'History failed: {{message}}',
+    historyEmpty: 'No dailies recorded for this board yet.',
+    historyEmptyRange: 'No dailies in the selected period.',
+    historySummary: 'Dailies {{dailies}} · planned {{committed}} · proven fulfilled {{fulfilled}} · undetermined {{undetermined}}.',
+    historyOverallRate: 'Overall proven fulfillment rate: {{rate}}% (weighted by commitments).',
+    historyOverallRateUnavailable: 'Overall proven fulfillment rate: unavailable (no reliably evaluated daily).',
+    historyUnreliableCount: 'Records without a reliable evaluation: {{count}}.',
+    historyEvolutionTitle: 'Daily evolution',
+    historyEvolutionPoint: '{{date}}: {{rate}}% ({{committed}} planned)',
+    historyEvolutionPointUnavailable: '{{date}}: n/a ({{committed}} planned)',
+    historyRecordDate: 'Daily: {{date}}',
+    historyRecordNoDate: 'Daily: date unavailable',
+    historyRecordPlanning: 'Planning: {{when}}',
+    historyRecordEvaluation: 'Evaluation: {{when}}',
+    historyRecordNoEvaluation: 'Evaluation: none recorded',
+    historyRecordCommitment: 'Commitment {{id}} · revision {{revision}}',
+    historyRecordRevisionInEffect: 'Revision in effect at evaluation: {{revision}}',
+    historyRecordInferredEvaluation: 'Evaluation snapshot inferred (not explicitly recorded).',
+    historyRecordMetrics: 'Planned {{committed}} · reached {{reached}} · beyond {{beyond}} · behind {{behind}} · off-track {{offTrack}} · missing {{missing}}.',
+    historyRecordRate: 'Proven: {{rate}}%',
+    historyRecordRateUnavailable: 'Proven: unavailable',
+    historyRecordUnreliable: 'Not reliably evaluated: {{reasons}}.',
+    historyRecordOpen: 'Open comparison',
+    historyReasonNoBase: 'no base snapshot',
+    historyReasonNoLater: 'no later snapshot',
+    historyReasonIncomplete: 'incomplete snapshot',
+    historyReasonOrder: 'unreliable column order',
+    historyReasonNoCommitment: 'no commitment',
+    historyReasonFailed: 'comparison failed',
   },
   pt: {
     outdatedExtension: 'Sua extensão está desatualizada. Por favor, atualize. O link de download está no console.',
@@ -278,6 +316,44 @@ const I18N = {
     navProjected: 'Board projetado',
     navActual: 'Resultado real',
     navComparison: 'Comparação dos compromissos',
+    // Histórico da Daily (roadmap T1.7): análise histórica das dailies.
+    historySectionTitle: 'Histórico da Daily',
+    historyHelp: 'Reveja as dailies registradas deste board. Cada registro mantém o plano original, os snapshots e o resultado. Nada é recalculado com o estado atual do board.',
+    historyRefresh: 'Carregar histórico',
+    historyFromLabel: 'De:',
+    historyToLabel: 'Até:',
+    historyApplyFilter: 'Aplicar período',
+    historyClearFilter: 'Limpar período',
+    historyLoading: 'Carregando histórico…',
+    historyError: 'Falha no histórico: {{message}}',
+    historyEmpty: 'Ainda não há dailies registradas para este board.',
+    historyEmptyRange: 'Nenhuma daily no período selecionado.',
+    historySummary: 'Dailies {{dailies}} · planejados {{committed}} · cumpridos comprovados {{fulfilled}} · indeterminados {{undetermined}}.',
+    historyOverallRate: 'Taxa geral de cumprimento comprovado: {{rate}}% (ponderada pelos compromissos).',
+    historyOverallRateUnavailable: 'Taxa geral de cumprimento comprovado: indisponível (nenhuma daily avaliada com confiança).',
+    historyUnreliableCount: 'Registros sem avaliação confiável: {{count}}.',
+    historyEvolutionTitle: 'Evolução diária',
+    historyEvolutionPoint: '{{date}}: {{rate}}% ({{committed}} planejados)',
+    historyEvolutionPointUnavailable: '{{date}}: n/d ({{committed}} planejados)',
+    historyRecordDate: 'Daily: {{date}}',
+    historyRecordNoDate: 'Daily: data indisponível',
+    historyRecordPlanning: 'Planejamento: {{when}}',
+    historyRecordEvaluation: 'Avaliação: {{when}}',
+    historyRecordNoEvaluation: 'Avaliação: nenhuma registrada',
+    historyRecordCommitment: 'Compromisso {{id}} · revisão {{revision}}',
+    historyRecordRevisionInEffect: 'Revisão vigente na avaliação: {{revision}}',
+    historyRecordInferredEvaluation: 'Snapshot de avaliação inferido (não registrado explicitamente).',
+    historyRecordMetrics: 'Planejados {{committed}} · atingiu {{reached}} · além {{beyond}} · aquém {{behind}} · indefinido {{offTrack}} · sumiu {{missing}}.',
+    historyRecordRate: 'Comprovado: {{rate}}%',
+    historyRecordRateUnavailable: 'Comprovado: indisponível',
+    historyRecordUnreliable: 'Sem avaliação confiável: {{reasons}}.',
+    historyRecordOpen: 'Abrir comparação',
+    historyReasonNoBase: 'sem snapshot inicial',
+    historyReasonNoLater: 'sem snapshot posterior',
+    historyReasonIncomplete: 'snapshot incompleto',
+    historyReasonOrder: 'ordem de colunas não confiável',
+    historyReasonNoCommitment: 'sem compromisso',
+    historyReasonFailed: 'falha na comparação',
   },
 };
 
@@ -1378,6 +1454,11 @@ const CommitmentPicker =
 // missing module degrades to "projected section unavailable", never a crash.
 const ProjectedBoard =
   (typeof WIPBoardProjectedBoard !== 'undefined' && WIPBoardProjectedBoard) || null;
+// Daily History (roadmap T1.7): the pure aggregation view-model that
+// reconstructs and summarizes past dailies from persisted records only. Optional,
+// so a missing module degrades to "history section unavailable", never a crash.
+const DailyHistory =
+  (typeof WIPBoardDailyHistory !== 'undefined' && WIPBoardDailyHistory) || null;
 
 // A single store instance per page, created lazily so a missing module (older
 // manifest) degrades to "panel unavailable" instead of throwing at load.
@@ -2592,6 +2673,333 @@ function errText(err) {
   return err && err.message ? err.message : String(err);
 }
 
+// --- Daily History (roadmap T1.7) ------------------------------------------
+// A read-only historical view of the dailies recorded for the current board.
+// Every number comes from the pure WIPBoardDailyHistory aggregation layer, which
+// reuses the T1.6 comparison view-model (and the T1.3 engine) and reconstructs
+// records from PERSISTED snapshots + commitments only. The live board is never
+// read to fill a historical gap. All DOM writes go through
+// withObserverPaused()/setIndicatorHtml so the R1 MutationObserver fix holds.
+//
+// In-memory state holds the full view-model and the chosen date range so a
+// language switch or a filter change re-renders from memory without recomputing
+// or re-reading the board.
+const historyState = {
+  view: null, // the last WIPBoardDailyHistory.buildHistoryView result
+  snapshots: [],
+  commitments: [],
+  range: { from: null, to: null },
+};
+
+async function handleLoadHistory(context, i18n) {
+  const store = getSnapshotStore();
+  if (!store || !DailyHistory || !DailyComparison) {
+    setHistoryStatus(i18n.t('historyError', { message: 'module unavailable' }), 'err');
+    return;
+  }
+
+  let boardModel;
+  try {
+    boardModel = readBoardModel();
+  } catch (err) {
+    setHistoryStatus(i18n.t('historyError', { message: errText(err) }), 'err');
+    return;
+  }
+  const scope = resolveSnapshotScope(boardModel, context);
+  if (!scope) {
+    setHistoryStatus(i18n.t('snapshotScopeMissing'), 'err');
+    return;
+  }
+
+  setHistoryStatus(i18n.t('historyLoading'), null);
+
+  // Read ALL persisted snapshots and commitments for the SAME board scope. The
+  // store already isolates by org/project/team/board, so other boards never leak.
+  let snapshots;
+  let commitments;
+  try {
+    snapshots = await store.getSnapshots(scope);
+    commitments = await store.getCommitments(scope);
+  } catch (err) {
+    setHistoryStatus(i18n.t('historyError', { message: errText(err) }), 'err');
+    return;
+  }
+
+  historyState.snapshots = snapshots || [];
+  historyState.commitments = commitments || [];
+  recomputeHistory(i18n);
+}
+
+// Build the view-model from the loaded records + the current range. Pure; no
+// board read. Re-run whenever the range changes.
+function recomputeHistory(i18n) {
+  if (!DailyHistory) return;
+  historyState.view = DailyHistory.buildHistoryView(
+    { snapshots: historyState.snapshots, commitments: historyState.commitments },
+    { range: historyState.range }
+  );
+  setHistoryStatus('', null);
+  renderHistory(i18n);
+}
+
+function handleApplyHistoryRange(i18n) {
+  const from = document.getElementById('wip-history-from');
+  const to = document.getElementById('wip-history-to');
+  historyState.range = {
+    from: from && from.value ? from.value : null,
+    to: to && to.value ? to.value : null,
+  };
+  if (historyState.view) recomputeHistory(i18n);
+}
+
+function handleClearHistoryRange(i18n) {
+  historyState.range = { from: null, to: null };
+  const from = document.getElementById('wip-history-from');
+  const to = document.getElementById('wip-history-to');
+  if (from) from.value = '';
+  if (to) to.value = '';
+  if (historyState.view) recomputeHistory(i18n);
+}
+
+// Map a history-level reliability reason code to a localized label.
+function historyReasonText(code, i18n) {
+  const map = {
+    NO_BASE_SNAPSHOT: 'historyReasonNoBase',
+    NO_LATER_SNAPSHOT: 'historyReasonNoLater',
+    INCOMPLETE_SNAPSHOT: 'historyReasonIncomplete',
+    UNRELIABLE_COLUMN_ORDER: 'historyReasonOrder',
+    NO_COMMITMENT: 'historyReasonNoCommitment',
+    COMPARISON_FAILED: 'historyReasonFailed',
+  };
+  return map[code] ? i18n.t(map[code]) : code;
+}
+
+function renderHistory(i18n) {
+  const output = document.getElementById('wip-history-output');
+  if (!output) return;
+  const view = historyState.view;
+  if (!view) {
+    setHistoryOutput('');
+    return;
+  }
+
+  // Empty states: distinguish "no dailies at all" from "none in this period".
+  if (!view.records.length) {
+    const key = view.totalRecords > 0 ? 'historyEmptyRange' : 'historyEmpty';
+    setHistoryOutput(`<div class="wip-history-empty">${escapeText(i18n.t(key))}</div>`);
+    return;
+  }
+
+  const s = view.summary;
+
+  // Historical summary + overall weighted rate (suppressed when unreliable) +
+  // the separate count of records without a reliable evaluation.
+  const summary =
+    `<div class="wip-comparison-summary">` +
+    escapeText(
+      i18n.t('historySummary', {
+        dailies: s.dailies,
+        committed: s.committed,
+        fulfilled: s.fulfilled,
+        undetermined: s.undetermined,
+      })
+    ) +
+    `</div>`;
+
+  let rate;
+  if (s.rateReliable && s.overallRate != null) {
+    const pct = Math.max(0, Math.min(100, s.overallRate));
+    rate =
+      `<div class="wip-comparison-rate">` +
+      escapeText(i18n.t('historyOverallRate', { rate: s.overallRate })) +
+      `<span class="wip-rate-bar"><span class="wip-rate-fill" style="width:${pct}%"></span></span>` +
+      `</div>`;
+  } else {
+    rate =
+      `<div class="wip-comparison-rate unavailable">` +
+      escapeText(i18n.t('historyOverallRateUnavailable')) +
+      `</div>`;
+  }
+
+  const unreliable =
+    `<div class="wip-comparison-undetermined">` +
+    escapeText(i18n.t('historyUnreliableCount', { count: s.unreliableDailies })) +
+    `</div>`;
+
+  // Simple evolution chart (no chart library): a labeled bar per day.
+  const evolution = renderHistoryEvolution(s.evolution, i18n);
+
+  // One card per daily record, newest first.
+  const cards = view.records.map(rec => renderHistoryRecord(rec, i18n)).join('');
+
+  setHistoryOutput(
+    summary +
+      rate +
+      unreliable +
+      evolution +
+      `<div class="wip-history-records">${cards}</div>`
+  );
+
+  bindHistoryRecordButtons(i18n);
+}
+
+function renderHistoryEvolution(evolution, i18n) {
+  const points = Array.isArray(evolution) ? evolution : [];
+  if (!points.length) return '';
+  const bars = points
+    .map(p => {
+      const reliable = p.reliable && p.rate != null;
+      const pct = reliable ? Math.max(0, Math.min(100, p.rate)) : 0;
+      const label = reliable
+        ? i18n.t('historyEvolutionPoint', { date: p.date, rate: p.rate, committed: p.committed })
+        : i18n.t('historyEvolutionPointUnavailable', { date: p.date, committed: p.committed });
+      return (
+        `<div class="wip-history-evo-row" title="${escapeAttr(label)}">` +
+        `<span class="wip-history-evo-date">${escapeText(p.date)}</span>` +
+        `<span class="wip-history-evo-track"><span class="wip-history-evo-fill${reliable ? '' : ' unavailable'}" style="width:${pct}%"></span></span>` +
+        `<span class="wip-history-evo-val">${escapeText(reliable ? p.rate + '%' : 'n/a')}</span>` +
+        `</div>`
+      );
+    })
+    .join('');
+  return (
+    `<div class="wip-history-evolution">` +
+    `<div class="wip-history-evo-title">${escapeText(i18n.t('historyEvolutionTitle'))}</div>` +
+    bars +
+    `</div>`
+  );
+}
+
+function renderHistoryRecord(rec, i18n) {
+  const m = rec.metrics || {};
+  const dateLine = rec.dailyDate
+    ? i18n.t('historyRecordDate', { date: rec.dailyDate })
+    : i18n.t('historyRecordNoDate');
+
+  const planning = rec.planningAt
+    ? `<div class="wip-comparison-meta">${escapeText(i18n.t('historyRecordPlanning', { when: formatSnapshotWhen(rec.planningAt) }))}</div>`
+    : '';
+  const evaluation = rec.evaluationAt
+    ? `<div class="wip-comparison-meta">${escapeText(i18n.t('historyRecordEvaluation', { when: formatSnapshotWhen(rec.evaluationAt) }))}</div>`
+    : `<div class="wip-comparison-meta">${escapeText(i18n.t('historyRecordNoEvaluation'))}</div>`;
+
+  const commitmentLine = `<div class="wip-comparison-meta">${escapeText(
+    i18n.t('historyRecordCommitment', { id: rec.commitmentId == null ? '—' : rec.commitmentId, revision: rec.revision == null ? '—' : rec.revision })
+  )}</div>`;
+
+  let revisionInEffect = '';
+  if (rec.revisionInEffect != null) {
+    revisionInEffect = `<div class="wip-comparison-meta">${escapeText(i18n.t('historyRecordRevisionInEffect', { revision: rec.revisionInEffect }))}</div>`;
+  }
+
+  let inferredNote = '';
+  if (rec.evaluationSource === 'inferred' && rec.later) {
+    inferredNote = `<div class="wip-comparison-archived">${escapeText(i18n.t('historyRecordInferredEvaluation'))}</div>`;
+  }
+
+  const metricsLine = `<div class="wip-comparison-summary">${escapeText(
+    i18n.t('historyRecordMetrics', {
+      committed: m.committed || 0,
+      reached: m.reached || 0,
+      beyond: m.beyond || 0,
+      behind: m.behind || 0,
+      offTrack: m.offTrack || 0,
+      missing: m.missing || 0,
+    })
+  )}</div>`;
+
+  let rateLine;
+  if (m.rateReliable && m.fulfillmentRate != null) {
+    rateLine = `<span class="wip-history-rate">${escapeText(i18n.t('historyRecordRate', { rate: m.fulfillmentRate }))}</span>`;
+  } else {
+    rateLine = `<span class="wip-history-rate unavailable">${escapeText(i18n.t('historyRecordRateUnavailable'))}</span>`;
+  }
+
+  let reliabilityLine = '';
+  if (rec.reliability && !rec.reliability.reliable) {
+    const reasons = (rec.reliability.reasons || []).map(c => historyReasonText(c, i18n)).join(', ');
+    reliabilityLine = `<div class="wip-comparison-reliability">${escapeText(i18n.t('historyRecordUnreliable', { reasons: reasons }))}</div>`;
+  }
+
+  // "Open comparison" navigates to the existing comparison view for this exact
+  // record (same commitment + later snapshot identity), reusing T1.6. Disabled
+  // when there is no base snapshot (nothing to open honestly).
+  const openBtn = rec.initial
+    ? `<button type="button" class="wip-comparison-filter wip-history-open" ` +
+      `data-commitment="${escapeAttr(String(rec.commitmentId == null ? '' : rec.commitmentId))}" ` +
+      `data-later="${escapeAttr(String(rec.later && rec.later.id != null ? rec.later.id : ''))}">` +
+      `${escapeText(i18n.t('historyRecordOpen'))}</button>`
+    : '';
+
+  return (
+    `<div class="wip-history-card">` +
+    `<div class="wip-history-card-head">` +
+    `<span class="wip-history-card-date">${escapeText(dateLine)}</span>` +
+    rateLine +
+    `</div>` +
+    commitmentLine +
+    revisionInEffect +
+    planning +
+    evaluation +
+    inferredNote +
+    metricsLine +
+    reliabilityLine +
+    (openBtn ? `<div class="wip-snap-actions">${openBtn}</div>` : '') +
+    `</div>`
+  );
+}
+
+// Bind the per-record "Open comparison" buttons. Clicking loads the SAME record
+// into the existing comparison view (T1.6) and switches to it, preserving the
+// selected snapshot/commitment identity. No recompute of history and no board
+// read beyond what the comparison already does.
+function bindHistoryRecordButtons(i18n) {
+  const output = document.getElementById('wip-history-output');
+  if (!output) return;
+  output.querySelectorAll('.wip-history-open').forEach(btn => {
+    btn.onclick = () => openHistoryRecordInComparison(btn, i18n);
+  });
+}
+
+function openHistoryRecordInComparison(btn, i18n) {
+  const commitmentId = btn.getAttribute('data-commitment');
+  const laterId = btn.getAttribute('data-later');
+  const view = historyState.view;
+  if (!view) return;
+  const rec = view.records.find(r => String(r.commitmentId) === String(commitmentId));
+  if (!rec) return;
+
+  const initial = historyState.snapshots.find(s => rec.initial && String(s.id) === String(rec.initial.id)) || null;
+  const commitment = historyState.commitments.find(c => String(c.id) === String(commitmentId)) || null;
+  if (!initial || !commitment) return;
+
+  // Seed the comparison in-memory state with this historic record's identity so
+  // the existing comparison view renders exactly this daily. Reuses T1.6; no new
+  // comparison algorithm is introduced here.
+  comparisonState.initial = initial;
+  comparisonState.commitment = commitment;
+  comparisonState.laterSnapshots = DailyComparison.selectComparableSnapshots(historyState.snapshots, initial);
+  comparisonState.selectedLaterId = laterId || (comparisonState.laterSnapshots.length ? comparisonState.laterSnapshots[0].id : null);
+  comparisonState.filter = 'all';
+  recomputeComparison(i18n);
+
+  if (typeof setDailyView === 'function') setDailyView('comparison', i18n);
+}
+
+function setHistoryStatus(message, kind) {
+  const status = document.getElementById('wip-history-status');
+  if (!status) return;
+  status.textContent = message || '';
+  status.className = 'wip-snap-status' + (kind ? ' ' + kind : '');
+}
+
+function setHistoryOutput(html) {
+  const output = document.getElementById('wip-history-output');
+  if (!output) return;
+  // Diff-before-write mirrors the indicator/snapshot guard (R1 fix discipline).
+  setIndicatorHtml(output, html || '');
+}
+
 // --- Daily views navigation (roadmap T1.6 §6) ------------------------------
 // Switches the panel between the four daily views (Initial board, Projected
 // board, Actual result, Commitment comparison) while preserving the selected
@@ -2713,6 +3121,23 @@ function ensureSnapshotPanel(context, i18n) {
           <p class="wip-snap-status" id="wip-comparison-status"></p>
           <div class="wip-commit-output" id="wip-comparison-output"></div>
         </div>
+        <div class="wip-history-section" id="wip-history-section">
+          <h4 id="wip-history-title"></h4>
+          <p class="wip-comparison-help" id="wip-history-help"></p>
+          <div class="wip-snap-actions">
+            <button class="wip-snap-btn" id="wip-history-refresh" type="button"></button>
+          </div>
+          <div class="wip-history-filter">
+            <label id="wip-history-from-label" for="wip-history-from"></label>
+            <input type="date" id="wip-history-from" class="wip-history-date" />
+            <label id="wip-history-to-label" for="wip-history-to"></label>
+            <input type="date" id="wip-history-to" class="wip-history-date" />
+            <button class="wip-snap-btn" id="wip-history-apply" type="button"></button>
+            <button class="wip-snap-btn" id="wip-history-clear" type="button"></button>
+          </div>
+          <p class="wip-snap-status" id="wip-history-status"></p>
+          <div class="wip-commit-output" id="wip-history-output"></div>
+        </div>
         <div class="wip-nav-section" id="wip-nav-section">
           <h4 id="wip-nav-title"></h4>
           <div class="wip-nav-tabs">
@@ -2824,6 +3249,32 @@ function ensureSnapshotPanel(context, i18n) {
       if (comparisonState.vm) renderComparison(i18n);
     } else {
       comparisonSection.style.display = 'none';
+    }
+  }
+
+  // Daily History sub-section (roadmap T1.7). Shown only when the pure history
+  // aggregation module and the comparison view-model are present; bound against
+  // the current context/i18n every refresh so config and language changes take
+  // effect. The UI only presents what the pure layer produced.
+  const historySection = document.getElementById('wip-history-section');
+  if (historySection) {
+    if (DailyHistory && DailyComparison && DailyCommitment) {
+      historySection.style.display = 'block';
+      bindSnapshotButton('wip-history-refresh', () => handleLoadHistory(context, i18n));
+      bindSnapshotButton('wip-history-apply', () => handleApplyHistoryRange(i18n));
+      bindSnapshotButton('wip-history-clear', () => handleClearHistoryRange(i18n));
+      setTextById('wip-history-title', i18n.t('historySectionTitle'));
+      setTextById('wip-history-help', i18n.t('historyHelp'));
+      setTextById('wip-history-refresh', i18n.t('historyRefresh'));
+      setTextById('wip-history-from-label', i18n.t('historyFromLabel'));
+      setTextById('wip-history-to-label', i18n.t('historyToLabel'));
+      setTextById('wip-history-apply', i18n.t('historyApplyFilter'));
+      setTextById('wip-history-clear', i18n.t('historyClearFilter'));
+      // Relabel an already-rendered history without recomputing or re-reading the
+      // board, so a language switch keeps the current records and metrics.
+      if (historyState.view) renderHistory(i18n);
+    } else {
+      historySection.style.display = 'none';
     }
   }
 
