@@ -3,7 +3,9 @@
   "name": "Azure DevOps - Board WIP Monitor",
   "version": "1.3",
   "description": "Calculates board WIP with configurable columns, alerts, and optional special rules.",
-  "permissions": ["storage"],
+  "permissions": [
+    "storage"
+  ],
   "host_permissions": [
     "https://dev.azure.com/*",
     "https://*.visualstudio.com/*"
@@ -34,7 +36,10 @@
         "src/data/sprint-trends.js",
         "content.js"
       ],
-      "run_at": "document_end"
+      "run_at": "document_end",
+      "css": [
+        "src/ui/forms.css"
+      ]
     }
   ],
   "action": {
@@ -42,9 +47,13 @@
     "default_title": "Configurar WIP"
   },
   "web_accessible_resources": [
-  {
-    "resources": ["version.json"],
-    "matches": ["<all_urls>"]
-  }
-]
+    {
+      "resources": [
+        "version.json"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
 }
