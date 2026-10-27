@@ -253,6 +253,104 @@ test('the Daily History (T1.7) keys are present in both languages', () => {
   });
 });
 
+test('the Sprint Intelligence (T2.2) keys are present in both languages', () => {
+  const i18n = loadI18N();
+  const required = [
+    'sprintSectionTitle',
+    'sprintHelp',
+    'sprintRefresh',
+    'sprintLoading',
+    'sprintError',
+    'sprintScopeMissing',
+    'sprintStateApi',
+    'sprintStateManual',
+    'sprintStateDisabled',
+    'sprintStateUnauthenticated',
+    'sprintStateUnavailable',
+    'sprintStateNoSprint',
+    'sprintStateNone',
+    'sprintUnavailableBadge',
+    'sprintRealBadge',
+    'sprintManualBadge',
+    'sprintIdLabel',
+    'sprintPathLabel',
+    'sprintPeriodLabel',
+    'sprintPeriodUnknown',
+    'sprintDaysElapsed',
+    'sprintDaysRemaining',
+    'sprintDaysUnknown',
+    'sprintPlannedCount',
+    'sprintAddedCount',
+    'sprintRemovedCount',
+    'sprintCompletedCount',
+    'sprintInProgressCount',
+    'sprintCurrentCount',
+    'sprintNoBaseline',
+    'sprintRecordBaseline',
+    'sprintReplaceBaseline',
+    'sprintBaselineSaved',
+    'sprintBaselineExists',
+    'sprintBaselineNeedsSprint',
+    'sprintGoalTitle',
+    'sprintGoalObjective',
+    'sprintGoalDescription',
+    'sprintGoalCriteria',
+    'sprintGoalPriorities',
+    'sprintGoalSave',
+    'sprintGoalSaved',
+    'sprintGoalHistory',
+    'sprintGoalEmpty',
+    'sprintGoalNeedsSprint',
+    'sprintManualTitle',
+    'sprintManualId',
+    'sprintManualStart',
+    'sprintManualFinish',
+    'sprintManualSave',
+    'sprintManualSaved',
+    'sprintManualNeedsId',
+  ];
+  required.forEach((key) => {
+    assert.ok(key in i18n.en, `EN missing ${key}`);
+    assert.ok(key in i18n.pt, `PT missing ${key}`);
+  });
+});
+
+test('the Sprint Progress (T2.3) keys are present in both languages', () => {
+  const i18n = loadI18N();
+  const required = [
+    'progressSectionTitle',
+    'progressHelp',
+    'progressNoBaseline',
+    'progressPrimaryTitle',
+    'progressBaselinePct',
+    'progressBaselinePctPartial',
+    'progressBaselineCounts',
+    'progressNotStarted',
+    'progressInProgress',
+    'progressCompleted',
+    'progressUnknown',
+    'progressRemoved',
+    'progressSecondaryTitle',
+    'progressCurrentPct',
+    'progressCurrentCounts',
+    'progressAdded',
+    'progressAddedCompleted',
+    'progressScopeDelta',
+    'progressColumnsTitle',
+    'progressColumnRow',
+    'progressColumnUnknown',
+    'progressReliabilityTitle',
+    'progressReliabilitySufficient',
+    'progressReliabilityPartial',
+    'progressReliabilityUnavailable',
+    'progressLateBaseline',
+  ];
+  required.forEach((key) => {
+    assert.ok(key in i18n.en, `EN missing ${key}`);
+    assert.ok(key in i18n.pt, `PT missing ${key}`);
+  });
+});
+
 test('placeholder tokens match between EN and PT for shared keys', () => {
   const i18n = loadI18N();
   const tokenRe = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
