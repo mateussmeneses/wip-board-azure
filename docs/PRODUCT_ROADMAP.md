@@ -473,6 +473,66 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   permission; Manifest V3 preserved. Real-browser validation and live API access
   remain pending per the homologation policy. See `docs/SPRINT_PROGRESS_T2_3.md`.
 
+### T2.4 — Sprint Trends & Risk Analysis — DONE (offline / DOM + manual)
+- Scope: temporal analysis of the sprint over successive, persisted
+  observations. Answers: progress evolution over time; observed progress vs
+  elapsed time (calendar days, with a linear reference line); scope-change
+  evolution; remaining work (burndown) and done work (burnup); delivery trends;
+  data-grounded risk signals; and the limitations/reliability of each analysis.
+  Roadmap Intelligence is explicitly NOT in scope here.
+- Acceptance: the time series has one point PER REAL OBSERVATION (never a
+  fabricated daily point); the elapsed-time percentage is calendar-day based and
+  labelled `calendar-days` to distinguish it from a future business-day metric;
+  the linear reference is a visualization aid, never a forecast, and the
+  deviation is information, not proof of delay; burnup/burndown use only real
+  instants and are NOT forced monotonic (a reopened item lowers completed);
+  unknown-state items are a separate series, never counted as done; scope changes
+  are labelled "detected in interval" between two captures, never at an exact
+  instant; the risk verdict is a heuristic (On Track / Attention / At Risk /
+  Insufficient Data) from explicit, configurable, documented thresholds, with the
+  contributing signals listed and no statistical/AI claim; thin, late or
+  incomplete data prefers Insufficient Data; the baseline is never mutated and the
+  DOM is never used to reconstruct past states.
+- Tests: `test/sprint-trends.test.js` (24) covering empty history, no baseline, a
+  single observation, multiple + out-of-order + duplicate observations, below /
+  above / at the time reference, no reliable dates, scope add/remove/return,
+  reopened items (non-monotonic series), unknown states, high unknown share
+  (insufficient data), scope growth, stagnation, incomplete observations, late
+  baseline, a changed finish date, different sprints/orgs, configurable
+  thresholds, the goal's 70% elapsed example and the calendar-days basis;
+  `test/sprint-observation-store.test.js` (14) covering append + immutability,
+  chronological + out-of-order ordering, latest, scope/sprint isolation, timezone
+  preservation, completeness/reliability indicators, baseline-ref (never
+  persisting the baseline), duplicate collapse, persistence after reload,
+  retention pruning, invalid input, the STORAGE_FAILURE path and by-id lookup;
+  plus the T2.4 i18n key-parity check in `test/i18n-parity.test.js`.
+- Status: one PURE, Chrome-free, DOM-free engine `src/data/sprint-trends.js`
+  (`WIPBoardSprintTrends`) and one minimal persistence contract
+  `src/data/sprint-observation-store.js` (`WIPBoardSprintObservationStore`). The
+  engine REUSES the T2.3 `WIPBoardSprintProgress.computeProgress` per observation
+  (it never reimplements the T2.3 classification) and reads the immutable
+  baseline read-only. The observation store mirrors the snapshot-store /
+  sprint-goal-store design exactly (same injectable adapter, scope+sprint key
+  isolation, immutable append-only records, STORAGE_FAILURE surfacing) and stores
+  only ids/columns/states/timestamps plus completeness + a baseline REFERENCE —
+  never the baseline itself and never credentials. Capture is an EXPLICIT user
+  action ("Record observation") reusing the existing `SnapshotCapture` verdict;
+  there is no background schedule. `content.js` adds a "Sprint trends & risk /
+  Tendências e risco da sprint" sub-section INSIDE the Sprint Intelligence block
+  with a three-way view toggle (Progress / Scope / Trends): a progress-vs-time
+  view with the linear reference marker and the signed deviation; a trends view
+  with the completion series, the burnup/burndown points and the colored risk
+  badge + signal explanation; and a scope-change timeline — all bilingual EN/PT
+  (49 `trends*` keys) and written through the `setIndicatorHtml()` R1 diff-guard
+  inside the existing `withObserverPaused()` phase. The read-only API stays
+  unwired (T2.1 + goal section 12); trends are computed from the local immutable
+  baseline + the persisted observation history + the manual/DOM sprint.
+  `manifest.json` loads both modules before `content.js`. Suite: 438 tests pass
+  (401 prior + 36 new + 1 T2.4 i18n key-parity check). No new config keys; no new
+  permission; Manifest V3 preserved; WIP, R1 and Daily Intelligence regressions
+  all green. Real-browser validation and live API access remain pending per the
+  homologation policy. See `docs/SPRINT_TRENDS_T2_4.md`.
+
 ---
 
 ## Phase 3 — Roadmap Intelligence + History (P3)

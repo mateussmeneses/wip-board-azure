@@ -260,6 +260,56 @@ const I18N = {
     progressReliabilityPartial: 'Partial evidence: {{count}} baseline item(s) lack a known position. The percentage reflects only what is proven.',
     progressReliabilityUnavailable: 'Progress unavailable: no baseline to measure against.',
     progressLateBaseline: 'Late baseline: the initial scope was captured after the sprint started. It is not a true start-of-sprint snapshot.',
+    // Sprint Trends & Risk (roadmap T2.4): temporal analysis over persisted
+    // observations. Trends and risk are heuristics over real data, never a
+    // statistical forecast.
+    trendsSectionTitle: 'Sprint trends & risk',
+    trendsHelp: 'Temporal analysis over successive observations of the sprint. Progress over time, scope changes and heuristic risk signals from real, persisted data. The reference line is not a forecast.',
+    trendsRecordObservation: 'Record observation',
+    trendsRefresh: 'Load trends',
+    trendsObservationSaved: 'Observation recorded ({{count}} items).',
+    trendsObservationNeedsSprint: 'A sprint and a baseline must exist before recording an observation.',
+    trendsNoBaseline: 'Record the initial scope (baseline) to analyze trends.',
+    trendsNoHistory: 'No observations recorded yet. Record an observation to start the trend history.',
+    trendsSingleObservation: 'Only one observation recorded. Record more over time to see a trend.',
+    trendsObservationCount: 'Observations: {{count}}',
+    trendsLastObservation: 'Last observation: {{when}}',
+    trendsViewProgress: 'Progress',
+    trendsViewScope: 'Scope',
+    trendsViewTrends: 'Trends',
+    trendsTimeTitle: 'Progress vs time',
+    trendsElapsed: 'Time elapsed (calendar): {{pct}}%',
+    trendsElapsedUnknown: 'Elapsed time unavailable (no reliable dates).',
+    trendsReference: 'Linear reference: {{pct}}% (visual aid, not a forecast)',
+    trendsObservedCompletion: 'Observed baseline completion: {{pct}}%',
+    trendsDeviation: 'Deviation vs reference: {{pts}} pts (information, not proof of delay)',
+    trendsSeriesTitle: 'Completion over time',
+    trendsSeriesPoint: '{{when}}: {{pct}}% ({{completed}}/{{total}})',
+    trendsSeriesPointPartial: '{{when}}: {{pct}}% ({{completed}}/{{total}}, partial)',
+    trendsBurnTitle: 'Burnup / burndown',
+    trendsBurnupPoint: '{{when}}: {{completed}} of {{total}} done',
+    trendsBurndownPoint: '{{when}}: {{remaining}} remaining, {{unknown}} unknown',
+    trendsBurnNote: 'Only real observation instants are shown; no daily points are fabricated.',
+    trendsScopeTitle: 'Scope changes over time',
+    trendsScopeInterval: 'Between {{from}} and {{to}} (detected in interval):',
+    trendsScopeAdded: 'Added: {{ids}}',
+    trendsScopeRemoved: 'Removed: {{ids}}',
+    trendsScopeReturned: 'Returned: {{ids}}',
+    trendsScopeNone: 'No scope changes detected between observations.',
+    trendsRiskTitle: 'Risk indicator',
+    trendsRiskOnTrack: 'On Track',
+    trendsRiskAttention: 'Attention',
+    trendsRiskAtRisk: 'At Risk',
+    trendsRiskInsufficient: 'Insufficient Data',
+    trendsRiskSignalsTitle: 'Signals behind the verdict:',
+    trendsRiskNoSignals: 'No adverse signals in the observed data.',
+    trendsSignalBehindReference: 'Behind the time reference by {{value}} pts',
+    trendsSignalLateLowCompletion: 'Late sprint with low completion ({{value}}%)',
+    trendsSignalScopeGrowth: 'Scope growth of {{value}}% over the baseline',
+    trendsSignalStagnation: '{{value}} item(s) with no movement across observations',
+    trendsSignalUnknownShare: 'High share of unknown-state items ({{value}}%)',
+    trendsRiskInsufficientReason: 'Too few reliable observations or too many unknown items to judge risk.',
+    trendsRiskDisclaimer: 'Heuristic over observed data. Not a statistical forecast; the sprint is not certain to finish or to be late.',
   },
   pt: {
     outdatedExtension: 'Sua extensão está desatualizada. Por favor, atualize. O link de download está no console.',
@@ -516,6 +566,56 @@ const I18N = {
     progressReliabilityPartial: 'Evidência parcial: {{count}} item(ns) da linha de base sem posição conhecida. O percentual reflete apenas o que está comprovado.',
     progressReliabilityUnavailable: 'Progresso indisponível: não há linha de base para medir.',
     progressLateBaseline: 'Linha de base tardia: o escopo inicial foi capturado após o início da sprint. Não é um retrato real do começo da sprint.',
+    // Sprint Trends & Risk (roadmap T2.4): análise temporal sobre observações
+    // persistidas. Tendências e risco são heurísticas sobre dados reais, nunca
+    // previsão estatística.
+    trendsSectionTitle: 'Tendências e risco da sprint',
+    trendsHelp: 'Análise temporal sobre observações sucessivas da sprint. Progresso ao longo do tempo, alterações de escopo e sinais heurísticos de risco a partir de dados reais persistidos. A linha de referência não é uma previsão.',
+    trendsRecordObservation: 'Registrar observação',
+    trendsRefresh: 'Carregar tendências',
+    trendsObservationSaved: 'Observação registrada ({{count}} itens).',
+    trendsObservationNeedsSprint: 'É preciso ter uma sprint e uma linha de base antes de registrar uma observação.',
+    trendsNoBaseline: 'Registre o escopo inicial (linha de base) para analisar tendências.',
+    trendsNoHistory: 'Nenhuma observação registrada ainda. Registre uma observação para iniciar o histórico de tendências.',
+    trendsSingleObservation: 'Apenas uma observação registrada. Registre mais ao longo do tempo para ver uma tendência.',
+    trendsObservationCount: 'Observações: {{count}}',
+    trendsLastObservation: 'Última observação: {{when}}',
+    trendsViewProgress: 'Progresso',
+    trendsViewScope: 'Escopo',
+    trendsViewTrends: 'Tendências',
+    trendsTimeTitle: 'Progresso vs tempo',
+    trendsElapsed: 'Tempo decorrido (corrido): {{pct}}%',
+    trendsElapsedUnknown: 'Tempo decorrido indisponível (sem datas confiáveis).',
+    trendsReference: 'Referência linear: {{pct}}% (apoio visual, não é previsão)',
+    trendsObservedCompletion: 'Conclusão observada do baseline: {{pct}}%',
+    trendsDeviation: 'Desvio vs referência: {{pts}} pts (informação, não prova de atraso)',
+    trendsSeriesTitle: 'Conclusão ao longo do tempo',
+    trendsSeriesPoint: '{{when}}: {{pct}}% ({{completed}}/{{total}})',
+    trendsSeriesPointPartial: '{{when}}: {{pct}}% ({{completed}}/{{total}}, parcial)',
+    trendsBurnTitle: 'Burnup / burndown',
+    trendsBurnupPoint: '{{when}}: {{completed}} de {{total}} concluídos',
+    trendsBurndownPoint: '{{when}}: {{remaining}} restantes, {{unknown}} desconhecidos',
+    trendsBurnNote: 'Somente os instantes reais de observação são mostrados; nenhum ponto diário é fabricado.',
+    trendsScopeTitle: 'Alterações de escopo ao longo do tempo',
+    trendsScopeInterval: 'Entre {{from}} e {{to}} (detectado no intervalo):',
+    trendsScopeAdded: 'Adicionados: {{ids}}',
+    trendsScopeRemoved: 'Removidos: {{ids}}',
+    trendsScopeReturned: 'Retornaram: {{ids}}',
+    trendsScopeNone: 'Nenhuma alteração de escopo detectada entre observações.',
+    trendsRiskTitle: 'Indicador de risco',
+    trendsRiskOnTrack: 'No caminho',
+    trendsRiskAttention: 'Atenção',
+    trendsRiskAtRisk: 'Em risco',
+    trendsRiskInsufficient: 'Dados insuficientes',
+    trendsRiskSignalsTitle: 'Sinais que originaram o veredito:',
+    trendsRiskNoSignals: 'Nenhum sinal adverso nos dados observados.',
+    trendsSignalBehindReference: 'Abaixo da referência de tempo em {{value}} pts',
+    trendsSignalLateLowCompletion: 'Sprint no fim com baixa conclusão ({{value}}%)',
+    trendsSignalScopeGrowth: 'Crescimento de escopo de {{value}}% sobre a linha de base',
+    trendsSignalStagnation: '{{value}} item(ns) sem avanço entre observações',
+    trendsSignalUnknownShare: 'Alta proporção de itens em estado desconhecido ({{value}}%)',
+    trendsRiskInsufficientReason: 'Poucas observações confiáveis ou itens desconhecidos demais para avaliar o risco.',
+    trendsRiskDisclaimer: 'Heurística sobre dados observados. Não é previsão estatística; a sprint não terminará nem atrasará com certeza.',
   },
 };
 
@@ -825,6 +925,58 @@ if (!document.getElementById('wip-alarm-style')) {
       margin: 6px 0;
       opacity: 0.95;
     }
+
+    /* Sprint Trends & Risk (roadmap T2.4): the temporal-analysis sub-section
+       inside the Sprint Intelligence block. View toggle, a reference marker on
+       the completion bar and a colored risk badge. Library-free. */
+    #wip-snapshot-panel .wip-sprint-trends {
+      border-top: 1px dashed #d0d7de;
+      margin-top: 10px;
+      padding-top: 8px;
+    }
+    #wip-snapshot-panel .wip-trends-toggle {
+      display: flex;
+      gap: 6px;
+      margin: 6px 0;
+      flex-wrap: wrap;
+    }
+    #wip-snapshot-panel .wip-trends-tab {
+      font-size: 11px;
+      padding: 3px 8px;
+      border: 1px solid #c9d4e3;
+      border-radius: 12px;
+      background: #f4f7fb;
+      color: #1f2937;
+      cursor: pointer;
+    }
+    #wip-snapshot-panel .wip-trends-tab.active {
+      background: #0b5fff;
+      border-color: #0b5fff;
+      color: #fff;
+    }
+    /* The elapsed-time reference marker overlaid on the completion bar. It is a
+       visual aid only; the goal forbids reading it as a forecast. */
+    #wip-snapshot-panel .wip-trends-ref {
+      position: relative;
+    }
+    #wip-snapshot-panel .wip-trends-ref-mark {
+      position: absolute;
+      top: -2px;
+      width: 2px;
+      height: 14px;
+      background: #d93025;
+    }
+    #wip-snapshot-panel .wip-risk-badge {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      color: #fff;
+    }
+    #wip-snapshot-panel .wip-risk-ontrack { background: #1e8e3e; }
+    #wip-snapshot-panel .wip-risk-attention { background: #f9ab00; color: #1f2937; }
+    #wip-snapshot-panel .wip-risk-atrisk { background: #d93025; }
+    #wip-snapshot-panel .wip-risk-insufficient { background: #80868b; }
 
     /* Daily Commitment section (roadmap T1.3): a discrete sub-section inside the
        same snapshot panel. It is a DELIVERY projection, visually distinct from
@@ -1770,6 +1922,10 @@ const SprintIntelligence =
   (typeof WIPBoardSprintIntelligence !== 'undefined' && WIPBoardSprintIntelligence) || null;
 const SprintProgress =
   (typeof WIPBoardSprintProgress !== 'undefined' && WIPBoardSprintProgress) || null;
+const SprintObservationStore =
+  (typeof WIPBoardSprintObservationStore !== 'undefined' && WIPBoardSprintObservationStore) || null;
+const SprintTrends =
+  (typeof WIPBoardSprintTrends !== 'undefined' && WIPBoardSprintTrends) || null;
 
 // A single sprint-goal store instance per page, created lazily so a missing
 // module degrades to "panel unavailable" instead of throwing at load.
@@ -1794,7 +1950,25 @@ const sprintState = {
   sprintId: null,
   manualSprint: null,
   progress: null, // the last WIPBoardSprintProgress.computeProgress result (T2.3)
+  trends: null, // the last WIPBoardSprintTrends.computeTrends result (T2.4)
+  baselineRecord: null, // the stored baseline record (for the observation ref)
+  trendsView: 'trends', // active Sprint Trends view: progress | scope | trends
 };
+
+// A single sprint-observation store instance per page, created lazily so a
+// missing module degrades to "panel unavailable" instead of throwing at load.
+let sprintObservationStoreInstance = null;
+function getSprintObservationStore() {
+  if (sprintObservationStoreInstance) return sprintObservationStoreInstance;
+  if (!SprintObservationStore || typeof SprintObservationStore.createStore !== 'function') return null;
+  try {
+    sprintObservationStoreInstance = SprintObservationStore.createStore();
+  } catch (err) {
+    console.debug('[WIP-Board] Sprint observation store unavailable.', err);
+    sprintObservationStoreInstance = null;
+  }
+  return sprintObservationStoreInstance;
+}
 
 // A single store instance per page, created lazily so a missing module (older
 // manifest) degrades to "panel unavailable" instead of throwing at load.
@@ -3620,10 +3794,124 @@ async function handleLoadSprint(context, i18n) {
     sprintState.progress = null;
   }
 
+  // Keep the stored baseline record so an observation can reference the exact
+  // baseline it was measured against (T2.4). The baseline itself is never
+  // altered here.
+  sprintState.baselineRecord = baselineRecord;
+
+  // Sprint Trends (T2.4): load the persisted observation history for this sprint
+  // and compute the temporal analysis. The engine is pure and reuses the T2.3
+  // progress engine per observation; it never reconstructs history from the DOM.
+  // With no baseline or no history it returns an honest, limitation-flagged
+  // result. The read-only API stays unwired (T2.1/goal section 12).
+  sprintState.trends = null;
+  if (SprintTrends && baselineRecord && sprintId != null) {
+    const obsStore = getSprintObservationStore();
+    if (obsStore) {
+      try {
+        const history = await obsStore.getObservations(ctx.scope, sprintId);
+        sprintState.trends = SprintTrends.computeTrends({
+          sprint: sprintState.view.sprint || { id: sprintId },
+          baseline: baselineRecord,
+          history: history,
+          flowConfig: resolveSprintFlowConfig(context),
+          now: new Date(),
+        });
+      } catch (err) {
+        console.debug('[WIP-Board] Sprint trends unavailable.', err);
+        sprintState.trends = null;
+      }
+    }
+  }
+
   setSprintStatus('', null);
   renderSprint(i18n);
   renderSprintProgress(i18n);
+  renderSprintTrends(i18n);
   prefillSprintForms(i18n);
+}
+
+// Record a sprint-state observation (T2.4). This is an EXPLICIT user action that
+// reuses the existing DOM-scope resolution and the observation store; it never
+// runs on a background schedule and never mutates the baseline. A baseline must
+// already exist so the observation can reference it.
+async function handleRecordObservation(context, i18n) {
+  const obsStore = getSprintObservationStore();
+  if (!obsStore || !SprintScope) {
+    setSprintTrendsStatus(i18n.t('sprintError', { message: 'module unavailable' }), 'err');
+    return;
+  }
+  const ctx = resolveSprintContext(context, i18n);
+  if (!ctx) return;
+  if (!sprintState.sprintId || !sprintState.baselineRecord) {
+    setSprintTrendsStatus(i18n.t('trendsObservationNeedsSprint'), 'err');
+    return;
+  }
+
+  // Reuse the existing SnapshotCapture mechanism to get the honest completeness
+  // verdict + reasons from the current board read (goal section 2: reuse the
+  // existing capture mechanisms). Fall back to a plain read when the capture
+  // module is absent.
+  let complete = false;
+  let incompleteReasons = [];
+  let items = ctx.items;
+  if (SnapshotCapture && typeof SnapshotCapture.buildCapture === 'function') {
+    let boardModel;
+    try {
+      boardModel = readBoardModel();
+    } catch (err) {
+      setSprintTrendsStatus(i18n.t('sprintError', { message: errText(err) }), 'err');
+      return;
+    }
+    try {
+      const capture = SnapshotCapture.buildCapture(boardModel, ctx.scope, { source: { origin: 'dom-reader' } });
+      complete = capture.complete === true;
+      incompleteReasons = Array.isArray(capture.incompleteReasons) ? capture.incompleteReasons : [];
+      items = Array.isArray(capture.items) && capture.items.length ? capture.items : ctx.items;
+    } catch (err) {
+      // A capture failure must not fabricate completeness; record as incomplete.
+      complete = false;
+    }
+  }
+  const baselineRecord = sprintState.baselineRecord;
+
+  try {
+    const observation = await obsStore.appendObservation({
+      scope: ctx.scope,
+      sprintId: sprintState.sprintId,
+      items: items,
+      complete: complete,
+      reliability: complete ? 'sufficient' : 'partial',
+      incompleteReasons: incompleteReasons,
+      source: { origin: 'dom-reader' },
+      baselineRef: {
+        sprintId: sprintState.sprintId,
+        revision: typeof baselineRecord.revision === 'number' ? baselineRecord.revision : 0,
+        capturedAt: baselineRecord.baseline && baselineRecord.baseline.capturedAt
+          ? baselineRecord.baseline.capturedAt
+          : (baselineRecord.savedAt || null),
+      },
+    });
+    setSprintTrendsStatus(i18n.t('trendsObservationSaved', { count: observation.itemCount }), 'ok');
+    // Reload so the trend series reflects the newly recorded observation.
+    await handleLoadSprint(context, i18n);
+  } catch (err) {
+    setSprintTrendsStatus(i18n.t('sprintError', { message: errText(err) }), 'err');
+  }
+}
+
+function setSprintTrendsStatus(message, kind) {
+  const el = document.getElementById('wip-sprint-trends-status');
+  if (!el) return;
+  el.textContent = message || '';
+  el.className = 'wip-snap-status' + (kind ? ' ' + kind : '');
+}
+
+// Switch the Sprint Trends view (progress | scope | trends) and re-render from
+// the in-memory result, so a toggle never re-reads the board (R1-safe).
+function setSprintTrendsView(view, i18n) {
+  sprintState.trendsView = view;
+  renderSprintTrends(i18n);
 }
 
 // Flow configuration (goal section 4): the team's main flow is Approved -> ... ->
@@ -3959,6 +4247,179 @@ function renderSprintProgress(i18n) {
   setIndicatorHtml(output, lateBanner + primary + secondary + columns + reliability);
 }
 
+// Render the Sprint Trends & Risk view (roadmap T2.4). Pure presentation of what
+// the WIPBoardSprintTrends engine produced; it never recomputes or re-reads the
+// board. Three switchable views (progress / scope / trends) all read from the
+// same in-memory result. Honest about limitations: no history, a single
+// observation, incomplete captures, a late baseline or unreliable dates are all
+// stated instead of guessed (goal sections 8, 9). Every write goes through the
+// setIndicatorHtml() R1 diff-guard.
+function renderSprintTrends(i18n) {
+  const output = document.getElementById('wip-sprint-trends-output');
+  if (!output) return;
+  const t = sprintState.trends;
+
+  // Reflect the active view on the toggle tabs.
+  const view = sprintState.trendsView || 'trends';
+  ['progress', 'scope', 'trends'].forEach(function (v) {
+    const tab = document.getElementById('wip-sprint-trends-tab-' + v);
+    if (tab) tab.classList.toggle('active', v === view);
+  });
+
+  if (!t || !t.hasBaseline) {
+    setIndicatorHtml(output, `<div class="wip-snap-note">${escapeText(i18n.t('trendsNoBaseline'))}</div>`);
+    return;
+  }
+  if (!t.hasHistory) {
+    setIndicatorHtml(output, `<div class="wip-snap-note">${escapeText(i18n.t('trendsNoHistory'))}</div>`);
+    return;
+  }
+
+  const header =
+    `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsObservationCount', { count: t.observationCount }))}</span></div>` +
+    (t.latest
+      ? `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsLastObservation', { when: formatTrendWhen(t.latest.iso) }))}</span></div>`
+      : '') +
+    (t.observationCount === 1
+      ? `<div class="wip-snap-note">${escapeText(i18n.t('trendsSingleObservation'))}</div>`
+      : '');
+
+  let body = '';
+  if (view === 'scope') {
+    body = renderTrendsScopeView(t, i18n);
+  } else if (view === 'progress') {
+    body = renderTrendsProgressView(t, i18n);
+  } else {
+    body = renderTrendsTrendsView(t, i18n);
+  }
+
+  setIndicatorHtml(output, header + body);
+}
+
+// Progress-vs-time view (goal sections 4 & 3): elapsed time, linear reference,
+// observed completion and the deviation (as information, never proof of delay).
+function renderTrendsProgressView(t, i18n) {
+  let html = `<div class="wip-snap-row"><strong>${escapeText(i18n.t('trendsTimeTitle'))}</strong></div>`;
+  if (t.time && t.time.reliable && t.time.elapsedPct != null) {
+    html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsElapsed', { pct: t.time.elapsedPct }))}</span></div>`;
+    html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsReference', { pct: t.time.linearReferencePct }))}</span></div>`;
+    const observedPct = t.latest && t.latest.baselineCompletionPct != null ? t.latest.baselineCompletionPct : 0;
+    html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsObservedCompletion', { pct: observedPct }))}</span></div>`;
+    html +=
+      `<div class="wip-progress-bar wip-trends-ref" role="img" aria-label="${escapeText(String(observedPct))}%">` +
+      `<div class="wip-progress-fill" style="width:${Math.max(0, Math.min(100, observedPct))}%"></div>` +
+      `<div class="wip-trends-ref-mark" style="left:${Math.max(0, Math.min(100, t.time.linearReferencePct))}%"></div>` +
+      `</div>`;
+    const dev = Math.round((observedPct - t.time.linearReferencePct) * 100) / 100;
+    html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsDeviation', { pts: dev > 0 ? '+' + dev : String(dev) }))}</span></div>`;
+  } else {
+    html += `<div class="wip-snap-note">${escapeText(i18n.t('trendsElapsedUnknown'))}</div>`;
+  }
+  return html;
+}
+
+// Trends view: the completion series + burnup/burndown + the risk indicator.
+function renderTrendsTrendsView(t, i18n) {
+  let html = `<div class="wip-snap-row"><strong>${escapeText(i18n.t('trendsSeriesTitle'))}</strong></div>`;
+  (t.series || []).forEach(function (p) {
+    const when = formatTrendWhen(p.iso);
+    const pct = p.baselineCompletionPct == null ? 0 : p.baselineCompletionPct;
+    const key = p.reliability === 'sufficient' ? 'trendsSeriesPoint' : 'trendsSeriesPointPartial';
+    html += `<div class="wip-snap-row"><span>${escapeText(i18n.t(key, { when: when, pct: pct, completed: p.completed, total: p.baselineTotal }))}</span></div>`;
+  });
+
+  // Burnup / burndown (only real instants; goal section 5).
+  html += `<div class="wip-snap-row"><strong>${escapeText(i18n.t('trendsBurnTitle'))}</strong></div>`;
+  (t.burndown || []).forEach(function (p) {
+    const when = formatTrendWhen(p.iso);
+    html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsBurndownPoint', { when: when, remaining: p.remaining, unknown: p.unknown }))}</span></div>`;
+  });
+  html += `<div class="wip-snap-note">${escapeText(i18n.t('trendsBurnNote'))}</div>`;
+
+  html += renderTrendsRisk(t, i18n);
+  return html;
+}
+
+// Scope view: the scope-change timeline between successive observations.
+function renderTrendsScopeView(t, i18n) {
+  let html = `<div class="wip-snap-row"><strong>${escapeText(i18n.t('trendsScopeTitle'))}</strong></div>`;
+  const intervals = (t.scopeTimeline || []).filter(function (iv) {
+    return iv.added.length || iv.removed.length || iv.returned.length;
+  });
+  if (intervals.length === 0) {
+    html += `<div class="wip-snap-note">${escapeText(i18n.t('trendsScopeNone'))}</div>`;
+    return html;
+  }
+  intervals.forEach(function (iv) {
+    html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsScopeInterval', { from: formatTrendWhen(iv.fromIso), to: formatTrendWhen(iv.toIso) }))}</span></div>`;
+    if (iv.added.length) html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsScopeAdded', { ids: iv.added.join(', ') }))}</span></div>`;
+    if (iv.removed.length) html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsScopeRemoved', { ids: iv.removed.join(', ') }))}</span></div>`;
+    if (iv.returned.length) html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsScopeReturned', { ids: iv.returned.join(', ') }))}</span></div>`;
+  });
+  return html;
+}
+
+// Risk indicator + the signals that explain it (goal sections 7 & 8). Includes
+// the explicit "not a forecast" disclaimer so the heuristic is never mistaken
+// for a prediction.
+function renderTrendsRisk(t, i18n) {
+  const risk = t.risk || { level: 'insufficient-data', signals: [] };
+  const levelKey = {
+    'on-track': 'trendsRiskOnTrack',
+    'attention': 'trendsRiskAttention',
+    'at-risk': 'trendsRiskAtRisk',
+    'insufficient-data': 'trendsRiskInsufficient',
+  }[risk.level] || 'trendsRiskInsufficient';
+  const levelClass = {
+    'on-track': 'wip-risk-ontrack',
+    'attention': 'wip-risk-attention',
+    'at-risk': 'wip-risk-atrisk',
+    'insufficient-data': 'wip-risk-insufficient',
+  }[risk.level] || 'wip-risk-insufficient';
+
+  let html =
+    `<div class="wip-snap-row"><strong>${escapeText(i18n.t('trendsRiskTitle'))}</strong></div>` +
+    `<div class="wip-snap-row"><span class="wip-risk-badge ${levelClass}">${escapeText(i18n.t(levelKey))}</span></div>`;
+
+  if (risk.level === 'insufficient-data') {
+    html += `<div class="wip-snap-note">${escapeText(i18n.t('trendsRiskInsufficientReason'))}</div>`;
+    return html;
+  }
+
+  html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsRiskSignalsTitle'))}</span></div>`;
+  const signalKey = {
+    'behind-reference': 'trendsSignalBehindReference',
+    'late-sprint-low-completion': 'trendsSignalLateLowCompletion',
+    'scope-growth': 'trendsSignalScopeGrowth',
+    'stagnation': 'trendsSignalStagnation',
+    'unknown-share': 'trendsSignalUnknownShare',
+  };
+  const signals = Array.isArray(risk.signals) ? risk.signals : [];
+  if (signals.length === 0) {
+    html += `<div class="wip-snap-note">${escapeText(i18n.t('trendsRiskNoSignals'))}</div>`;
+  } else {
+    signals.forEach(function (s) {
+      const key = signalKey[s.code];
+      if (!key) return;
+      html += `<div class="wip-snap-row"><span>${escapeText(i18n.t(key, { value: s.value }))}</span></div>`;
+    });
+  }
+
+  html += `<div class="wip-snap-note">${escapeText(i18n.t('trendsRiskDisclaimer'))}</div>`;
+  return html;
+}
+
+function formatTrendWhen(iso) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return String(iso);
+    return d.toLocaleDateString();
+  } catch (e) {
+    return String(iso);
+  }
+}
+
 function unavailableToText(value) {
   if (value == null) return '';
   if (value && typeof value === 'object' && value.__wipFieldState === 'unavailable') return '';
@@ -4067,6 +4528,20 @@ function ensureSnapshotPanel(context, i18n) {
             <h4 id="wip-sprint-progress-title"></h4>
             <p class="wip-comparison-help" id="wip-sprint-progress-help"></p>
             <div class="wip-commit-output" id="wip-sprint-progress-output"></div>
+          </div>
+          <div class="wip-sprint-trends" id="wip-sprint-trends">
+            <h4 id="wip-sprint-trends-title"></h4>
+            <p class="wip-comparison-help" id="wip-sprint-trends-help"></p>
+            <div class="wip-snap-actions">
+              <button class="wip-snap-btn" id="wip-sprint-observe" type="button"></button>
+            </div>
+            <div class="wip-trends-toggle">
+              <button class="wip-trends-tab" id="wip-sprint-trends-tab-progress" data-view="progress" type="button"></button>
+              <button class="wip-trends-tab" id="wip-sprint-trends-tab-scope" data-view="scope" type="button"></button>
+              <button class="wip-trends-tab active" id="wip-sprint-trends-tab-trends" data-view="trends" type="button"></button>
+            </div>
+            <p class="wip-snap-status" id="wip-sprint-trends-status"></p>
+            <div class="wip-commit-output" id="wip-sprint-trends-output"></div>
           </div>
           <div class="wip-sprint-goal" id="wip-sprint-goal">
             <h4 id="wip-sprint-goal-title"></h4>
@@ -4289,10 +4764,35 @@ function ensureSnapshotPanel(context, i18n) {
       setTextById('wip-sprint-manual-save', i18n.t('sprintManualSave'));
       setTextById('wip-sprint-progress-title', i18n.t('progressSectionTitle'));
       setTextById('wip-sprint-progress-help', i18n.t('progressHelp'));
+
+      // Sprint Trends & Risk sub-section (roadmap T2.4). Shown only when the pure
+      // trend engine and the observation store are present; bound against the
+      // current context/i18n every refresh. It reuses the DOM scope + local
+      // observation history; the read-only API stays unwired (goal section 12).
+      const trendsSection = document.getElementById('wip-sprint-trends');
+      if (trendsSection) {
+        if (SprintTrends && SprintObservationStore) {
+          trendsSection.style.display = 'block';
+          bindSnapshotButton('wip-sprint-observe', () => handleRecordObservation(context, i18n));
+          bindSnapshotButton('wip-sprint-trends-tab-progress', () => setSprintTrendsView('progress', i18n));
+          bindSnapshotButton('wip-sprint-trends-tab-scope', () => setSprintTrendsView('scope', i18n));
+          bindSnapshotButton('wip-sprint-trends-tab-trends', () => setSprintTrendsView('trends', i18n));
+          setTextById('wip-sprint-trends-title', i18n.t('trendsSectionTitle'));
+          setTextById('wip-sprint-trends-help', i18n.t('trendsHelp'));
+          setTextById('wip-sprint-observe', i18n.t('trendsRecordObservation'));
+          setTextById('wip-sprint-trends-tab-progress', i18n.t('trendsViewProgress'));
+          setTextById('wip-sprint-trends-tab-scope', i18n.t('trendsViewScope'));
+          setTextById('wip-sprint-trends-tab-trends', i18n.t('trendsViewTrends'));
+        } else {
+          trendsSection.style.display = 'none';
+        }
+      }
+
       // Relabel an already-rendered view without recomputing, so a language
       // switch keeps the current sprint data and metrics.
       if (sprintState.view) renderSprint(i18n);
       if (sprintState.progress) renderSprintProgress(i18n);
+      if (sprintState.trends) renderSprintTrends(i18n);
     } else {
       sprintSection.style.display = 'none';
     }

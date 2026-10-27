@@ -30,6 +30,8 @@
         "src/data/sprint-goal-store.js",
         "src/data/sprint-intelligence.js",
         "src/data/sprint-progress.js",
+        "src/data/sprint-observation-store.js",
+        "src/data/sprint-trends.js",
         "content.js"
       ],
       "run_at": "document_end"

@@ -351,6 +351,63 @@ test('the Sprint Progress (T2.3) keys are present in both languages', () => {
   });
 });
 
+test('the Sprint Trends & Risk (T2.4) keys are present in both languages', () => {
+  const i18n = loadI18N();
+  const required = [
+    'trendsSectionTitle',
+    'trendsHelp',
+    'trendsRecordObservation',
+    'trendsRefresh',
+    'trendsObservationSaved',
+    'trendsObservationNeedsSprint',
+    'trendsNoBaseline',
+    'trendsNoHistory',
+    'trendsSingleObservation',
+    'trendsObservationCount',
+    'trendsLastObservation',
+    'trendsViewProgress',
+    'trendsViewScope',
+    'trendsViewTrends',
+    'trendsTimeTitle',
+    'trendsElapsed',
+    'trendsElapsedUnknown',
+    'trendsReference',
+    'trendsObservedCompletion',
+    'trendsDeviation',
+    'trendsSeriesTitle',
+    'trendsSeriesPoint',
+    'trendsSeriesPointPartial',
+    'trendsBurnTitle',
+    'trendsBurnupPoint',
+    'trendsBurndownPoint',
+    'trendsBurnNote',
+    'trendsScopeTitle',
+    'trendsScopeInterval',
+    'trendsScopeAdded',
+    'trendsScopeRemoved',
+    'trendsScopeReturned',
+    'trendsScopeNone',
+    'trendsRiskTitle',
+    'trendsRiskOnTrack',
+    'trendsRiskAttention',
+    'trendsRiskAtRisk',
+    'trendsRiskInsufficient',
+    'trendsRiskSignalsTitle',
+    'trendsRiskNoSignals',
+    'trendsSignalBehindReference',
+    'trendsSignalLateLowCompletion',
+    'trendsSignalScopeGrowth',
+    'trendsSignalStagnation',
+    'trendsSignalUnknownShare',
+    'trendsRiskInsufficientReason',
+    'trendsRiskDisclaimer',
+  ];
+  required.forEach((key) => {
+    assert.ok(key in i18n.en, `EN missing ${key}`);
+    assert.ok(key in i18n.pt, `PT missing ${key}`);
+  });
+});
+
 test('placeholder tokens match between EN and PT for shared keys', () => {
   const i18n = loadI18N();
   const tokenRe = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
