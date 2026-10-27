@@ -811,14 +811,22 @@ if (!document.getElementById('wip-alarm-style')) {
     .wip-detail-name { color: inherit; }
     .wip-detail-count { font-weight: bold; background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; }
 
-    /* Daily Snapshot panel (roadmap T1.2): a discrete, collapsible side panel
-       anchored bottom-right so it never overlaps the board content. */
+    /* Snapshot + Daily + Sprint share one panel. Constrain the whole layout to
+       the visible viewport: the header must stay reachable even after all
+       sections expand, while only the content area scrolls. */
     #wip-snapshot-panel {
       position: fixed;
       right: 16px;
       bottom: 16px;
       z-index: 999998;
-      width: 280px;
+      width: min(360px, calc(100vw - 32px));
+      max-width: calc(100vw - 32px);
+      max-height: calc(100vh - 32px);
+      max-height: calc(100dvh - 32px);
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      min-width: 0;
       font-family: inherit;
       font-size: 13px;
       color: #1f2937;
@@ -826,6 +834,7 @@ if (!document.getElementById('wip-alarm-style')) {
     #wip-snapshot-toggle {
       width: 100%;
       box-sizing: border-box;
+      flex: 0 0 auto;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -842,6 +851,14 @@ if (!document.getElementById('wip-alarm-style')) {
     #wip-snapshot-toggle:hover { background: #005a9e; }
     #wip-snapshot-body {
       display: none;
+      flex: 1 1 auto;
+      min-height: 0;
+      min-width: 0;
+      box-sizing: border-box;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      overflow-wrap: anywhere;
       margin-top: 8px;
       padding: 12px;
       background: #ffffff;
@@ -850,6 +867,16 @@ if (!document.getElementById('wip-alarm-style')) {
       box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     }
     #wip-snapshot-panel.open #wip-snapshot-body { display: block; }
+    @media (max-width: 600px), (max-height: 500px) {
+      #wip-snapshot-panel {
+        right: 8px;
+        bottom: 8px;
+        width: min(360px, calc(100vw - 16px));
+        max-width: calc(100vw - 16px);
+        max-height: calc(100vh - 16px);
+        max-height: calc(100dvh - 16px);
+      }
+    }
     #wip-snapshot-panel .wip-snap-note {
       font-size: 11px;
       color: #666;
@@ -4488,11 +4515,11 @@ function ensureSnapshotPanel(context, i18n) {
     panel = document.createElement('div');
     panel.id = 'wip-snapshot-panel';
     panel.innerHTML = `
-      <button id="wip-snapshot-toggle" type="button">
+      <button id="wip-snapshot-toggle" type="button" aria-controls="wip-snapshot-body" aria-expanded="false">
         <span id="wip-snapshot-title"></span>
         <span id="wip-snapshot-caret">▴</span>
       </button>
-      <div id="wip-snapshot-body">
+      <div id="wip-snapshot-body" role="region" aria-labelledby="wip-snapshot-title">
         <p class="wip-snap-note" id="wip-snapshot-note"></p>
         <div class="wip-snap-actions">
           <button class="wip-snap-btn" id="wip-snapshot-capture" type="button"></button>
@@ -4627,10 +4654,22 @@ function ensureSnapshotPanel(context, i18n) {
     `;
     document.body.appendChild(panel);
 
-    panel.querySelector('#wip-snapshot-toggle').addEventListener('click', () => {
-      panel.classList.toggle('open');
+    const toggle = panel.querySelector('#wip-snapshot-toggle');
+    const setOpen = (open) => {
+      if (panel.classList.contains('open') === open) return;
+      panel.classList.toggle('open', open);
+      toggle.setAttribute('aria-expanded', String(open));
       const caret = panel.querySelector('#wip-snapshot-caret');
-      if (caret) caret.textContent = panel.classList.contains('open') ? '▾' : '▴';
+      if (caret) caret.textContent = open ? '▾' : '▴';
+    };
+    toggle.addEventListener('click', () => setOpen(!panel.classList.contains('open')));
+    // Escape closes the panel even when focus is inside a deeply nested form.
+    panel.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && panel.classList.contains('open')) {
+        setOpen(false);
+        toggle.focus();
+        event.stopPropagation();
+      }
     });
   }
 
