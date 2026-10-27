@@ -1796,7 +1796,7 @@ function resetCommitmentPicker() {
 // commitment, and render the searchable list. Runs ONLY on an explicit click.
 async function handleOpenPicker(context, i18n) {
   const store = getSnapshotStore();
-  if (!store || !DailyCommitment || !CommitmentPicker || !SnapshotCapture) {
+  if (!store || !DailyCommitment || !CommitmentPicker || !SnapshotCapture || !DailySession) {
     setCommitmentStatus(i18n.t('commitmentError', { message: 'module unavailable' }), 'err');
     return;
   }
@@ -2002,7 +2002,7 @@ function collectPickerSelection() {
 
 async function handleSaveCommitment(context, i18n) {
   const store = getSnapshotStore();
-  if (!store || !DailyCommitment || !CommitmentPicker) {
+  if (!store || !DailyCommitment || !CommitmentPicker || !DailySession) {
     setCommitmentStatus(i18n.t('commitmentError', { message: 'module unavailable' }), 'err');
     return;
   }
@@ -2209,7 +2209,7 @@ const projectedBoardState = {
 
 async function handleShowProjectedBoard(context, i18n) {
   const store = getSnapshotStore();
-  if (!store || !ProjectedBoard || !DailyCommitment) {
+  if (!store || !ProjectedBoard || !DailyCommitment || !DailySession) {
     setProjectedStatus(i18n.t('projectedError', { message: 'module unavailable' }), 'err');
     return;
   }
@@ -2412,6 +2412,7 @@ const comparisonState = {
   initial: null,
   commitment: null,
   revision: null, // historical evaluation may pin an earlier plan revision
+  isHistorical: false,
   filter: 'all',
 };
 
@@ -2420,7 +2421,7 @@ const DailyComparison =
 
 async function handleRunComparison(context, i18n) {
   const store = getSnapshotStore();
-  if (!store || !DailyComparison || !DailyCommitment) {
+  if (!store || !DailyComparison || !DailyCommitment || !DailySession) {
     setComparisonStatus(i18n.t('comparisonError', { message: 'module unavailable' }), 'err');
     return;
   }
@@ -2476,6 +2477,7 @@ async function handleRunComparison(context, i18n) {
   comparisonState.initial = initial;
   comparisonState.commitment = commitmentRecord;
   comparisonState.revision = null; // latest plan by default; history pins a revision explicitly
+  comparisonState.isHistorical = false;
   comparisonState.laterSnapshots = laterSnapshots;
   // Keep a previously chosen later snapshot if still valid, else default to the
   // newest valid one. Never auto-select an incompatible/other-board snapshot.
@@ -2485,6 +2487,29 @@ async function handleRunComparison(context, i18n) {
     : (laterSnapshots.length ? laterSnapshots[0].id : null);
 
   recomputeComparison(i18n);
+  // This is an explicit evaluation action: archive which observed snapshot and
+  // which plan revision were used. Historical views never overwrite this pin.
+  await persistCurrentEvaluation(i18n);
+}
+
+// Explicitly persist the evaluation identity; it is NOT stored on filter/render.
+async function persistCurrentEvaluation(i18n) {
+  if (comparisonState.isHistorical || !comparisonState.commitment ||
+      !comparisonState.selectedLaterId) return;
+  const store = getSnapshotStore();
+  if (!store) return;
+  try {
+    await store.recordCommitmentEvaluation(
+      comparisonState.commitment.scope,
+      comparisonState.commitment.id,
+      {
+        laterSnapshotId: comparisonState.selectedLaterId,
+        revision: comparisonState.commitment.revision,
+      }
+    );
+  } catch (err) {
+    setComparisonStatus(i18n.t('comparisonError', { message: errText(err) }), 'err');
+  }
 }
 
 // Build the view-model from the selected later snapshot. Pure; no board read.
@@ -2721,6 +2746,7 @@ function bindComparisonInteractions(i18n) {
     select.onchange = () => {
       comparisonState.selectedLaterId = idFromDom(select.value);
       recomputeComparison(i18n);
+      void persistCurrentEvaluation(i18n);
     };
   }
   const output = document.getElementById('wip-comparison-output');
@@ -3058,6 +3084,7 @@ function openHistoryRecordInComparison(btn, i18n) {
   comparisonState.initial = initial;
   comparisonState.commitment = commitment;
   comparisonState.revision = rec.revisionInEffect != null ? rec.revisionInEffect : null;
+  comparisonState.isHistorical = true;
   comparisonState.laterSnapshots = DailyComparison.selectComparableSnapshots(historyState.snapshots, initial);
   // Do not substitute an unrelated later snapshot for an unevaluated daily.
   comparisonState.selectedLaterId =
@@ -3261,7 +3288,7 @@ function ensureSnapshotPanel(context, i18n) {
     // The visual picker (roadmap T1.4) needs both the engine and the pure picker
     // view-model. If either is missing, the whole sub-section is hidden so the
     // core WIP indicator and the snapshot panel keep working.
-    if (DailyCommitment && CommitmentPicker) {
+    if (DailyCommitment && CommitmentPicker && DailySession) {
       commitSection.style.display = 'block';
       bindSnapshotButton('wip-commit-pick', () => handleOpenPicker(context, i18n));
       bindSnapshotButton('wip-commit-save', () => handleSaveCommitment(context, i18n));
@@ -3292,7 +3319,7 @@ function ensureSnapshotPanel(context, i18n) {
   // and the commitment engine are present; bound against the current context.
   const projectedSection = document.getElementById('wip-projected-section');
   if (projectedSection) {
-    if (ProjectedBoard && DailyCommitment) {
+    if (ProjectedBoard && DailyCommitment && DailySession) {
       projectedSection.style.display = 'block';
       bindSnapshotButton('wip-projected-show', () => handleShowProjectedBoard(context, i18n));
       bindSnapshotButton('wip-projected-tab-initial', () => setProjectedView('initial', i18n));
@@ -3321,7 +3348,7 @@ function ensureSnapshotPanel(context, i18n) {
   // context/i18n every refresh so config and language changes take effect.
   const comparisonSection = document.getElementById('wip-comparison-section');
   if (comparisonSection) {
-    if (DailyComparison && DailyCommitment) {
+    if (DailyComparison && DailyCommitment && DailySession) {
       comparisonSection.style.display = 'block';
       bindSnapshotButton('wip-comparison-run', () => handleRunComparison(context, i18n));
       setTextById('wip-comparison-title', i18n.t('comparisonSectionTitle'));
