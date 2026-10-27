@@ -159,6 +159,100 @@ test('the Daily Comparison (T1.6) keys are present in both languages', () => {
   });
 });
 
+test('the Daily History (T1.7) keys are present in both languages', () => {
+  const i18n = loadI18N();
+  const required = [
+    'historySectionTitle',
+    'historyHelp',
+    'historyRefresh',
+    'historyFromLabel',
+    'historyToLabel',
+    'historyApplyFilter',
+    'historyClearFilter',
+    'historyLoading',
+    'historyError',
+    'historyEmpty',
+    'historyEmptyRange',
+    'historySummary',
+    'historyOverallRate',
+    'historyOverallRateUnavailable',
+    'historyUnreliableCount',
+    'historyEvolutionTitle',
+    'historyEvolutionPoint',
+    'historyEvolutionPointUnavailable',
+    'historyRecordDate',
+    'historyRecordNoDate',
+    'historyRecordPlanning',
+    'historyRecordEvaluation',
+    'historyRecordNoEvaluation',
+    'historyRecordCommitment',
+    'historyRecordRevisionInEffect',
+    'historyRecordInferredEvaluation',
+    'historyRecordMetrics',
+    'historyRecordRate',
+    'historyRecordRateUnavailable',
+    'historyRecordUnreliable',
+    'historyRecordOpen',
+    'historyReasonNoBase',
+    'historyReasonNoLater',
+    'historyReasonIncomplete',
+    'historyReasonOrder',
+    'historyReasonNoCommitment',
+    'historyReasonFailed',
+  ];
+  required.forEach((key) => {
+    assert.ok(key in i18n.en, `EN missing ${key}`);
+    assert.ok(key in i18n.pt, `PT missing ${key}`);
+  });
+});
+
+test('the Daily History (T1.7) keys are present in both languages', () => {
+  const i18n = loadI18N();
+  const required = [
+    'historySectionTitle',
+    'historyHelp',
+    'historyRefresh',
+    'historyFromLabel',
+    'historyToLabel',
+    'historyApplyFilter',
+    'historyClearFilter',
+    'historyLoading',
+    'historyError',
+    'historyEmpty',
+    'historyEmptyRange',
+    'historySummary',
+    'historyOverallRate',
+    'historyOverallRateUnavailable',
+    'historyUnreliableCount',
+    'historyEvolutionTitle',
+    'historyEvolutionPoint',
+    'historyEvolutionPointUnavailable',
+    'historyRecordDate',
+    'historyRecordNoDate',
+    'historyRecordCommitment',
+    'historyRecordRevisionInEffect',
+    'historyRecordPlanning',
+    'historyRecordEvaluation',
+    'historyRecordNoEvaluation',
+    'historyRecordInferredEvaluation',
+    'historyRecordMetrics',
+    'historyRecordRate',
+    'historyRecordRateUnavailable',
+    'historyRecordUnreliable',
+    'historyRecordOpen',
+    'historyReasonNoBase',
+    'historyReasonNoLater',
+    'historyReasonIncomplete',
+    'historyReasonOrder',
+    'historyReasonNoCommitment',
+    'historyReasonFailed',
+  ];
+  required.forEach((key) => {
+    assert.ok(key in i18n.en, `EN missing ${key}`);
+    assert.ok(key in i18n.pt, `PT missing ${key}`);
+  });
+});
+
 test('placeholder tokens match between EN and PT for shared keys', () => {
   const i18n = loadI18N();
   const tokenRe = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;

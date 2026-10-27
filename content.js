@@ -1027,6 +1027,69 @@ if (!document.getElementById('wip-alarm-style')) {
     #wip-snapshot-panel .wip-comparison-status.missing { background: #fde8e8; color: #cc292b; }
     #wip-snapshot-panel .wip-comparison-empty { font-size: 11px; color: #6b7280; padding: 6px 2px; }
 
+    /* Daily History (roadmap T1.7). Reuses the discreet panel chrome. */
+    #wip-snapshot-panel .wip-history-filter {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px;
+      margin: 4px 0;
+      font-size: 10px;
+      color: #4b5563;
+    }
+    #wip-snapshot-panel .wip-history-date {
+      font-size: 10px;
+      padding: 2px 4px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+    }
+    #wip-snapshot-panel .wip-history-empty { font-size: 11px; color: #6b7280; padding: 6px 2px; }
+    #wip-snapshot-panel .wip-history-evolution {
+      margin: 6px 0;
+      padding: 4px 6px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      background: #fcfcfd;
+    }
+    #wip-snapshot-panel .wip-history-evo-title { font-size: 10px; font-weight: 600; color: #1f2937; margin-bottom: 3px; }
+    #wip-snapshot-panel .wip-history-evo-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+    #wip-snapshot-panel .wip-history-evo-date { font-size: 9px; color: #6b7280; width: 62px; flex: none; }
+    #wip-snapshot-panel .wip-history-evo-track {
+      flex: 1;
+      height: 6px;
+      background: #eef0f3;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    #wip-snapshot-panel .wip-history-evo-fill { display: block; height: 100%; background: #1a56db; }
+    #wip-snapshot-panel .wip-history-evo-fill.unavailable { background: #d1d5db; }
+    #wip-snapshot-panel .wip-history-evo-val { font-size: 9px; color: #4b5563; width: 34px; text-align: right; flex: none; }
+    #wip-snapshot-panel .wip-history-records {
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    #wip-snapshot-panel .wip-history-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 5px 6px;
+      margin-bottom: 4px;
+      background: #fff;
+    }
+    #wip-snapshot-panel .wip-history-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+    #wip-snapshot-panel .wip-history-card-date { font-size: 11px; font-weight: 600; color: #1f2937; }
+    #wip-snapshot-panel .wip-history-rate { font-size: 10px; color: #1e8e3e; font-weight: 600; }
+    #wip-snapshot-panel .wip-history-rate.unavailable { color: #6b7280; font-weight: 400; }
+
     /* View visibility toggling for the daily-views navigation. */
     #wip-snapshot-panel.nav-initial #wip-projected-section,
     #wip-snapshot-panel.nav-initial #wip-comparison-section,

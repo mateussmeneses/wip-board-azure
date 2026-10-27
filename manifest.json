@@ -23,6 +23,7 @@
         "src/data/commitment-picker.js",
         "src/data/projected-board.js",
         "src/data/daily-comparison.js",
+        "src/data/daily-history.js",
         "content.js"
       ],
       "run_at": "document_end"

@@ -277,6 +277,62 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   in `test/i18n-parity.test.js`). Real-browser validation pending (see the
   checklist in `docs/DAILY_COMPARISON_T1_6.md`).
 
+### T1.7 — Daily History — DONE
+- Scope: a read-only historical view over the dailies already recorded for ONE
+  board scope. Reconstructs the original plan, the related snapshots and the
+  obtained results from persisted records only, without rebuilding history from
+  current Azure DevOps state. Lists one row per daily (newest-first, date-range
+  filter), shows per-daily indicators and aggregate indicators, a simple HTML/CSS
+  evolution chart, and navigates to the existing T1.6 comparison for a selected
+  daily.
+- Acceptance: the history is computed exclusively from persisted snapshots +
+  commitments; the overall proven rate is weighted by commitment count (not an
+  average of daily percentages); missing/off-track are reported as undetermined,
+  never proven failures; dailies from different org/project/team/board/date and
+  different commitment ids are never mixed; multiple dailies on the same day keep
+  distinct identities; retention that pruned a referenced snapshot yields an
+  honest flagged record, never a fabricated baseline; WIP number unaffected.
+- Tests: `test/daily-history.test.js` (25) covering every scenario in the task's
+  section 8, plus the T1.7 key-parity check in `test/i18n-parity.test.js`.
+- Status: `src/data/daily-history.js` (`WIPBoardDailyHistory`) is a pure,
+  Chrome-free and DOM-free AGGREGATION view-model. It REUSES the T1.6 comparison
+  view-model (`buildComparison`, `selectComparableSnapshots`) via dependency
+  injection — which itself reuses the T1.3 classification engine — so no second
+  comparison or metrics engine is created. It adds: reconstruction of one daily
+  record per commitment; deterministic selection of the evaluation snapshot from
+  PERSISTED data only (`evaluation.laterSnapshotId`, else a bounded inferred
+  fallback flagged `evaluationSource: 'inferred'`); preservation of the revision
+  in effect at evaluation time (the current revision is never silently
+  substituted for the original plan); same-scope assertions on every linked
+  snapshot; date-range filtering; newest-first ordering; and commitment-weighted
+  aggregate indicators where only reliable records feed the overall rate and
+  "no reliable evaluation" is counted apart from "zero commitments". To represent
+  several dailies per board correctly, the store schema evolved `1 -> 2` with the
+  MINIMAL, additive, non-destructive change: an `evaluation` field on commitments
+  (`{ laterSnapshotId, revision, evaluatedAt } | null`), a forward
+  `migrateRecord` applied on read (old data reads back as v2 with
+  `evaluation: null`), and `recordCommitmentEvaluation` which refuses a call
+  without a `laterSnapshotId` and never alters the plan or revision. `content.js`
+  adds a "Daily History / Histórico da Daily" sub-section (summary, period
+  filter, newest-first list, per-date indicators, a library-free HTML/CSS
+  evolution chart, per-record "Open comparison" into the T1.6 view) — shown only
+  when the history/comparison/commitment modules are present, localized EN/PT
+  (37 `history*` keys), and written through the `setIndicatorHtml()` R1
+  diff-guard (same discipline as the T1.6 comparison panel; the panel structure
+  itself is mounted inside the existing `withObserverPaused()` phase).
+  `manifest.json` loads
+  `src/data/daily-history.js` before `content.js`. Suite: 226 tests pass (201
+  prior + 25 new in `test/daily-history.test.js`; the T1.7 i18n key-parity check
+  was added to `test/i18n-parity.test.js`). Real-browser validation pending (see
+  the checklist in `docs/DAILY_HISTORY_T1_7.md`).
+
+> Phase 1 — Daily Commitment core (snapshots → commitment → projection →
+> comparison → history) is COMPLETE on the DOM-only / local-storage path. Phase 2
+> (Sprint Intelligence) is the recommended next increment; it introduces the
+> read-only `ado-api-client` and does NOT depend on T1.7. The API-based History &
+> trends task (T3.2 below) remains a later, complementary phase that enriches this
+> local history with server-side `/updates` once the API shape is confirmed.
+
 ---
 
 ## Phase 2 — Sprint Intelligence (P2, needs API)
