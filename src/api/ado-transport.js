@@ -186,13 +186,29 @@
           return Promise.reject(Errors.disallowed('a request object is required'));
         }
         const method = String(request.method || '').toUpperCase();
+        // Enforce destinations at the transport boundary too. A caller can
+        // construct a request without using the safe URL builders.
+        let target;
+        try {
+          target = new URL(request.url);
+        } catch (_) {
+          return Promise.reject(Errors.disallowed('invalid Azure DevOps request URL'));
+        }
+        const host = target.hostname.toLowerCase();
+        const allowedHost = host === 'dev.azure.com' ||
+          (host !== 'visualstudio.com' && host.endsWith('.visualstudio.com'));
+        if (target.protocol !== 'https:' || !allowedHost ||
+            target.username || target.password) {
+          return Promise.reject(Errors.disallowed('request host is not allow-listed'));
+        }
+        const isWiqlQuery = /\/_apis\/wit\/wiql\/?$/i.test(target.pathname);
         const isAllowed =
           READ_METHODS.indexOf(method) !== -1 ||
-          (method === 'POST' && request.allowWiqlPost === true);
+          (method === 'POST' && request.allowWiqlPost === true && isWiqlQuery);
         if (!isAllowed) {
-          // Structural read-only guarantee: reject any write before it leaves.
+          // POST is permitted only on the official WIQL query endpoint.
           return Promise.reject(
-            Errors.disallowed('method not permitted by read-only policy: ' + method)
+            Errors.disallowed('method or endpoint not permitted by read-only policy: ' + method)
           );
         }
         return runWithRetry(Object.assign({}, request, { method: method }), 0);
