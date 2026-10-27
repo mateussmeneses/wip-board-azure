@@ -11,7 +11,7 @@
 //   7. commitment versioning (revision) preserved by the store
 //
 // The comparison lives in a PURE, Chrome-free + DOM-free module
-// (src/data/daily-commitment.js) and is driven here with plain objects and with
+// (src/features/daily/daily-commitment.js) and is driven here with plain objects and with
 // the real snapshot pipeline (reader -> capture -> store). Zero dependencies:
 // Node's built-in runner + the chrome storage mock.
 //
@@ -20,7 +20,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const commitment = require('../src/data/daily-commitment.js');
+const commitment = require('../src/features/daily/daily-commitment.js');
 const store = require('../src/data/snapshot-store.js');
 const { createMockStorage } = require('./helpers/mock-chrome-storage.js');
 
@@ -371,7 +371,7 @@ test('end to end: commit against a base snapshot, compare to a later snapshot', 
 test('daily-commitment module is DOM-free and Chrome-free by design', () => {
   const fs = require('node:fs');
   const path = require('node:path');
-  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'data', 'daily-commitment.js'), 'utf8');
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'features', 'daily', 'daily-commitment.js'), 'utf8');
   assert.equal(/\bdocument\b/.test(src), false);
   assert.equal(/MutationObserver/.test(src), false);
   assert.equal(/\bchrome\./.test(src), false);

@@ -9,8 +9,7 @@
 
 ## 1. What the DOM already gives us (verified)
 
-Evidence from the captured sample `elementos estruturados do board.html` in this repo
-(counts via regex over the file):
+Historical evidence from an early board export (removed from the distributed extension after the reader was fixture-tested, to reduce data exposure). The following occurrences are historical observations and are not reproduced by the sanitized fixtures:
 
 | Signal | Occurrences | Selector |
 |---|---|---|

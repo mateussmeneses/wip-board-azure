@@ -61,6 +61,9 @@
     NO_COLUMNS: 'NO_COLUMNS',
     DUPLICATE_IDS: 'DUPLICATE_IDS',
     MISSING_IDS: 'MISSING_IDS',
+    HEADER_COUNT_MISMATCH: 'HEADER_COUNT_MISMATCH',
+    COLUMN_ALIGNMENT_UNKNOWN: 'COLUMN_ALIGNMENT_UNKNOWN',
+    HEADER_COUNT_UNAVAILABLE: 'HEADER_COUNT_UNAVAILABLE',
   });
 
   // ---------------------------------------------------------------------------
@@ -181,6 +184,8 @@
         role: classifyColumnRole(column, opts),
         isDoneColumn: column.isDoneColumn === true,
         count: count,
+        reportedCount: typeof column.reportedCount === 'number' &&
+          Number.isFinite(column.reportedCount) ? column.reportedCount : null,
       };
     });
 
@@ -193,6 +198,19 @@
     if (hiddenCount > 0) incompleteReasons.push(IncompleteReasons.HIDDEN_ITEMS);
     if (duplicateCount > 0) incompleteReasons.push(IncompleteReasons.DUPLICATE_IDS);
     if (missingIdCount > 0) incompleteReasons.push(IncompleteReasons.MISSING_IDS);
+    // Azure's header count can exceed DOM-present cards because of filtering,
+    // virtualization or paging. Never silently present a smaller observed count
+    // as the complete board total.
+    if (columns.some(function (c) {
+      return c.reportedCount != null && c.reportedCount !== c.count;
+    })) incompleteReasons.push(IncompleteReasons.HEADER_COUNT_MISMATCH);
+    if (safeModel.diagnostics && columns.some(function (c) {
+      return c.reportedCount == null;
+    })) incompleteReasons.push(IncompleteReasons.HEADER_COUNT_UNAVAILABLE);
+    if (safeModel.diagnostics &&
+        safeModel.diagnostics.columnAlignmentReliable === false) {
+      incompleteReasons.push(IncompleteReasons.COLUMN_ALIGNMENT_UNKNOWN);
+    }
 
     const complete = incompleteReasons.length === 0;
 

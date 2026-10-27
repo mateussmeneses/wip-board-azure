@@ -21,8 +21,8 @@
 
 | Arquivo | Mudança |
 |---|---|
-| `src/data/commitment-picker.js` | **Adicionado.** View-model puro, sem Chrome e sem DOM (`WIPBoardCommitmentPicker`): `buildColumnOptions` (colunas reais do board, em ordem de fluxo, de-duplicadas), `buildPickerRows` (merge snapshot base + board atual + compromisso salvo), `filterRows` (busca por id/título, tolerante a acento/caixa), `buildExpectationsFromSelection` (converte a seleção visual no mapa de expectativas do engine; rejeita item sem destino; colapsa id duplicado), `summarizeSelection` (resumo do planejamento). Não reimplementa store/engine/comparação; só modela dados para a UI. |
-| `manifest.json` | `content_scripts[].js` passa a carregar `src/data/commitment-picker.js` antes de `content.js`. |
+| `src/features/daily/commitment-picker.js` | **Adicionado.** View-model puro, sem Chrome e sem DOM (`WIPBoardCommitmentPicker`): `buildColumnOptions` (colunas reais do board, em ordem de fluxo, de-duplicadas), `buildPickerRows` (merge snapshot base + board atual + compromisso salvo), `filterRows` (busca por id/título, tolerante a acento/caixa), `buildExpectationsFromSelection` (converte a seleção visual no mapa de expectativas do engine; rejeita item sem destino; colapsa id duplicado), `summarizeSelection` (resumo do planejamento). Não reimplementa store/engine/comparação; só modela dados para a UI. |
+| `manifest.json` | `content_scripts[].js` passa a carregar `src/features/daily/commitment-picker.js` antes de `content.js`. |
 | `content.js` | Textarea `id: coluna` substituída por lista pesquisável com checkbox + dropdown de destino por card, resumo do planejamento, botões "Escolher work items", "Salvar compromisso" e "Planejado x realizado". Novo estado em memória do picker, handlers de abertura/render/seleção/busca, helpers de escape HTML, binding do módulo `CommitmentPicker`, CSS do picker e strings EN/PT. Nenhuma conta de WIP tocada. |
 | `docs/PRODUCT_ROADMAP.md` | T1.4 reescrita (textarea → card picker) com status; T1.5 (Projected Board) adicionada como próximo incremento. |
 | `test/commitment-picker.test.js` | **Adicionado.** 20 testes do view-model e integração com engine/store. |

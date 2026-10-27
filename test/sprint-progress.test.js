@@ -10,9 +10,9 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const SprintProgress = require('../src/data/sprint-progress.js');
-const SprintBaseline = require('../src/data/sprint-baseline.js');
-const SprintScope = require('../src/data/sprint-scope.js');
+const SprintProgress = require('../src/features/sprint/sprint-progress.js');
+const SprintBaseline = require('../src/features/sprint/sprint-baseline.js');
+const SprintScope = require('../src/features/sprint/sprint-scope.js');
 
 const { ItemState, Reliability } = SprintProgress;
 

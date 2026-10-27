@@ -13,9 +13,9 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const SprintTrends = require('../src/data/sprint-trends.js');
-const SprintBaseline = require('../src/data/sprint-baseline.js');
-const SprintScope = require('../src/data/sprint-scope.js');
+const SprintTrends = require('../src/features/sprint/sprint-trends.js');
+const SprintBaseline = require('../src/features/sprint/sprint-baseline.js');
+const SprintScope = require('../src/features/sprint/sprint-scope.js');
 
 const { Risk, Reliability } = SprintTrends;
 

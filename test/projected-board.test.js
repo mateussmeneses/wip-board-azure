@@ -1,7 +1,7 @@
 // test/projected-board.test.js
 // Tests for the Projected Board engine (docs/PRODUCT_ROADMAP.md T1.5).
 //
-// The engine (src/data/projected-board.js) is PURE, Chrome-free and DOM-free: it
+// The engine (src/features/daily/projected-board.js) is PURE, Chrome-free and DOM-free: it
 // turns a captured snapshot (the baseline) + a saved commitment (the declared
 // destinations) into the EXPECTED end-of-day board, computing per-column counts,
 // deltas and the planned-move list. It is a SIMULATION and never mutates its
@@ -29,8 +29,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const projected = require('../src/data/projected-board.js');
-const commitmentEngine = require('../src/data/daily-commitment.js');
+const projected = require('../src/features/daily/projected-board.js');
+const commitmentEngine = require('../src/features/daily/daily-commitment.js');
 const store = require('../src/data/snapshot-store.js');
 const { createMockStorage } = require('./helpers/mock-chrome-storage.js');
 

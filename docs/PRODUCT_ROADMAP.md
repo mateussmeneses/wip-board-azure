@@ -131,7 +131,7 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   latest snapshot to classify on-track / behind / done.
 - Acceptance: classification matches a fixture of planned vs realized columns.
 - Tests: table-driven unit tests.
-- Status: `src/data/daily-commitment.js` (`WIPBoardDailyCommitment`) is a pure,
+- Status: `src/features/daily/daily-commitment.js` (`WIPBoardDailyCommitment`) is a pure,
   Chrome-free and DOM-free engine. `buildCommitmentItems(baseSnapshot, expectations)`
   derives, per stable id, the `startColumn` (from the base snapshot) and the
   `expectedColumn` (the planned destination), emitting exactly the item shape the
@@ -165,7 +165,7 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   bilingual EN/PT, mounted inside `withObserverPaused()` and writing through the
   `setIndicatorHtml` diff-guard.
 - Status (Card Picker increment): the textarea is replaced by a visual selection.
-  A new pure view-model `src/data/commitment-picker.js`
+  A new pure view-model `src/features/daily/commitment-picker.js`
   (`WIPBoardCommitmentPicker`) merges the base snapshot (authoritative committable
   ids + `startColumn` at planning time), the live board model (title / current
   column / assignee for display) and any saved commitment (pre-selection for
@@ -183,7 +183,7 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   (list render on each keystroke/toggle, summary) runs inside `withObserverPaused()`
   and the summary is diff-guarded, so the R1 fix is preserved for the new,
   write-heavy UI. Board-derived text is HTML-escaped before it reaches innerHTML.
-  `manifest.json` loads `src/data/commitment-picker.js` before `content.js`.
+  `manifest.json` loads `src/features/daily/commitment-picker.js` before `content.js`.
   Suite: 151 tests pass (128 prior + 20 in `test/commitment-picker.test.js` + 3 in
   `test/commitment-picker-r1.test.js`). Real-browser validation pending (see the
   checklist in `docs/DAILY_COMMITMENT_T1_4.md`).
@@ -196,7 +196,7 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
 - Acceptance: the projected view places each committed item in its expected column
   and leaves uncommitted items where they are; WIP number unaffected.
 - Tests: projection unit tests (committed vs uncommitted placement, missing items).
-- Status: `src/data/projected-board.js` (`WIPBoardProjectedBoard`) is a pure,
+- Status: `src/features/daily/projected-board.js` (`WIPBoardProjectedBoard`) is a pure,
   Chrome-free and DOM-free engine. `project(baseSnapshot, commitment, options)`
   takes the SELECTED snapshot as the authoritative baseline and the SAVED
   commitment as the declared destinations, then returns the projected board: per
@@ -222,7 +222,7 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   (latest-revision) commitment of the SAME board scope only; the live board is
   never used to substitute missing snapshot data, and with no commitment an
   informative empty state is shown (no old/foreign plan reused).
-  `manifest.json` loads `src/data/projected-board.js` before `content.js`.
+  `manifest.json` loads `src/features/daily/projected-board.js` before `content.js`.
   Suite: 178 tests pass (151 prior + 18 in `test/projected-board.test.js` + 4 in
   `test/projected-board-r1.test.js` + 5 in `test/i18n-parity.test.js`).
   Real-browser validation pending (see the checklist in
@@ -239,7 +239,7 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   rate; WIP number unaffected.
 - Tests: comparison-view unit tests over fixtures for each category; i18n parity;
   R1 regression for the new UI.
-- Status: `src/data/daily-comparison.js` (`WIPBoardDailyComparison`) is a pure,
+- Status: `src/features/daily/daily-comparison.js` (`WIPBoardDailyComparison`) is a pure,
   Chrome-free and DOM-free PRESENTATION view-model. It REUSES the classification
   engine (`WIPBoardDailyCommitment.compareCommitment`) via dependency injection —
   no second comparison mechanism is created — and adds: (1)
@@ -272,7 +272,7 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   snapshot/commitment identity; it never recomputes, never re-reads the board,
   never mutates the Projected Board and never touches Azure DevOps. The comparison
   module reads/writes NO WIP number. `manifest.json` loads
-  `src/data/daily-comparison.js` before `content.js`. Suite: 201 tests pass (178
+  `src/features/daily/daily-comparison.js` before `content.js`. Suite: 201 tests pass (178
   prior + 22 in `test/daily-comparison.test.js` + 1 added T1.6 key-parity check
   in `test/i18n-parity.test.js`). Real-browser validation pending (see the
   checklist in `docs/DAILY_COMPARISON_T1_6.md`).
@@ -294,7 +294,7 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   honest flagged record, never a fabricated baseline; WIP number unaffected.
 - Tests: `test/daily-history.test.js` (25) covering every scenario in the task's
   section 8, plus the T1.7 key-parity check in `test/i18n-parity.test.js`.
-- Status: `src/data/daily-history.js` (`WIPBoardDailyHistory`) is a pure,
+- Status: `src/features/daily/daily-history.js` (`WIPBoardDailyHistory`) is a pure,
   Chrome-free and DOM-free AGGREGATION view-model. It REUSES the T1.6 comparison
   view-model (`buildComparison`, `selectComparableSnapshots`) via dependency
   injection — which itself reuses the T1.3 classification engine — so no second
@@ -321,7 +321,7 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   diff-guard (same discipline as the T1.6 comparison panel; the panel structure
   itself is mounted inside the existing `withObserverPaused()` phase).
   `manifest.json` loads
-  `src/data/daily-history.js` before `content.js`. Suite: 226 tests pass (201
+  `src/features/daily/daily-history.js` before `content.js`. Suite: 226 tests pass (201
   prior + 25 new in `test/daily-history.test.js`; the T1.7 i18n key-parity check
   was added to `test/i18n-parity.test.js`). Real-browser validation pending (see
   the checklist in `docs/DAILY_HISTORY_T1_7.md`).
@@ -440,7 +440,7 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   in the same sprint, different org/team/project inputs, late baseline,
   incomplete snapshot, API disabled, scope changes preserving the baseline; plus
   the T2.3 i18n key-parity check in `test/i18n-parity.test.js`.
-- Status: one PURE, Chrome-free, DOM-free module `src/data/sprint-progress.js`
+- Status: one PURE, Chrome-free, DOM-free module `src/features/sprint/sprint-progress.js`
   (`WIPBoardSprintProgress`). It REUSES the T2.2 engines — it calls
   `WIPBoardSprintScope.buildScopeItems` (id dedupe, state/column separation,
   Feature flag) and `WIPBoardSprintBaseline.detectScopeChanges` / `resolveFlow` /
@@ -468,7 +468,7 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   existing `withObserverPaused()` phase. The read-only API stays unwired (T2.1 +
   goal section 8); progress is computed from the local immutable baseline + the
   DOM scope + the manual sprint. `manifest.json` loads
-  `src/data/sprint-progress.js` before `content.js`. Suite: 401 tests pass (375
+  `src/features/sprint/sprint-progress.js` before `content.js`. Suite: 401 tests pass (375
   prior + 25 new + 1 T2.3 i18n key-parity check). No new config keys; no new
   permission; Manifest V3 preserved. Real-browser validation and live API access
   remain pending per the homologation policy. See `docs/SPRINT_PROGRESS_T2_3.md`.
@@ -506,7 +506,7 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   persisting the baseline), duplicate collapse, persistence after reload,
   retention pruning, invalid input, the STORAGE_FAILURE path and by-id lookup;
   plus the T2.4 i18n key-parity check in `test/i18n-parity.test.js`.
-- Status: one PURE, Chrome-free, DOM-free engine `src/data/sprint-trends.js`
+- Status: one PURE, Chrome-free, DOM-free engine `src/features/sprint/sprint-trends.js`
   (`WIPBoardSprintTrends`) and one minimal persistence contract
   `src/data/sprint-observation-store.js` (`WIPBoardSprintObservationStore`). The
   engine REUSES the T2.3 `WIPBoardSprintProgress.computeProgress` per observation

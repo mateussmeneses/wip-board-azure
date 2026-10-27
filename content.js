@@ -41,6 +41,13 @@ const I18N = {
     reasonNoColumns: 'no columns',
     reasonDuplicateIds: 'duplicate ids',
     reasonMissingIds: 'cards without id',
+    reasonHeaderCountMismatch: 'Azure header totals differ from visible cards',
+    reasonColumnAlignmentUnknown: 'column headers and card bodies cannot be matched safely',
+    reasonHeaderCountUnavailable: 'Azure does not expose a verifiable column total',
+    snapshotObservedCount: '{{count}} visible',
+    snapshotHeaderCount: '{{count}} on board',
+    snapshotHeaderCountUnknown: 'board total not exposed',
+    snapshotBoardId: 'Board: {{board}}',
     // Daily Commitment (roadmap T1.3): a delivery metric kept separate from WIP.
     commitmentSectionTitle: 'Daily commitment (plan vs actual)',
     commitmentHelp: 'Pick the work items you commit to move today and choose each destination column. Based on the last captured snapshot.',
@@ -352,6 +359,13 @@ const I18N = {
     reasonNoColumns: 'sem colunas',
     reasonDuplicateIds: 'ids duplicados',
     reasonMissingIds: 'cards sem id',
+    reasonHeaderCountMismatch: 'totais do cabeçalho do Azure diferem dos cards visíveis',
+    reasonColumnAlignmentUnknown: 'não foi possível associar cabeçalhos e corpos de coluna com segurança',
+    reasonHeaderCountUnavailable: 'o Azure não disponibiliza um total verificável para a coluna',
+    snapshotObservedCount: '{{count}} visíveis',
+    snapshotHeaderCount: '{{count}} no board',
+    snapshotHeaderCountUnknown: 'total do board indisponível',
+    snapshotBoardId: 'Board: {{board}}',
     // Compromisso diário (roadmap T1.3): métrica de entrega, separada do WIP.
     commitmentSectionTitle: 'Compromisso diário (planejado x realizado)',
     commitmentHelp: 'Selecione os work items que você se compromete a mover hoje e escolha a coluna de destino de cada um. Baseado no último snapshot capturado.',
@@ -721,803 +735,8 @@ async function getVersion() {
 getVersion()
 
 
-if (!document.getElementById('wip-alarm-style')) {
-  const style = document.createElement('style');
-  style.id = 'wip-alarm-style';
-  style.innerHTML = `
-    /* Floating indicator animation when WIP exceeds limit */
-    @keyframes pulse-critical {
-      0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.8); }
-      70% { box-shadow: 0 0 0 15px rgba(220, 53, 69, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
-    }
-    .wip-alerta-critico {
-      animation: pulse-critical 1.5s infinite !important;
-      background-color: #dc3545 !important;
-      color: white !important;
-      border: 3px solid #721c24 !important;
-      text-transform: uppercase;
-    }
-    @keyframes pulse-wip-warning {
-      0% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.7); transform: translateX(-50%) scale(1); }
-      70% { box-shadow: 0 0 0 18px rgba(234, 88, 12, 0); transform: translateX(-50%) scale(1.02); }
-      100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0); transform: translateX(-50%) scale(1); }
-    }
-    .wip-alerta-atenção {
-      animation: pulse-wip-warning 1.7s infinite !important;
-      background: linear-gradient(135deg, #fff7ed, #fed7aa) !important;
-      color: #9a3412 !important;
-      border: 3px solid #ea580c !important;
-      text-transform: uppercase;
-    }
+// Extension-owned panel and card styles are declared in src/ui/board.css.
 
-    /* Orange animation for cards with critical aging/target-date conditions */
-    @keyframes pulse-card {
-      0% { box-shadow: 0 0 0 0 rgba(245, 139, 31, 0.6); }
-      70% { box-shadow: 0 0 0 8px rgba(245, 139, 31, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(245, 139, 31, 0); }
-    }
-    .card-alerta-critico {
-
-      box-shadow: 0 0 0 3px #c2410c !important;
-      
-      background: linear-gradient(90deg, rgba(194, 65, 12, 0.24), rgba(255, 255, 255, 0)) !important;
-      animation: pulse-card 1.4s infinite !important;
-    }
-    .card-alerta-alto {
-      box-shadow: 0 0 0 3px #ea580c !important;
-      background: linear-gradient(90deg, rgba(234, 88, 12, 0.18), rgba(255, 255, 255, 0)) !important;
-    }
-    .card-alerta-medio {
-      box-shadow: 0 0 0 3px #f97316 !important;
-      background: linear-gradient(90deg, rgba(249, 115, 22, 0.14), rgba(255, 255, 255, 0)) !important;
-    }
-    .card-alerta-baixo {
-      box-shadow: 0 0 0 3px #fb923c !important;
-      border: 3px solid #fb923c !important;
-      background: linear-gradient(90deg, rgba(251, 146, 60, 0.1), rgba(255, 255, 255, 0)) !important;
-    }
-    
-    /* Layout for the details panel toggled from the indicator */
-    #wip-details-panel {
-      display: none; /* Hidden by default */
-      margin-top: 10px;
-      padding: 10px;
-      border-top: 1px solid rgba(0,0,0,0.1); /* Subtle separator under panel header */
-      font-size: 13px;
-      font-weight: normal;
-      text-transform: none;
-      text-align: left;
-      border-radius: 10px;
-      background: rgba(255,255,255,0.95);
-      color: #1f2937;
-    }
-    .wip-alerta-critico #wip-details-panel {
-      background: #fff5f5;
-      color: #111827;
-      border: 1px solid #fecaca;
-    }
-    .wip-alerta-atenção #wip-details-panel {
-      background: #fff7ed;
-      color: #111827;
-      border: 1px solid #fed7aa;
-    }
-    /* Per-row layout: column name on left, count on right */
-    .wip-detail-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 4px;
-    }
-    .wip-detail-name { color: inherit; }
-    .wip-detail-count { font-weight: bold; background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; }
-
-    /* Snapshot + Daily + Sprint share one panel. Constrain the whole layout to
-       the visible viewport: the header must stay reachable even after all
-       sections expand, while only the content area scrolls. */
-    #wip-snapshot-panel {
-      position: fixed;
-      right: 16px;
-      bottom: 16px;
-      z-index: 999998;
-      width: min(360px, calc(100vw - 32px));
-      max-width: calc(100vw - 32px);
-      max-height: calc(100vh - 32px);
-      max-height: calc(100dvh - 32px);
-      display: flex;
-      flex-direction: column;
-      box-sizing: border-box;
-      min-width: 0;
-      font-family: inherit;
-      font-size: 13px;
-      color: #1f2937;
-    }
-    #wip-snapshot-toggle {
-      width: 100%;
-      box-sizing: border-box;
-      flex: 0 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 8px 12px;
-      background: #0078d4;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    #wip-snapshot-toggle:hover { background: #005a9e; }
-    #wip-snapshot-body {
-      display: none;
-      flex: 1 1 auto;
-      min-height: 0;
-      min-width: 0;
-      box-sizing: border-box;
-      overflow-y: auto;
-      overflow-x: hidden;
-      overscroll-behavior: contain;
-      overflow-wrap: anywhere;
-      margin-top: 8px;
-      padding: 12px;
-      background: #ffffff;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-    }
-    #wip-snapshot-panel.open #wip-snapshot-body { display: block; }
-    @media (max-width: 600px), (max-height: 500px) {
-      #wip-snapshot-panel {
-        right: 8px;
-        bottom: 8px;
-        width: min(360px, calc(100vw - 16px));
-        max-width: calc(100vw - 16px);
-        max-height: calc(100vh - 16px);
-        max-height: calc(100dvh - 16px);
-      }
-    }
-    #wip-snapshot-panel .wip-snap-note {
-      font-size: 11px;
-      color: #666;
-      margin: 0 0 10px 0;
-    }
-    #wip-snapshot-panel .wip-snap-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 10px;
-    }
-    #wip-snapshot-panel .wip-snap-btn {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 7px 10px;
-      border-radius: 6px;
-      border: 1px solid #0078d4;
-      background: #f0f9ff;
-      color: #0369a1;
-      font-weight: bold;
-      cursor: pointer;
-      margin: 0;
-    }
-    #wip-snapshot-panel .wip-snap-btn:hover { background: #e0f2fe; }
-    #wip-snapshot-panel .wip-snap-btn:disabled { opacity: 0.6; cursor: default; }
-    #wip-snapshot-panel .wip-snap-status {
-      font-size: 12px;
-      margin: 8px 0 0 0;
-      min-height: 16px;
-    }
-    #wip-snapshot-panel .wip-snap-status.ok { color: #1e8e3e; }
-    #wip-snapshot-panel .wip-snap-status.err { color: #cc292b; }
-    #wip-snapshot-panel .wip-snap-output {
-      margin-top: 8px;
-      max-height: 180px;
-      overflow-y: auto;
-      font-size: 12px;
-      border-top: 1px solid #eee;
-      padding-top: 8px;
-    }
-    #wip-snapshot-panel .wip-snap-output:empty { display: none; }
-    #wip-snapshot-panel .wip-snap-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 2px 0;
-    }
-    #wip-snapshot-panel .wip-snap-badge {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: bold;
-      padding: 1px 6px;
-      border-radius: 10px;
-      text-transform: uppercase;
-    }
-    #wip-snapshot-panel .wip-snap-badge.complete { background: #e6f4ea; color: #1e8e3e; }
-    #wip-snapshot-panel .wip-snap-badge.incomplete { background: #fff3cd; color: #856404; }
-
-    /* Sprint Progress section (roadmap T2.3): a simple, library-free progress
-       bar plus visually distinct primary/secondary metric blocks. The primary
-       (baseline completion) block is emphasized per goal section 3. */
-    #wip-snapshot-panel .wip-progress-bar {
-      height: 10px;
-      border-radius: 5px;
-      background: #eceff1;
-      overflow: hidden;
-      margin: 4px 0 6px 0;
-    }
-    #wip-snapshot-panel .wip-progress-fill {
-      height: 100%;
-      background: #1e8e3e;
-      transition: width 0.2s ease;
-    }
-    #wip-snapshot-panel .wip-progress-primary {
-      border-left: 3px solid #1e8e3e;
-      padding-left: 8px;
-      margin: 6px 0;
-    }
-    #wip-snapshot-panel .wip-progress-secondary,
-    #wip-snapshot-panel .wip-progress-reliability {
-      border-left: 3px solid #cfd8dc;
-      padding-left: 8px;
-      margin: 6px 0;
-      opacity: 0.95;
-    }
-
-    /* Sprint Trends & Risk (roadmap T2.4): the temporal-analysis sub-section
-       inside the Sprint Intelligence block. View toggle, a reference marker on
-       the completion bar and a colored risk badge. Library-free. */
-    #wip-snapshot-panel .wip-sprint-trends {
-      border-top: 1px dashed #d0d7de;
-      margin-top: 10px;
-      padding-top: 8px;
-    }
-    #wip-snapshot-panel .wip-trends-toggle {
-      display: flex;
-      gap: 6px;
-      margin: 6px 0;
-      flex-wrap: wrap;
-    }
-    #wip-snapshot-panel .wip-trends-tab {
-      font-size: 11px;
-      padding: 3px 8px;
-      border: 1px solid #c9d4e3;
-      border-radius: 12px;
-      background: #f4f7fb;
-      color: #1f2937;
-      cursor: pointer;
-    }
-    #wip-snapshot-panel .wip-trends-tab.active {
-      background: #0b5fff;
-      border-color: #0b5fff;
-      color: #fff;
-    }
-    /* The elapsed-time reference marker overlaid on the completion bar. It is a
-       visual aid only; the goal forbids reading it as a forecast. */
-    #wip-snapshot-panel .wip-trends-ref {
-      position: relative;
-    }
-    #wip-snapshot-panel .wip-trends-ref-mark {
-      position: absolute;
-      top: -2px;
-      width: 2px;
-      height: 14px;
-      background: #d93025;
-    }
-    #wip-snapshot-panel .wip-risk-badge {
-      display: inline-block;
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 10px;
-      color: #fff;
-    }
-    #wip-snapshot-panel .wip-risk-ontrack { background: #1e8e3e; }
-    #wip-snapshot-panel .wip-risk-attention { background: #f9ab00; color: #1f2937; }
-    #wip-snapshot-panel .wip-risk-atrisk { background: #d93025; }
-    #wip-snapshot-panel .wip-risk-insufficient { background: #80868b; }
-
-    /* Daily Commitment section (roadmap T1.3): a discrete sub-section inside the
-       same snapshot panel. It is a DELIVERY projection, visually distinct from
-       the WIP indicator and never altering the WIP number. */
-    #wip-snapshot-panel .wip-commit-section {
-      margin-top: 10px;
-      border-top: 1px solid #eee;
-      padding-top: 10px;
-    }
-    #wip-snapshot-panel .wip-commit-section h4 {
-      margin: 0 0 6px 0;
-      font-size: 12px;
-      color: #1f2937;
-    }
-    #wip-snapshot-panel .wip-commit-help {
-      font-size: 11px;
-      color: #666;
-      margin: 0 0 6px 0;
-    }
-    /* Daily Commitment Card Picker (roadmap T1.4): a compact, searchable list of
-       work items with a checkbox and a destination dropdown per card. Replaces
-       the former free-text "id: column" textarea with a visual selection. */
-    #wip-snapshot-panel .wip-commit-search {
-      width: 100%;
-      box-sizing: border-box;
-      font-family: inherit;
-      font-size: 12px;
-      padding: 6px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      margin-bottom: 6px;
-    }
-    #wip-snapshot-panel .wip-commit-list {
-      max-height: 220px;
-      overflow-y: auto;
-      border: 1px solid #eee;
-      border-radius: 6px;
-    }
-    #wip-snapshot-panel .wip-commit-list:empty { display: none; }
-    #wip-snapshot-panel .wip-commit-pick {
-      display: flex;
-      align-items: flex-start;
-      gap: 6px;
-      padding: 6px;
-      border-bottom: 1px solid #f1f1f1;
-    }
-    #wip-snapshot-panel .wip-commit-pick:last-child { border-bottom: none; }
-    #wip-snapshot-panel .wip-commit-pick.off-board { opacity: 0.75; }
-    #wip-snapshot-panel .wip-commit-pick input[type="checkbox"] {
-      margin-top: 2px;
-      flex: 0 0 auto;
-    }
-    #wip-snapshot-panel .wip-commit-pick-main {
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-    #wip-snapshot-panel .wip-commit-pick-title {
-      font-size: 12px;
-      color: #1f2937;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    #wip-snapshot-panel .wip-commit-pick-meta {
-      font-size: 10px;
-      color: #6b7280;
-      margin-top: 1px;
-    }
-    #wip-snapshot-panel .wip-commit-pick-off {
-      color: #cc292b;
-      font-weight: bold;
-    }
-    #wip-snapshot-panel .wip-commit-dest {
-      margin-top: 4px;
-      width: 100%;
-      box-sizing: border-box;
-      font-family: inherit;
-      font-size: 11px;
-      padding: 3px 4px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-    #wip-snapshot-panel .wip-commit-empty {
-      font-size: 11px;
-      color: #6b7280;
-      padding: 8px 4px;
-    }
-    #wip-snapshot-panel .wip-commit-plan {
-      font-size: 11px;
-      color: #374151;
-      margin: 6px 0;
-    }
-    #wip-snapshot-panel .wip-commit-plan .wip-commit-missing { color: #cc292b; }
-    #wip-snapshot-panel .wip-commit-output {
-      margin-top: 8px;
-      max-height: 160px;
-      overflow-y: auto;
-      font-size: 12px;
-    }
-    #wip-snapshot-panel .wip-commit-output:empty { display: none; }
-    #wip-snapshot-panel .wip-commit-summary {
-      font-size: 11px;
-      color: #374151;
-      margin: 6px 0;
-    }
-    #wip-snapshot-panel .wip-commit-row {
-      padding: 2px 0;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    #wip-snapshot-panel .wip-commit-status {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: bold;
-      padding: 1px 6px;
-      border-radius: 10px;
-      text-transform: uppercase;
-    }
-    #wip-snapshot-panel .wip-commit-status.reached { background: #e6f4ea; color: #1e8e3e; }
-    #wip-snapshot-panel .wip-commit-status.beyond { background: #e8f0fe; color: #1a56db; }
-    #wip-snapshot-panel .wip-commit-status.behind { background: #fff3cd; color: #856404; }
-    #wip-snapshot-panel .wip-commit-status.off-track { background: #f3f4f6; color: #4b5563; }
-    #wip-snapshot-panel .wip-commit-status.missing { background: #fde8e8; color: #cc292b; }
-    /* Projected Board (roadmap T1.5). A light, column-oriented simulation view. */
-    #wip-snapshot-panel .wip-projected-section {
-      border-top: 1px dashed #d0d7de;
-      margin-top: 10px;
-      padding-top: 8px;
-    }
-    #wip-snapshot-panel .wip-projected-section h4 {
-      margin: 0 0 4px 0;
-      font-size: 12px;
-      color: #1f2937;
-    }
-    #wip-snapshot-panel .wip-projected-help {
-      font-size: 10px;
-      color: #6b7280;
-      margin: 0 0 6px 0;
-    }
-    #wip-snapshot-panel .wip-projected-toggle {
-      display: inline-flex;
-      gap: 4px;
-      margin: 4px 0;
-    }
-    #wip-snapshot-panel .wip-projected-tab {
-      font-size: 11px;
-      padding: 3px 8px;
-      border: 1px solid #c2c8d0;
-      border-radius: 4px;
-      background: #f8fafc;
-      color: #1f2937;
-      cursor: pointer;
-    }
-    #wip-snapshot-panel .wip-projected-tab.active {
-      background: #0b5fff;
-      border-color: #0b5fff;
-      color: #fff;
-    }
-    #wip-snapshot-panel .wip-projected-sim-note {
-      font-size: 10px;
-      color: #856404;
-      background: #fff8e1;
-      border-radius: 4px;
-      padding: 2px 6px;
-      margin: 4px 0;
-      display: inline-block;
-    }
-    #wip-snapshot-panel .wip-projected-summary {
-      font-size: 11px;
-      color: #374151;
-      margin: 6px 0;
-    }
-    #wip-snapshot-panel .wip-projected-reliability {
-      font-size: 10px;
-      color: #cc292b;
-      margin: 2px 0 6px 0;
-    }
-    #wip-snapshot-panel .wip-projected-board {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      max-height: 220px;
-      overflow-y: auto;
-    }
-    #wip-snapshot-panel .wip-projected-col {
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      padding: 4px 6px;
-      background: #fcfcfd;
-    }
-    #wip-snapshot-panel .wip-projected-col-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-size: 11px;
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 3px;
-    }
-    #wip-snapshot-panel .wip-projected-col-count { color: #4b5563; font-weight: 500; }
-    #wip-snapshot-panel .wip-projected-col-delta { font-size: 10px; margin-left: 4px; }
-    #wip-snapshot-panel .wip-projected-col-delta.up { color: #1e8e3e; }
-    #wip-snapshot-panel .wip-projected-col-delta.down { color: #cc292b; }
-    #wip-snapshot-panel .wip-projected-cards {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 3px;
-    }
-    #wip-snapshot-panel .wip-projected-card {
-      font-size: 10px;
-      padding: 1px 5px;
-      border-radius: 3px;
-      background: #eef2f7;
-      color: #1f2937;
-    }
-    #wip-snapshot-panel .wip-projected-card.moved {
-      background: #e8f0fe;
-      border: 1px solid #1a56db;
-      color: #1a56db;
-    }
-    #wip-snapshot-panel .wip-projected-empty { font-size: 10px; color: #9ca3af; }
-
-    /* Daily views navigation (roadmap T1.6 §6): switch between the four views. */
-    #wip-snapshot-panel .wip-nav-section {
-      border-top: 1px solid #eee;
-      margin-top: 10px;
-      padding-top: 10px;
-    }
-    #wip-snapshot-panel .wip-nav-section h4 {
-      margin: 0 0 6px 0;
-      font-size: 12px;
-      color: #1f2937;
-    }
-    #wip-snapshot-panel .wip-nav-tabs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-    #wip-snapshot-panel .wip-nav-tab {
-      font-size: 11px;
-      padding: 3px 8px;
-      border: 1px solid #c9d4e3;
-      border-radius: 12px;
-      background: #f4f7fb;
-      color: #1f2937;
-      cursor: pointer;
-    }
-    #wip-snapshot-panel .wip-nav-tab.active {
-      background: #0b5fff;
-      border-color: #0b5fff;
-      color: #fff;
-    }
-
-    /* Daily Comparison (roadmap T1.6). Compact comparison cards, result filters. */
-    #wip-snapshot-panel .wip-comparison-section {
-      border-top: 1px dashed #d0d7de;
-      margin-top: 10px;
-      padding-top: 8px;
-    }
-    #wip-snapshot-panel .wip-comparison-section h4 {
-      margin: 0 0 4px 0;
-      font-size: 12px;
-      color: #1f2937;
-    }
-    #wip-snapshot-panel .wip-comparison-help {
-      font-size: 10px;
-      color: #6b7280;
-      margin: 0 0 6px 0;
-    }
-    #wip-snapshot-panel .wip-comparison-later {
-      width: 100%;
-      box-sizing: border-box;
-      font-size: 11px;
-      padding: 4px 6px;
-      border: 1px solid #c9d4e3;
-      border-radius: 4px;
-      margin: 4px 0 6px 0;
-    }
-    #wip-snapshot-panel .wip-comparison-meta {
-      font-size: 10px;
-      color: #4b5563;
-      margin: 2px 0;
-    }
-    #wip-snapshot-panel .wip-comparison-archived {
-      font-size: 10px;
-      color: #856404;
-      background: #fff8e1;
-      border-radius: 3px;
-      padding: 1px 4px;
-      margin: 2px 0;
-      display: inline-block;
-    }
-    #wip-snapshot-panel .wip-comparison-summary {
-      font-size: 11px;
-      color: #374151;
-      margin: 6px 0 2px 0;
-    }
-    #wip-snapshot-panel .wip-comparison-undetermined {
-      font-size: 10px;
-      color: #6b7280;
-      margin: 2px 0;
-    }
-    #wip-snapshot-panel .wip-comparison-rate {
-      font-size: 13px;
-      font-weight: bold;
-      margin: 4px 0;
-    }
-    #wip-snapshot-panel .wip-comparison-rate .wip-rate-bar {
-      display: block;
-      height: 6px;
-      border-radius: 3px;
-      background: #e5e7eb;
-      margin-top: 3px;
-      overflow: hidden;
-    }
-    #wip-snapshot-panel .wip-comparison-rate .wip-rate-fill {
-      display: block;
-      height: 100%;
-      background: #1e8e3e;
-    }
-    #wip-snapshot-panel .wip-comparison-rate.unavailable { color: #6b7280; font-weight: normal; font-size: 11px; }
-    #wip-snapshot-panel .wip-comparison-reliability {
-      font-size: 10px;
-      color: #cc292b;
-      margin: 2px 0 6px 0;
-    }
-    #wip-snapshot-panel .wip-comparison-filters {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 3px;
-      margin: 6px 0;
-    }
-    #wip-snapshot-panel .wip-comparison-filter {
-      font-size: 10px;
-      padding: 2px 6px;
-      border: 1px solid #c9d4e3;
-      border-radius: 10px;
-      background: #f4f7fb;
-      color: #374151;
-      cursor: pointer;
-    }
-    #wip-snapshot-panel .wip-comparison-filter.active {
-      background: #0b5fff;
-      border-color: #0b5fff;
-      color: #fff;
-    }
-    #wip-snapshot-panel .wip-comparison-cards {
-      max-height: 200px;
-      overflow-y: auto;
-    }
-    #wip-snapshot-panel .wip-comparison-card {
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      padding: 5px 6px;
-      margin-bottom: 4px;
-      background: #fcfcfd;
-    }
-    #wip-snapshot-panel .wip-comparison-card-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-    }
-    #wip-snapshot-panel .wip-comparison-card-id { font-size: 11px; font-weight: 600; color: #1f2937; }
-    #wip-snapshot-panel .wip-comparison-flow {
-      font-size: 10px;
-      color: #4b5563;
-      margin-top: 2px;
-    }
-    #wip-snapshot-panel .wip-comparison-flow .wip-flow-expected { color: #1a56db; }
-    #wip-snapshot-panel .wip-comparison-flow .wip-flow-actual { color: #1f2937; font-weight: 500; }
-    #wip-snapshot-panel .wip-comparison-explain {
-      font-size: 10px;
-      color: #856404;
-      margin-top: 2px;
-    }
-    #wip-snapshot-panel .wip-comparison-status {
-      display: inline-block;
-      font-size: 10px;
-      padding: 1px 6px;
-      border-radius: 10px;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-    #wip-snapshot-panel .wip-comparison-status.reached { background: #e6f4ea; color: #1e8e3e; }
-    #wip-snapshot-panel .wip-comparison-status.beyond { background: #e8f0fe; color: #1a56db; }
-    #wip-snapshot-panel .wip-comparison-status.behind { background: #fff3cd; color: #856404; }
-    #wip-snapshot-panel .wip-comparison-status.off-track { background: #f3f4f6; color: #4b5563; }
-    #wip-snapshot-panel .wip-comparison-status.missing { background: #fde8e8; color: #cc292b; }
-    #wip-snapshot-panel .wip-comparison-empty { font-size: 11px; color: #6b7280; padding: 6px 2px; }
-
-    /* Daily History (roadmap T1.7). Reuses the discreet panel chrome. */
-    #wip-snapshot-panel .wip-history-filter {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 4px;
-      margin: 4px 0;
-      font-size: 10px;
-      color: #4b5563;
-    }
-    #wip-snapshot-panel .wip-history-date {
-      font-size: 10px;
-      padding: 2px 4px;
-      border: 1px solid #d1d5db;
-      border-radius: 4px;
-    }
-    #wip-snapshot-panel .wip-history-empty { font-size: 11px; color: #6b7280; padding: 6px 2px; }
-    #wip-snapshot-panel .wip-history-evolution {
-      margin: 6px 0;
-      padding: 4px 6px;
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      background: #fcfcfd;
-    }
-    #wip-snapshot-panel .wip-history-evo-title { font-size: 10px; font-weight: 600; color: #1f2937; margin-bottom: 3px; }
-    #wip-snapshot-panel .wip-history-evo-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 2px;
-    }
-    #wip-snapshot-panel .wip-history-evo-date { font-size: 9px; color: #6b7280; width: 62px; flex: none; }
-    #wip-snapshot-panel .wip-history-evo-track {
-      flex: 1;
-      height: 6px;
-      background: #eef0f3;
-      border-radius: 3px;
-      overflow: hidden;
-    }
-    #wip-snapshot-panel .wip-history-evo-fill { display: block; height: 100%; background: #1a56db; }
-    #wip-snapshot-panel .wip-history-evo-fill.unavailable { background: #d1d5db; }
-    #wip-snapshot-panel .wip-history-evo-val { font-size: 9px; color: #4b5563; width: 34px; text-align: right; flex: none; }
-    #wip-snapshot-panel .wip-history-records {
-      max-height: 220px;
-      overflow-y: auto;
-    }
-    #wip-snapshot-panel .wip-history-card {
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      padding: 5px 6px;
-      margin-bottom: 4px;
-      background: #fff;
-    }
-    #wip-snapshot-panel .wip-history-card-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-    }
-    #wip-snapshot-panel .wip-history-card-date { font-size: 11px; font-weight: 600; color: #1f2937; }
-    #wip-snapshot-panel .wip-history-rate { font-size: 10px; color: #1e8e3e; font-weight: 600; }
-    #wip-snapshot-panel .wip-history-rate.unavailable { color: #6b7280; font-weight: 400; }
-
-    /* View visibility toggling for the daily-views navigation. */
-    #wip-snapshot-panel.nav-initial #wip-projected-section,
-    #wip-snapshot-panel.nav-initial #wip-comparison-section,
-    #wip-snapshot-panel.nav-projected #wip-comparison-section,
-    #wip-snapshot-panel.nav-actual #wip-comparison-section,
-    #wip-snapshot-panel.nav-comparison #wip-projected-section { display: none !important; }
-
-    /* Sprint Intelligence (roadmap T2.2): compact, consistent with the panel. */
-    #wip-snapshot-panel .wip-sprint-section {
-      margin-top: 8px;
-      padding-top: 6px;
-      border-top: 1px dashed #d1d5db;
-    }
-    #wip-snapshot-panel .wip-sprint-goal,
-    #wip-snapshot-panel .wip-sprint-manual {
-      margin-top: 6px;
-      padding: 5px 6px;
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      background: #fcfcfd;
-    }
-    #wip-snapshot-panel .wip-sprint-goal h4,
-    #wip-snapshot-panel .wip-sprint-manual h4 {
-      font-size: 11px;
-      font-weight: 600;
-      color: #1f2937;
-      margin: 0 0 4px;
-    }
-    #wip-snapshot-panel .wip-sprint-goal label,
-    #wip-snapshot-panel .wip-sprint-manual label {
-      display: block;
-      font-size: 10px;
-      color: #4b5563;
-      margin: 4px 0 2px;
-    }
-    #wip-snapshot-panel .wip-sprint-input,
-    #wip-snapshot-panel .wip-sprint-textarea {
-      width: 100%;
-      box-sizing: border-box;
-      font-size: 11px;
-      padding: 3px 5px;
-      border: 1px solid #d1d5db;
-      border-radius: 4px;
-      font-family: inherit;
-    }
-    #wip-snapshot-panel .wip-sprint-textarea { resize: vertical; }
-  `;
-  document.head.appendChild(style);
-}
 
 
 // Column name resolution and card visibility are now owned by WIPBoardReader
@@ -1804,6 +1023,7 @@ function applyCardAlarm(card, isHighlightActive, alarmConfig, blockTag, i18n) {
 // fallback that the reader intentionally does not cover).
 
 const Reader = (typeof WIPBoardReader !== 'undefined' && WIPBoardReader) || null;
+const BoardIdentity = (typeof WIPBoardIdentity !== 'undefined' && WIPBoardIdentity) || null;
 
 function readBoardModel() {
   // Read the live document into the normalized model. The reader's default
@@ -2023,45 +1243,14 @@ function getSnapshotStore() {
 }
 
 function resolveSnapshotScope(boardModel, context) {
-  // Organization/project come from the reader model (parsed from card hrefs);
-  // team/board come from the configured board keyword + optional route filter so
-  // different teams/boards never collide in storage. Returns null when the
-  // mandatory org/project cannot be detected, so capture refuses rather than
-  // writing an ambiguous record.
-  const firstScoped = (boardModel.items || []).find(
-    item =>
-      item &&
-      typeof item.organization === 'string' &&
-      item.organization &&
-      typeof item.project === 'string' &&
-      item.project
-  );
-  // The Azure board URL still identifies its org and project when the board
-  // is empty, filtered or has no visible cards. Do not require a card href
-  // merely to resolve a stable storage scope.
-  let organization = firstScoped && firstScoped.organization;
-  let project = firstScoped && firstScoped.project;
-  if (!organization || !project) {
-    try {
-      const url = new URL(window.location.href);
-      const parts = url.pathname.split('/').filter(Boolean).map(decodeURIComponent);
-      if (url.hostname === 'dev.azure.com' && parts.length >= 2) {
-        organization = parts[0];
-        project = parts[1];
-      } else if (url.hostname.endsWith('.visualstudio.com') && parts.length >= 1) {
-        organization = url.hostname.slice(0, -'.visualstudio.com'.length);
-        project = parts[0];
-      }
-    } catch (_) {
-      return null;
-    }
+  // One scope per ACTUAL board route, regardless of the user's WIP keyword.
+  // This isolates both roadmap boards and maintenance even within one project.
+  // Legacy keyword-scoped snapshots are not migrated automatically because
+  // their originating board cannot be proven after the fact.
+  if (!BoardIdentity || typeof BoardIdentity.resolveBoardScope !== 'function') {
+    return null;
   }
-  if (!organization || !project) return null;
-
-  const board = context.currentBoardName || project;
-  const team = context.boardPathFilter || context.currentBoardName || 'default';
-
-  return { organization, project, team, board };
+  return BoardIdentity.resolveBoardScope(window.location.href);
 }
 
 function formatSnapshotWhen(capturedAt) {
@@ -2082,6 +1271,9 @@ function describeIncompleteReasons(reasons, i18n) {
     NO_COLUMNS: 'reasonNoColumns',
     DUPLICATE_IDS: 'reasonDuplicateIds',
     MISSING_IDS: 'reasonMissingIds',
+    HEADER_COUNT_MISMATCH: 'reasonHeaderCountMismatch',
+    COLUMN_ALIGNMENT_UNKNOWN: 'reasonColumnAlignmentUnknown',
+    HEADER_COUNT_UNAVAILABLE: 'reasonHeaderCountUnavailable',
   };
   return (reasons || [])
     .map(code => (map[code] ? i18n.t(map[code]) : code))
@@ -2103,14 +1295,23 @@ function setSnapshotOutput(html) {
   setIndicatorHtml(output, html || '');
 }
 
-function renderSnapshotColumns(columns, i18n) {
+function renderSnapshotColumns(columns, i18n, scope) {
   if (!Array.isArray(columns) || columns.length === 0) return '';
-  return columns
-    .map(col => {
-      const name = String(col.name == null ? '' : col.name).replace(/[<>]/g, '');
-      return `<div class="wip-snap-row"><span>${name}</span><span class="wip-detail-count">${col.count || 0}</span></div>`;
-    })
-    .join('');
+  const title = scope && scope.board
+    ? `<div class="wip-snap-note">${escapeText(i18n.t('snapshotBoardId', { board: scope.board }))}</div>`
+    : '';
+  return title + columns.map(col => {
+    const name = escapeText(String(col.name == null ? '' : col.name));
+    const observed = typeof col.count === 'number' ? col.count : 0;
+    const reported = typeof col.reportedCount === 'number' ? col.reportedCount : null;
+    const mismatch = reported != null && reported !== observed;
+    const observedText = escapeText(i18n.t('snapshotObservedCount', { count: observed }));
+    const headerText = escapeText(reported == null
+      ? i18n.t('snapshotHeaderCountUnknown')
+      : i18n.t('snapshotHeaderCount', { count: reported }));
+    return `<div class="wip-snap-row"><span>${name}</span>` +
+      `<span class="wip-snap-counts${mismatch ? ' mismatch' : ''}">${observedText} / ${headerText}</span></div>`;
+  }).join('');
 }
 
 async function handleCaptureSnapshot(context, i18n) {
@@ -2157,11 +1358,11 @@ async function handleCaptureSnapshot(context, i18n) {
       i18n.t('snapshotCapturedIncomplete', {
         reasons: describeIncompleteReasons(capture.incompleteReasons, i18n),
       }),
-      'ok'
+      'warn'
     );
   }
 
-  setSnapshotOutput(renderSnapshotColumns(capture.columns, i18n));
+  setSnapshotOutput(renderSnapshotColumns(capture.columns, i18n, scope));
 }
 
 async function handleViewLatestSnapshot(context, i18n) {
@@ -2204,7 +1405,7 @@ async function handleViewLatestSnapshot(context, i18n) {
     'ok'
   );
   const badge = `<div class="wip-snap-row"><span class="wip-snap-badge ${badgeKey}">${badgeText}</span></div>`;
-  setSnapshotOutput(badge + renderSnapshotColumns(latest.columns, i18n));
+  setSnapshotOutput(badge + renderSnapshotColumns(latest.columns, i18n, scope));
 }
 
 async function handleViewHistory(context, i18n) {
@@ -4673,6 +3874,10 @@ function ensureSnapshotPanel(context, i18n) {
     });
   }
 
+  // A panel hidden on an earlier (non-board) route must become visible again
+  // when navigating to a different Azure board without reloading the SPA.
+  if (panel.style.display === 'none') panel.style.display = '';
+
   // Bind actions against the CURRENT context/i18n every refresh so config and
   // language changes take effect. Replacing the handler avoids stacking listeners.
   bindSnapshotButton('wip-snapshot-capture', () => handleCaptureSnapshot(context, i18n));
@@ -4909,6 +4114,16 @@ function hideSnapshotPanel() {
 // 2. MAIN WIP CALCULATION AND ANALYSIS
 // ============================================================================
 // Main runtime flow: scan board, count cards, apply rules, render indicator.
+function mountSnapshotPanelForBoard(context, i18n) {
+  // Delivery snapshots work on every real Azure board, even when WIP rules are
+  // targeted at only one of the user's three boards.
+  if (!BoardIdentity || !BoardIdentity.resolveBoardScope(window.location.href)) {
+    hideSnapshotPanel();
+    return;
+  }
+  withObserverPaused(() => ensureSnapshotPanel(context, i18n));
+}
+
 function updateWipBoard() {
 
   // Guard clause: extension can be reloaded while tab is still open.
@@ -4971,6 +4186,13 @@ function updateWipBoard() {
       language,
     } = getBoardContext(data);
     const i18n = getLanguagePack(language);
+    const snapshotContext = {
+      currentBoardName,
+      boardPathFilter,
+      azureApiEnabled: data.azureApiEnabled === true,
+      sprintStartColumn: typeof data.sprintStartColumn === 'string' ? data.sprintStartColumn : '',
+      sprintEndColumn: typeof data.sprintEndColumn === 'string' ? data.sprintEndColumn : '',
+    };
 
     if (!isConfigured) {
       let indicator = document.getElementById('custom-wip-indicator');
@@ -4982,8 +4204,8 @@ function updateWipBoard() {
       }
       indicator.style.display = 'block';
       setIndicatorHtml(indicator, `<div>${i18n.t('indicatorMissingConfig')}</div>`);
-      // Snapshot capture needs a configured board scope; keep the panel hidden.
-      hideSnapshotPanel();
+      // WIP configuration is separate from Daily/Sprint board histories.
+      mountSnapshotPanelForBoard(snapshotContext, i18n);
       return;
     }
     
@@ -4991,7 +4213,7 @@ function updateWipBoard() {
     if (!isAllowedBoard(currentBoardName, boardPathFilter)) {
       const indicator = document.getElementById('custom-wip-indicator');
       if (indicator) indicator.style.display = 'none';
-      hideSnapshotPanel();
+      mountSnapshotPanelForBoard(snapshotContext, i18n);
       return;
     }
 
@@ -5075,16 +4297,6 @@ function updateWipBoard() {
     // board changes still arrive once the observer reconnects on the next
     // microtask. The WIP math above is complete and unchanged; only the write
     // phase is wrapped.
-    const snapshotContext = {
-      currentBoardName,
-      boardPathFilter,
-      // Sprint Intelligence (T2.2): the API feature flag (default false) and the
-      // optional, per-board flow boundaries. Read-only; the API stays unwired.
-      azureApiEnabled: data.azureApiEnabled === true,
-      sprintStartColumn: typeof data.sprintStartColumn === 'string' ? data.sprintStartColumn : '',
-      sprintEndColumn: typeof data.sprintEndColumn === 'string' ? data.sprintEndColumn : '',
-    };
-
     withObserverPaused(() => {
       // Evaluate card-level alarms only in WIP columns.
       allWipCards.forEach(card => {

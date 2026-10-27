@@ -31,8 +31,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const picker = require('../src/data/commitment-picker.js');
-const commitment = require('../src/data/daily-commitment.js');
+const picker = require('../src/features/daily/commitment-picker.js');
+const commitment = require('../src/features/daily/daily-commitment.js');
 const store = require('../src/data/snapshot-store.js');
 const { createMockStorage } = require('./helpers/mock-chrome-storage.js');
 
@@ -377,7 +377,7 @@ test('a commitment picked on board A does not pre-select rows on board B', async
 test('commitment-picker module is DOM-free and Chrome-free by design', () => {
   const fs = require('node:fs');
   const path = require('node:path');
-  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'data', 'commitment-picker.js'), 'utf8');
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'features', 'daily', 'commitment-picker.js'), 'utf8');
   assert.equal(/\bdocument\b/.test(src), false);
   assert.equal(/MutationObserver/.test(src), false);
   assert.equal(/\bchrome\./.test(src), false);

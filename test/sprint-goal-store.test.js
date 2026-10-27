@@ -8,8 +8,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const Store = require('../src/data/sprint-goal-store.js');
-const SprintBaseline = require('../src/data/sprint-baseline.js');
-const SprintScope = require('../src/data/sprint-scope.js');
+const SprintBaseline = require('../src/features/sprint/sprint-baseline.js');
+const SprintScope = require('../src/features/sprint/sprint-scope.js');
 const { createMockStorage } = require('./helpers/mock-chrome-storage.js');
 
 const SCOPE = { organization: 'sda-iatec', project: 'Sda.Arms', team: 'Squad A', board: 'Board' };

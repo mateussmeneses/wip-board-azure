@@ -136,37 +136,79 @@
   // keeps order; stable id removes index fragility for identity — requirement 4).
   // ---------------------------------------------------------------------------
 
-  function readColumns(boardRoot) {
+  function columnLayout(boardRoot) {
     const headers = queryAll(boardRoot, SELECTORS.columnHeader);
     const bodies = queryAll(boardRoot, SELECTORS.columnBody);
+    const groups = headers.map(function () { return []; });
+    if (headers.length === 0) {
+      return { headers: headers, groups: groups, bodyCount: bodies.length, reliable: false };
+    }
 
-    return headers.map(function (header, index) {
+    // Prefer the stable header ID if Azure exposes it.
+    const ids = headers.map(function (h) { return attr(h, 'data-column'); });
+    const hasHeaderIds = ids.every(function (id) { return !!id; }) &&
+      new Set(ids).size === ids.length;
+
+    if (hasHeaderIds && bodies.every(function (b) {
+      return ids.indexOf(attr(b, 'data-column')) !== -1;
+    })) {
+      bodies.forEach(function (b) {
+        groups[ids.indexOf(attr(b, 'data-column'))].push(b);
+      });
+      return {
+        headers: headers, groups: groups, bodyCount: bodies.length,
+        reliable: groups.every(function (g) { return g.length > 0; }),
+      };
+    }
+
+    // Azure boards with swimlanes repeat the SAME column bodies once per lane:
+    // [A,B,C] [A,B,C] ... . Pair by column slot across every row, not only the
+    // first row. If repeated GUIDs disagree, mark the mapping unreliable.
+    const fullRows = bodies.length >= headers.length &&
+      bodies.length % headers.length === 0;
+    bodies.forEach(function (body, i) {
+      if (i < headers.length || fullRows) groups[i % headers.length].push(body);
+    });
+    const consistentIds = groups.every(function (group) {
+      const ids = group.map(function (b) { return attr(b, 'data-column'); }).filter(Boolean);
+      return ids.length < 2 || new Set(ids).size === 1;
+    });
+    return {
+      headers: headers,
+      groups: groups,
+      bodyCount: bodies.length,
+      reliable: fullRows && consistentIds,
+    };
+  }
+
+  function parseReportedCount(value) {
+    const raw = String(value || '').trim().replace(/\s/g, '');
+    if (/^\d+$/.test(raw)) return Number(raw);
+    // Common thousands grouping in Azure locales: 1,234 or 1.234.
+    if (/^\d{1,3}([,.]\d{3})+$/.test(raw)) {
+      return Number(raw.replace(/[,.]/g, ''));
+    }
+    return UNAVAILABLE;
+  }
+
+  function readColumns(boardRoot, providedLayout) {
+    const layout = providedLayout || columnLayout(boardRoot);
+    return layout.headers.map(function (header, index) {
       const editable = queryOne(header, SELECTORS.columnHeaderEditable);
       const ariaLabel = attr(header, 'aria-label');
-      // Prefer the editable label, then aria-label, then raw text. Mirrors the
-      // live getHeaderColumnDisplayName() precedence.
       const name = text(editable) || (ariaLabel ? ariaLabel.trim() : '') || text(header);
-
-      const body = bodies[index] || null;
+      const bodyGroup = layout.groups[index] || [];
+      const body = bodyGroup[0] || null;
       const countNode = queryOne(header, SELECTORS.columnItemCount);
-      const reportedCountText = countNode ? text(countNode) : '';
-      const reportedCount =
-        reportedCountText && /^\d+$/.test(reportedCountText)
-          ? Number(reportedCountText)
-          : UNAVAILABLE;
-
+      const reportedCount = countNode
+        ? parseReportedCount(text(countNode)) : UNAVAILABLE;
       return {
-        // Stable identity from the body container when present; order preserved.
-        id: body ? attr(body, 'data-column') : null,
+        id: attr(header, 'data-column') || (body ? attr(body, 'data-column') : null),
         name: name,
         order: index,
-        // Azure flags terminal/"done" columns on the body; keep it for delivery
-        // flow logic (Approved -> Closed) without hardcoding column names.
         isDoneColumn: body ? attr(body, 'data-done') === 'true' : UNAVAILABLE,
-        // The board's own card count for the column (header badge), when shown.
         reportedCount: reportedCount,
-        // Internal handle used while reading cards; not part of the public model.
-        _body: body,
+        _bodies: bodyGroup,
       };
     });
   }
@@ -316,13 +358,17 @@
       return emptyModel();
     }
 
-    const columns = readColumns(boardRoot);
+    const layout = columnLayout(boardRoot);
+    const columns = readColumns(boardRoot, layout);
+    const headerCount = layout.headers.length;
+    const bodyCount = layout.bodyCount;
     const items = [];
     const seenIds = new Map(); // id -> first index in items
 
     columns.forEach(function (column) {
-      if (!column._body) return;
-      const cardNodes = queryAll(column._body, SELECTORS.card);
+      const cardNodes = (column._bodies || []).flatMap(function (body) {
+        return queryAll(body, SELECTORS.card);
+      });
       cardNodes.forEach(function (cardNode) {
         const visible = isVisible(cardNode);
         const item = readCard(cardNode, column.name, column.id, visible);
@@ -358,6 +404,11 @@
       items: items,
       // Convenience aggregates for snapshots/diffing; still presentation-free.
       counts: buildCounts(items),
+      diagnostics: {
+        headerCount: headerCount,
+        bodyCount: bodyCount,
+        columnAlignmentReliable: layout.reliable,
+      },
     };
   }
 
@@ -390,6 +441,7 @@
       columns: [],
       items: [],
       counts: { total: 0, visible: 0, hidden: 0, uniqueVisibleIds: 0, duplicates: 0 },
+      diagnostics: { headerCount: 0, bodyCount: 0, columnAlignmentReliable: false },
     };
   }
 
