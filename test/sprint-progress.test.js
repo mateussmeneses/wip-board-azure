@@ -347,3 +347,28 @@ test('accepts a stored baseline-record wrapper { baseline, savedAt }', () => {
   assert.equal(r.hasBaseline, true);
   assert.equal(r.baseline.completed, 1);
 });
+
+test('incomplete scope does not infer removals or a current-scope percentage', () => {
+  const base = baselineOf(plannedItems(3));
+  const r = SprintProgress.computeProgress({
+    baseline: base,
+    currentItems: [{ id: 1, column: 'Closed' }],
+    currentComplete: false,
+  });
+  assert.equal(r.baseline.completed, 1);
+  assert.equal(r.baseline.unknown, 2);
+  assert.equal(r.baseline.removed, 0);
+  assert.equal(r.scopeChange.removed, 0);
+  assert.equal(r.scopeChange.delta, null);
+  assert.equal(r.current.completionPct, null);
+  assert.equal(r.reliability, Reliability.PARTIAL);
+});
+test('even a full visible set stays partial if the capture is flagged incomplete', () => {
+  const base = baselineOf(plannedItems(2));
+  const r = SprintProgress.computeProgress({
+    baseline: base, currentItems: plannedItems(2),
+    currentComplete: false,
+  });
+  assert.equal(r.reliability, Reliability.PARTIAL);
+  assert.equal(r.baseline.unknown, 0);
+});
