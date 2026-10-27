@@ -166,6 +166,7 @@
   //                    detect a late baseline; never used to invent history.
   //     capturedAt   : baseline capture time; defaults to the baseline record's
   //                    own capturedAt/savedAt.
+  //     currentComplete: false when a filtered/partial read cannot prove removals.
   //   }
   //
   // Returns a plain, never-frozen result object (see the shape below). When no
@@ -201,6 +202,9 @@
     const changes = SprintBaseline.detectScopeChanges(baseline, scopeItems, i.flowConfig || baseline.flow);
 
     const currentById = indexCurrent(scopeItems, flow);
+    // A filtered or incompletely loaded DOM cannot prove that a missing card
+    // left the sprint. API/complete captures may still establish removals.
+    const currentComplete = i.currentComplete !== false;
     const plannedIds = Array.isArray(baseline.plannedIds) ? baseline.plannedIds : [];
     const plannedSet = new Set(plannedIds);
     const startColumn = flow.startColumn;
@@ -217,11 +221,15 @@
     plannedSet.forEach(function (id) {
       const current = currentById.get(id);
       if (!current) {
-        // In the baseline but gone from the current scope: REMOVED. Its
-        // commitment still counts in the denominator (goal section 2) but it is
-        // explicitly identified, never silently dropped.
-        baselineBuckets.removed.push(id);
-        perItem.push({ id: id, state: ItemState.REMOVED, inBaseline: true, boundary: null });
+        // Only complete scope reads can prove a removal. When DOM data may be
+        // filtered/paged, classify absence as UNKNOWN instead of REMOVED.
+        if (currentComplete) {
+          baselineBuckets.removed.push(id);
+          perItem.push({ id: id, state: ItemState.REMOVED, inBaseline: true, boundary: null });
+        } else {
+          baselineBuckets.unknown.push(id);
+          perItem.push({ id: id, state: ItemState.UNKNOWN, inBaseline: true, boundary: null });
+        }
         return;
       }
       const boundary = boundaryValueOf(current, flow);
@@ -289,14 +297,14 @@
       const boundary = boundaryValueOf(current, flow);
       if (boundary != null && SprintBaseline.sameColumn(boundary, endColumn)) currentCompleted += 1;
     });
-    const currentScopeCompletionPct = percent(currentCompleted, currentTotal);
+    const currentScopeCompletionPct = currentComplete ? percent(currentCompleted, currentTotal) : null;
 
     // Reliability verdict (goal section 8): a baseline item with no resolvable
     // position makes the baseline percentage an INCOMPLETE evaluation.
     let reliability = Reliability.SUFFICIENT;
     if (baselineTotal === 0) {
       reliability = Reliability.UNAVAILABLE;
-    } else if (unknownCount > 0) {
+    } else if (unknownCount > 0 || !currentComplete) {
       reliability = Reliability.PARTIAL;
     }
 
@@ -351,7 +359,8 @@
         added: added.length,
         removed: removedCount,
         addedCompleted: addedCompleted.length,
-        delta: currentTotal - baselineTotal,
+        // A partial board cannot establish the total current sprint scope.
+        delta: currentComplete ? currentTotal - baselineTotal : null,
       },
 
       // Per-column distribution across the CURRENT scope (goal section 7).
