@@ -110,13 +110,15 @@
 
   // Create a client. `config`:
   //   fetch        : injected fetch (required)
-  //   authProvider : injected provider (default: session cookie provider)
+  //   authProvider : injected provider (default: null/disabled provider)
   //   storage      : chrome.storage.sync adapter for the flag (injectable)
   //   options      : transport options (timeout/retry)
   //   now/sleep/random/logger : passed to the transport (test seams)
   function createClient(config) {
     const cfg = config || {};
-    const authProvider = cfg.authProvider || Auth.sessionCookieProvider();
+    // Never assume a browser session grants API access. Authentication must be
+    // supplied explicitly by a validated provider (e.g. Entra OAuth).
+    const authProvider = cfg.authProvider || Auth.nullProvider();
     // Validate the provider up front; an invalid provider means "no auth".
     let validProvider = null;
     try {
