@@ -54,7 +54,15 @@
 
   // Bump SCHEMA_VERSION whenever the persisted record shape changes, and add a
   // step to MIGRATIONS so old data is upgraded on read.
-  const SCHEMA_VERSION = 1;
+  //
+  // v2 (roadmap T1.7, Daily History): commitments gain an OPTIONAL `evaluation`
+  // field that records which later snapshot was used to evaluate the daily and
+  // which revision was in effect at that moment. This is a NON-DESTRUCTIVE,
+  // additive evolution: old commitments simply gain `evaluation: null` on read,
+  // and no snapshot shape changes. Preserving the evaluated revision lets history
+  // judge a past daily against the plan actually declared that day, never the
+  // current revision (the Daily History reliability rule).
+  const SCHEMA_VERSION = 2;
 
   // Namespaced key prefixes keep snapshot and commitment records from colliding
   // and make scoped scans cheap with a single getAll + filter.
@@ -479,8 +487,15 @@
   // ---------------------------------------------------------------------------
 
   const MIGRATIONS = {
-    // Example for the future:
-    // 2: function (record) { return record_with_new_field; },
+    // v1 -> v2: add the optional `evaluation` field to commitments. Additive and
+    // non-destructive; snapshots are untouched. Only commitment records carry an
+    // evaluation, so snapshots just advance their schemaVersion.
+    2: function (record) {
+      if (record && record.kind === 'commitment' && record.evaluation === undefined) {
+        return Object.assign({}, record, { evaluation: null });
+      }
+      return record;
+    },
   };
 
   function migrateRecord(record) {
@@ -658,6 +673,11 @@
           // Prior states of this commitment, newest kept at the end. Immutable
           // copies that preserve the full planning history (requirement).
           revisions: [],
+          // Daily History (v2): the later snapshot + revision used to evaluate
+          // this daily. Set later via recordCommitmentEvaluation; null until the
+          // daily is evaluated. Preserving this keeps a historic result from
+          // being recomputed against the current revision.
+          evaluation: null,
         };
 
         const key = commitmentKey(scope, record.id);
@@ -735,7 +755,47 @@
           items: items,
           revision: existing.revision + 1,
           revisions: (existing.revisions || []).concat([archivedRevision]),
+          // Preserve any recorded evaluation across a revision; it refers to a
+          // past evaluation of an earlier plan and must not be lost.
+          evaluation: existing.evaluation != null ? existing.evaluation : null,
         };
+        const key = commitmentKey(scope, id);
+        const frozen = deepFreeze(next);
+        return adapter.set(mapOf(key, frozen)).then(function () {
+          return frozen;
+        });
+      });
+    }
+
+    // Record which later snapshot and which revision were used to evaluate this
+    // commitment's daily (Daily History, v2). This is an ADDITIVE write: it only
+    // sets the `evaluation` field and never touches the plan items or revision
+    // history, so persisting an evaluation cannot alter the original plan. The
+    // recorded revision pins the version in effect at evaluation time so a later
+    // revision never masquerades as the original (reliability rule).
+    //
+    //   evaluation = { laterSnapshotId, revision?, evaluatedAt? }
+    function recordCommitmentEvaluation(scope, id, evaluation) {
+      return getCommitmentById(scope, id).then(function (existing) {
+        const ev = evaluation && typeof evaluation === 'object' ? evaluation : {};
+        if (ev.laterSnapshotId == null) {
+          throw new SnapshotStoreError(
+            ErrorCodes.INVALID_COMMITMENT,
+            'recordCommitmentEvaluation requires a laterSnapshotId'
+          );
+        }
+        const capturedAt = buildCapturedAt(ev.evaluatedAt || clock());
+        const evaluationRecord = {
+          laterSnapshotId: ev.laterSnapshotId,
+          // The revision in effect at evaluation time; default to the current
+          // revision when not supplied, since that is the plan being evaluated.
+          revision: typeof ev.revision === 'number' ? ev.revision : existing.revision,
+          evaluatedAt: capturedAt,
+        };
+        const next = Object.assign({}, existing, {
+          schemaVersion: SCHEMA_VERSION,
+          evaluation: evaluationRecord,
+        });
         const key = commitmentKey(scope, id);
         const frozen = deepFreeze(next);
         return adapter.set(mapOf(key, frozen)).then(function () {
@@ -869,6 +929,7 @@
       getCommitments: getCommitments,
       getCommitmentById: getCommitmentById,
       reviseCommitment: reviseCommitment,
+      recordCommitmentEvaluation: recordCommitmentEvaluation,
       // comparison
       compareStored: compareStored,
       // retention

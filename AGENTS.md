@@ -99,6 +99,9 @@ Current status:
 - `agingCriticalDays` (number)
 - `targetDateWarningDays` (number)
 - `hasInitializedConfig` (boolean)
+- `azureApiEnabled` (boolean) — feature flag for the read-only Azure DevOps REST
+  client (roadmap T2.1). Default `false`. When off, no REST call is issued and the
+  DOM + local-storage runtime is unchanged. See `docs/ADO_API_CLIENT_T2_1.md`.
 
 ## Known Constraints
 1. DOM dependency

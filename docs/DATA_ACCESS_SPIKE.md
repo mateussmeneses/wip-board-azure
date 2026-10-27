@@ -132,3 +132,81 @@ under a new "Spike results" section with the date and tenant (no secrets, no tok
 must be the fallback everywhere. Sprint/Roadmap/History need the REST client, which is
 architecturally viable at zero credential cost but is **gated on running the spike in
 section 3 against a live, signed-in tenant** before any module depends on it.
+
+---
+
+## 5. Read-only client implemented (T2.1) — offline-proven, live-access pending
+
+The read-only REST client from roadmap T2.1 is now implemented under `src/api/` and
+covered by automated tests. It is OFF by default (feature flag `azureApiEnabled =
+false`) and wired into NO content script yet, so the DOM + local-storage runtime is
+unchanged. See `docs/ADO_API_CLIENT_T2_1.md` for the full write-up.
+
+### 5.1 Endpoints evaluated and implemented
+
+All against api-version **7.1**, read-only:
+
+| Endpoint | Method | Builder |
+|---|---|---|
+| `teamsettings/iterations` | GET | `ado-url.iterations` |
+| `teamsettings/iterations/{id}/workitems` | GET | `ado-url.iterationWorkItems` |
+| `wit/workitems?ids=…&fields=…` (≤ 200/call, batched) | GET | `ado-url.workItems` |
+| `work/boards/{board}/columns` | GET | `ado-url.boardColumns` |
+| `wit/wiql` (read-only query, the ONLY POST) | POST | `ado-url.wiql` |
+
+No create/update/delete endpoint exists in the client; the read-only guarantee is
+structural (the URL builder cannot assemble a mutating URL and the transport rejects
+any non-GET except the WIQL POST).
+
+### 5.2 Official references
+
+- Get Work Item / batch / updates / revisions: Azure DevOps REST API 7.1 (wit).
+- Team settings iterations and iteration work items: work/teamsettings (7.1).
+- Boards columns: work/boards (7.1).
+- Query by WIQL: wit/wiql (7.1).
+
+_Content was rephrased for compliance with licensing restrictions; see the inline
+links in section 2.2 for the primary sources._
+
+### 5.3 Permissions required
+
+No new manifest permission. The same-origin `fetch` reuses the existing
+`host_permissions` (`https://dev.azure.com/*`, `https://*.visualstudio.com/*`). The
+signed-in user's own Azure DevOps read permissions on the org/project/team govern
+what the API returns; a 403 is surfaced explicitly as insufficient permission.
+
+### 5.4 Recommended authentication strategy
+
+Same-origin session cookie for the content-script path (no stored token). The
+recommended path for a DISTRIBUTED extension is Microsoft Entra ID OAuth
+(authorization code + PKCE via `chrome.identity.launchWebAuthFlow`), NOT a legacy
+flow and NOT a persisted PAT. Entra requires an app registration (administrative
+dependency) and is left as an injectable provider seam.
+
+### 5.5 Chrome MV3 restrictions
+
+MV3 content scripts share one scope in manifest load order; the modules use the
+project's UMD namespace pattern (no bundler). Same-origin `fetch` from the injected
+content script avoids the `origin: null` CORS failures reported for foreign-origin
+pages. No remotely hosted code; no new permission.
+
+### 5.6 Possible administrative blockers (recorded, not masked)
+
+- Entra app registration unavailable in this environment.
+- Org policy could restrict third-party/OAuth access or API usage.
+- The same-origin cookie path is unverified on a live tenant.
+
+### 5.7 Test evidence
+
+`npm test` → 318 pass / 0 fail (228 prior + 90 new). Suites:
+`ado-url`, `ado-errors`, `ado-contracts`, `ado-auth`, `ado-feature-flag`,
+`ado-transport`, `ado-client`, `ado-manifest-safety`. All with mocked
+`fetch`/auth/storage; no live network.
+
+### 5.8 Proven vs simulated
+
+Proven offline: URL safety, read-only policy, normalization, batching/dedupe,
+error handling (401/403/404/429/5xx/timeout/network/CORS/malformed), bounded retry,
+flag-off inertness, MV3 compatibility. **NOT proven:** live signed-in access to a
+real tenant — still gated on the section 3 spike. `ApiCapability.liveAccessProven`
+stays `false` until that spike is recorded here with a date and tenant (no secrets).
