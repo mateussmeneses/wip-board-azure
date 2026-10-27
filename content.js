@@ -181,6 +181,7 @@ const I18N = {
     historyReasonFailed: 'comparison failed',
     // Sprint Intelligence (roadmap T2.2): sprint identity, goal, scope baseline.
     sprintSectionTitle: 'Sprint Intelligence',
+    sprintBaselineAlreadyExists: 'A baseline already exists for this sprint. It was not overwritten.',
     sprintHelp: 'Identify the sprint, its period and goal, and record the initially planned scope. Delivery data, kept separate from WIP. Uses the read-only API when enabled; otherwise a manual configuration, never simulated data.',
     sprintRefresh: 'Load sprint',
     sprintLoading: 'Loading sprint…',
@@ -486,6 +487,7 @@ const I18N = {
     historyReasonNoCommitment: 'sem compromisso',
     historyReasonFailed: 'falha na comparação',
     // Sprint Intelligence (roadmap T2.2): identidade da sprint, objetivo, linha de base do escopo.
+    sprintBaselineAlreadyExists: 'Já existe uma linha de base para esta sprint. Ela não foi sobrescrita.',
     sprintSectionTitle: 'Sprint Intelligence',
     sprintHelp: 'Identifique a sprint, seu período e objetivo, e registre o escopo inicialmente planejado. Dados de entrega, separados do WIP. Usa a API somente leitura quando habilitada; caso contrário, configuração manual, nunca dados simulados.',
     sprintRefresh: 'Carregar sprint',
@@ -3952,15 +3954,16 @@ async function handleRecordBaseline(context, i18n) {
   });
 
   try {
-    // saveBaseline refuses a silent second save; replace is explicit only.
+    // An existing baseline must never be overwritten by another capture.
     await store.saveBaseline(ctx.scope, sprintState.sprintId, baseline);
   } catch (err) {
-    if (err && err.code === 'DUPLICATE') {
-      await store.replaceBaseline(ctx.scope, sprintState.sprintId, baseline);
-    } else {
-      setSprintStatus(i18n.t('sprintError', { message: errText(err) }), 'err');
-      return;
-    }
+    setSprintStatus(
+      err && err.code === 'DUPLICATE'
+        ? i18n.t('sprintBaselineAlreadyExists')
+        : i18n.t('sprintError', { message: errText(err) }),
+      'err'
+    );
+    return;
   }
   setSprintStatus(i18n.t('sprintBaselineSaved', { count: baseline.plannedIds.length }), 'ok');
   // Reload so the view reflects the recorded baseline and scope-change signals.
