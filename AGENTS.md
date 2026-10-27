@@ -102,6 +102,16 @@ Current status:
 - `azureApiEnabled` (boolean) — feature flag for the read-only Azure DevOps REST
   client (roadmap T2.1). Default `false`. When off, no REST call is issued and the
   DOM + local-storage runtime is unchanged. See `docs/ADO_API_CLIENT_T2_1.md`.
+- `sprintStartColumn` (string, optional) — Sprint Intelligence flow START column
+  (roadmap T2.2). Default `Approved`. Configurable per board. See
+  `docs/SPRINT_SCOPE_T2_2.md`.
+- `sprintEndColumn` (string, optional) — Sprint Intelligence flow END column used
+  to decide completion (roadmap T2.2/T2.3). Default `Closed`. Distinct from
+  `System.State`. Configurable per board. The T2.3 Sprint Progress metric
+  (Baseline Completion %) uses this END column as the completion boundary and the
+  immutable baseline total as the denominator; it never uses the filtered WIP as
+  the denominator. See `docs/SPRINT_SCOPE_T2_2.md` and
+  `docs/SPRINT_PROGRESS_T2_3.md`.
 
 ## Known Constraints
 1. DOM dependency

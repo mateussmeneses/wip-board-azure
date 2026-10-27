@@ -368,11 +368,170 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   it remains gated on the `DATA_ACCESS_SPIKE.md §3` spike. See
   `docs/ADO_API_CLIENT_T2_1.md`.
 
-### T2.2 — Sprint summary
-- Scope: current iteration period, goal, initial scope, completed items, %
-  completion across Approved→Closed.
-- Acceptance: % matches a fixture of states; metric is labeled as delivery, not WIP.
-- Tests: computation unit tests.
+### T2.2 — Sprint Scope & Goal — DONE (offline / DOM + manual)
+- Scope: identify the current sprint (period + goal), record the initially
+  planned scope as an immutable baseline, and detect scope changes
+  (planned/added/removed/completed/in-progress) with configurable flow
+  boundaries. Completion (% Approved→Closed) is the follow-up T2.3.
+- Acceptance: scope classification matches a fixture of states; the baseline
+  never changes silently with card movement; metrics are labeled delivery, not
+  WIP; an unavailable API never presents simulated data as real.
+- Tests: computation + persistence unit tests.
+- Status: four PURE, Chrome-free, DOM-free modules under `src/data/` —
+  `sprint-scope.js` (`WIPBoardSprintScope`: sprint identity normalization with
+  the UNAVAILABLE sentinel, inclusive period/day math with a `before/active/
+  after/unknown` state, and scope-item building that keeps `System.State`
+  SEPARATE from the visual board column and flags Feature/Epic parents),
+  `sprint-baseline.js` (`WIPBoardSprintBaseline`: an immutable, deep-frozen
+  baseline of the planned ids + their start column/state, and
+  `detectScopeChanges` which classifies the current scope against that FIXED
+  reference — the baseline is never mutated by movement; the END/START
+  boundaries are configurable per board, `System.State` is matched only on an
+  explicit `useState` opt-in, and Feature parents are excluded from counts
+  unless `countFeatures` is explicitly set),
+  `sprint-goal-store.js` (`WIPBoardSprintGoalStore`: chrome.storage.local
+  persistence via the same injectable adapter the snapshot store uses — the goal
+  is saved with a preserved REVISION history, and the baseline is saved ONCE per
+  sprint with a DUPLICATE guard so it cannot change silently; `replaceBaseline`
+  is the only, explicit re-baseline path and it archives the prior), and
+  `sprint-intelligence.js` (`WIPBoardSprintIntelligence`: the composition
+  view-model that resolves the availability state — `disabled / unauthenticated
+  / unavailable / manual / api / no-sprint` — and builds the UI model; the three
+  unavailable states carry NO fabricated sprint and `dataReal` is false, honoring
+  "não representar dados simulados como reais"). `content.js` adds a compact,
+  bilingual EN/PT "Sprint Intelligence" sub-section inside the existing snapshot
+  panel: it resolves the current scope from the DOM reader, accepts a MANUAL
+  sprint persisted locally (so planning works with the API off), records the
+  baseline, shows the sprint identity/period/days/planned-vs-added counts and an
+  explicit availability banner, and lets the user edit + save the goal (objective
+  / description / success criteria / priorities) with the revision history
+  preserved. Every DOM write goes through `setIndicatorHtml()` and the section is
+  mounted inside the existing `withObserverPaused()` phase, so the R1 observer
+  fix holds. The read-only `ado-api-client` (T2.1) is intentionally NOT wired
+  into the content script in this task (goal section 8: live access unproven, and
+  the `ado-manifest-safety` guard keeps `src/api/*` out of the content scripts);
+  the view-model already accepts an `apiIteration` so a later, proven API wiring
+  drops in without a redesign. `manifest.json` loads the four sprint modules
+  before `content.js`. Suite: 375 tests pass (327 prior + 47 new across
+  `test/sprint-scope.test.js`, `test/sprint-baseline.test.js`,
+  `test/sprint-goal-store.test.js`, `test/sprint-intelligence.test.js` + 1 added
+  T2.2 i18n key-parity check). New config keys (all optional, read-only):
+  `azureApiEnabled` (existing flag, default false), `sprintStartColumn`,
+  `sprintEndColumn`. Real-browser validation and live API access remain pending
+  per the homologation policy (goal section 8). See `docs/SPRINT_SCOPE_T2_2.md`.
+
+### T2.3 — Sprint Progress — DONE (offline / DOM + manual)
+- Scope: compute and visualize sprint progress against the immutable planned
+  baseline, the configurable flow columns and the scope changes. Answers:
+  planned / completed / completion % / in progress / added / removed / original
+  planning progress / current-scope progress / insufficient-evidence data.
+- Acceptance: Baseline Completion % = completed baseline items reaching the END
+  column / total baseline × 100; additions and removals are counted SEPARATELY
+  and never change the baseline %; a removed item keeps its baseline commitment
+  and is identified explicitly; no work item is double-counted; current-scope
+  progress is a DISTINCT secondary metric; `System.State = Closed` is NOT treated
+  as the last board column; an undeterminable column is UNKNOWN, never assumed
+  done; the baseline is never recomputed from the current state; a late first
+  capture is flagged; the filtered WIP is never used as the sprint denominator.
+- Tests: `test/sprint-progress.test.js` (25) covering empty sprint, 20/12
+  baseline → 60%, additions, removals, completion of an added item, a removed
+  item before completion, all/none completed, unknown data, configurable +
+  renamed start/end columns, State vs Board column, duplicate ids, parent/child
+  in the same sprint, different org/team/project inputs, late baseline,
+  incomplete snapshot, API disabled, scope changes preserving the baseline; plus
+  the T2.3 i18n key-parity check in `test/i18n-parity.test.js`.
+- Status: one PURE, Chrome-free, DOM-free module `src/data/sprint-progress.js`
+  (`WIPBoardSprintProgress`). It REUSES the T2.2 engines — it calls
+  `WIPBoardSprintScope.buildScopeItems` (id dedupe, state/column separation,
+  Feature flag) and `WIPBoardSprintBaseline.detectScopeChanges` / `resolveFlow` /
+  `sameColumn` (configurable flow boundaries, Feature exclusion report) — and
+  never reimplements the scope or persistence algorithms (goal section 1). On
+  top it derives the exhaustive six-state model the task mandates
+  (`not-started` / `in-progress` / `completed` / `added-after-baseline` /
+  `removed-from-scope` / `unknown`): where the T2.2 detector folds an
+  undeterminable position into `inProgress`, this engine separates it as
+  `unknown` so a percentage is never presented as a complete evaluation. The
+  PRIMARY metric is Baseline Completion % (completed baseline items / baseline
+  total); a SEPARATE secondary block reports current-scope size, its completion
+  %, additions, additions completed and the signed scope delta — the two are
+  never mixed (goal sections 2 & 3). A reliability verdict
+  (`sufficient` / `partial` / `unavailable`) and a `lateBaseline` flag keep the
+  output honest (goal sections 6 & 8). Hierarchy counting is a single backlog
+  level: Feature/Epic parents are excluded by default (reusing the `countFeatures`
+  flow flag) and reported, so a parent is never counted as an independent
+  delivery alongside its children (goal section 5). `content.js` adds a "Sprint
+  progress / Progresso da sprint" sub-section INSIDE the existing Sprint
+  Intelligence block: an emphasized primary baseline-completion bar + counts, a
+  distinct secondary current-scope block, a per-column/stage distribution, a late
+  baseline banner and a reliability line — all bilingual EN/PT (26 `progress*`
+  keys) and written through the `setIndicatorHtml()` R1 diff-guard inside the
+  existing `withObserverPaused()` phase. The read-only API stays unwired (T2.1 +
+  goal section 8); progress is computed from the local immutable baseline + the
+  DOM scope + the manual sprint. `manifest.json` loads
+  `src/data/sprint-progress.js` before `content.js`. Suite: 401 tests pass (375
+  prior + 25 new + 1 T2.3 i18n key-parity check). No new config keys; no new
+  permission; Manifest V3 preserved. Real-browser validation and live API access
+  remain pending per the homologation policy. See `docs/SPRINT_PROGRESS_T2_3.md`.
+
+### T2.4 — Sprint Trends & Risk Analysis — DONE (offline / DOM + manual)
+- Scope: temporal analysis of the sprint over successive, persisted
+  observations. Answers: progress evolution over time; observed progress vs
+  elapsed time (calendar days, with a linear reference line); scope-change
+  evolution; remaining work (burndown) and done work (burnup); delivery trends;
+  data-grounded risk signals; and the limitations/reliability of each analysis.
+  Roadmap Intelligence is explicitly NOT in scope here.
+- Acceptance: the time series has one point PER REAL OBSERVATION (never a
+  fabricated daily point); the elapsed-time percentage is calendar-day based and
+  labelled `calendar-days` to distinguish it from a future business-day metric;
+  the linear reference is a visualization aid, never a forecast, and the
+  deviation is information, not proof of delay; burnup/burndown use only real
+  instants and are NOT forced monotonic (a reopened item lowers completed);
+  unknown-state items are a separate series, never counted as done; scope changes
+  are labelled "detected in interval" between two captures, never at an exact
+  instant; the risk verdict is a heuristic (On Track / Attention / At Risk /
+  Insufficient Data) from explicit, configurable, documented thresholds, with the
+  contributing signals listed and no statistical/AI claim; thin, late or
+  incomplete data prefers Insufficient Data; the baseline is never mutated and the
+  DOM is never used to reconstruct past states.
+- Tests: `test/sprint-trends.test.js` (24) covering empty history, no baseline, a
+  single observation, multiple + out-of-order + duplicate observations, below /
+  above / at the time reference, no reliable dates, scope add/remove/return,
+  reopened items (non-monotonic series), unknown states, high unknown share
+  (insufficient data), scope growth, stagnation, incomplete observations, late
+  baseline, a changed finish date, different sprints/orgs, configurable
+  thresholds, the goal's 70% elapsed example and the calendar-days basis;
+  `test/sprint-observation-store.test.js` (14) covering append + immutability,
+  chronological + out-of-order ordering, latest, scope/sprint isolation, timezone
+  preservation, completeness/reliability indicators, baseline-ref (never
+  persisting the baseline), duplicate collapse, persistence after reload,
+  retention pruning, invalid input, the STORAGE_FAILURE path and by-id lookup;
+  plus the T2.4 i18n key-parity check in `test/i18n-parity.test.js`.
+- Status: one PURE, Chrome-free, DOM-free engine `src/data/sprint-trends.js`
+  (`WIPBoardSprintTrends`) and one minimal persistence contract
+  `src/data/sprint-observation-store.js` (`WIPBoardSprintObservationStore`). The
+  engine REUSES the T2.3 `WIPBoardSprintProgress.computeProgress` per observation
+  (it never reimplements the T2.3 classification) and reads the immutable
+  baseline read-only. The observation store mirrors the snapshot-store /
+  sprint-goal-store design exactly (same injectable adapter, scope+sprint key
+  isolation, immutable append-only records, STORAGE_FAILURE surfacing) and stores
+  only ids/columns/states/timestamps plus completeness + a baseline REFERENCE —
+  never the baseline itself and never credentials. Capture is an EXPLICIT user
+  action ("Record observation") reusing the existing `SnapshotCapture` verdict;
+  there is no background schedule. `content.js` adds a "Sprint trends & risk /
+  Tendências e risco da sprint" sub-section INSIDE the Sprint Intelligence block
+  with a three-way view toggle (Progress / Scope / Trends): a progress-vs-time
+  view with the linear reference marker and the signed deviation; a trends view
+  with the completion series, the burnup/burndown points and the colored risk
+  badge + signal explanation; and a scope-change timeline — all bilingual EN/PT
+  (49 `trends*` keys) and written through the `setIndicatorHtml()` R1 diff-guard
+  inside the existing `withObserverPaused()` phase. The read-only API stays
+  unwired (T2.1 + goal section 12); trends are computed from the local immutable
+  baseline + the persisted observation history + the manual/DOM sprint.
+  `manifest.json` loads both modules before `content.js`. Suite: 438 tests pass
+  (401 prior + 36 new + 1 T2.4 i18n key-parity check). No new config keys; no new
+  permission; Manifest V3 preserved; WIP, R1 and Daily Intelligence regressions
+  all green. Real-browser validation and live API access remain pending per the
+  homologation policy. See `docs/SPRINT_TRENDS_T2_4.md`.
 
 ---
 

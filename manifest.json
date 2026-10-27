@@ -25,6 +25,13 @@
         "src/data/daily-comparison.js",
         "src/data/daily-history.js",
         "src/data/daily-session.js",
+        "src/data/sprint-scope.js",
+        "src/data/sprint-baseline.js",
+        "src/data/sprint-goal-store.js",
+        "src/data/sprint-intelligence.js",
+        "src/data/sprint-progress.js",
+        "src/data/sprint-observation-store.js",
+        "src/data/sprint-trends.js",
         "content.js"
       ],
       "run_at": "document_end"
