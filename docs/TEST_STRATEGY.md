@@ -11,8 +11,8 @@
 
 1. **Characterize before you change.** Capture current outputs of pure functions as
    tests first (golden/characterization tests), then refactor under their protection.
-2. **Pure logic is unit-tested; DOM reading is fixture-tested.** The committed sample
-   board HTML (`elementos estruturados do board.html`) is the DOM fixture.
+2. **Pure logic is unit-tested; DOM reading is fixture-tested.** Use the synthetic sanitized files under
+   `test/fixtures/` (especially `board-full.html`) as DOM fixtures. Do not commit raw exports from real Azure DevOps boards.
 3. **No live network in tests.** `fetch` is always mocked. The live REST spike is a
    manual, signed-in procedure documented in `DATA_ACCESS_SPIKE.md`, not a CI test.
 4. **WIP vs delivery isolation is itself a test.** A regression test asserts that

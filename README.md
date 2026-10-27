@@ -67,3 +67,23 @@ If a card has a Target Date and remaining days are less than or equal to the con
 - The extension depends on Azure DevOps DOM selectors and card field rendering.
 - If Azure UI structure changes, selectors may need updates.
 - Tag extraction includes a fallback parser for serialized page content when tags are not visible on cards.
+
+
+## Current source layout
+
+```text
+src/
+  api/            Azure DevOps read-only client (disabled by default)
+  core/           WIP logic and board route identity
+  data/           DOM reader and storage/capture adapters
+  features/
+    daily/        Commitment, picker, projections, comparison, history
+    sprint/       Scope, baseline, progress, trends
+  ui/             Panel and popup CSS, isolated form contrast
+test/             Node unit/integration tests and sanitized DOM fixtures
+docs/             Architecture, audits, roadmap and design notes
+```
+
+### Snapshot accuracy and multiple boards
+
+Snapshot history is scoped to the **actual Azure board route** (including team and board), not the generic WIP URL keyword. Two roadmap boards and one maintenance board therefore maintain independent histories, provided they have distinct board routes. A capture reports **visible DOM work items** separately from the count displayed in Azure's column header. Differences are flagged as incomplete; DOM virtualization, filters and hidden cards can prevent a full capture. The extension does not invent missing work-item IDs. Historical snapshots stored under the previous generic-key scope remain in browser local storage and are not automatically attributed to a new board.

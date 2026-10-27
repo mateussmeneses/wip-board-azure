@@ -1,5 +1,9 @@
 # Architecture — WIP Board Azure
 
+> Status: historical design document; consult README.md for the current source tree.
+>
+> **Security:** the current API client requires an explicit auth provider and does not implicitly reuse browser session cookies. The previous API strategy discussion below is historical.
+>
 > Status: proposed evolution. This document describes the current (as-is) architecture
 > and the target (to-be) modular architecture for evolving the extension from a pure
 > WIP monitor into a delivery-tracking tool (Daily Commitment, Sprint Intelligence,
