@@ -317,6 +317,8 @@
     }
 
     const columns = readColumns(boardRoot);
+    const headerCount = queryAll(boardRoot, SELECTORS.columnHeader).length;
+    const bodyCount = queryAll(boardRoot, SELECTORS.columnBody).length;
     const items = [];
     const seenIds = new Map(); // id -> first index in items
 
@@ -358,6 +360,11 @@
       items: items,
       // Convenience aggregates for snapshots/diffing; still presentation-free.
       counts: buildCounts(items),
+      diagnostics: {
+        headerCount: headerCount,
+        bodyCount: bodyCount,
+        columnAlignmentReliable: headerCount === bodyCount,
+      },
     };
   }
 
@@ -390,6 +397,7 @@
       columns: [],
       items: [],
       counts: { total: 0, visible: 0, hidden: 0, uniqueVisibleIds: 0, duplicates: 0 },
+      diagnostics: { headerCount: 0, bodyCount: 0, columnAlignmentReliable: false },
     };
   }
 
