@@ -426,3 +426,13 @@ test('placeholder tokens match between EN and PT for shared keys', () => {
     );
   });
 });
+
+test('Sprint integrity UI messages exist in PT and EN', () => {
+  const packs = loadI18N();
+  const keys = ['sprintBaselineAlreadyExists', 'sprintIncompleteScope',
+    'trendsObservedUnavailable', 'trendsSeriesUnavailable', 'trendsScopeUnreliable'];
+  for (const key of keys) {
+    assert.equal(typeof packs.en[key], 'string', key + ' missing EN');
+    assert.equal(typeof packs.pt[key], 'string', key + ' missing PT');
+  }
+});
