@@ -31,8 +31,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const picker = require('../src/data/commitment-picker.js');
-const commitment = require('../src/data/daily-commitment.js');
+const picker = require('../src/features/daily/commitment-picker.js');
+const commitment = require('../src/features/daily/daily-commitment.js');
 const store = require('../src/data/snapshot-store.js');
 const { createMockStorage } = require('./helpers/mock-chrome-storage.js');
 

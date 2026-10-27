@@ -6,7 +6,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const SprintScope = require('../src/data/sprint-scope.js');
+const SprintScope = require('../src/features/sprint/sprint-scope.js');
 
 const { UNAVAILABLE, Source, PeriodState } = SprintScope;
 

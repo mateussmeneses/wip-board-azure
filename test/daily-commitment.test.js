@@ -11,7 +11,7 @@
 //   7. commitment versioning (revision) preserved by the store
 //
 // The comparison lives in a PURE, Chrome-free + DOM-free module
-// (src/data/daily-commitment.js) and is driven here with plain objects and with
+// (src/features/daily/daily-commitment.js) and is driven here with plain objects and with
 // the real snapshot pipeline (reader -> capture -> store). Zero dependencies:
 // Node's built-in runner + the chrome storage mock.
 //
@@ -20,7 +20,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const commitment = require('../src/data/daily-commitment.js');
+const commitment = require('../src/features/daily/daily-commitment.js');
 const store = require('../src/data/snapshot-store.js');
 const { createMockStorage } = require('./helpers/mock-chrome-storage.js');
 

@@ -1,9 +1,9 @@
 // test/daily-history.test.js
 // Tests for Daily History (docs/PRODUCT_ROADMAP.md T1.7).
 //
-// The history AGGREGATION layer (src/data/daily-history.js) is a pure,
+// The history AGGREGATION layer (src/features/daily/daily-history.js) is a pure,
 // Chrome-free and DOM-free module. It REUSES the T1.6 comparison view-model
-// (src/data/daily-comparison.js), which itself reuses the T1.3 classification
+// (src/features/daily/daily-comparison.js), which itself reuses the T1.3 classification
 // engine. This module adds: reconstruction of one daily record per commitment
 // from persisted snapshots + commitments, deterministic selection of the
 // evaluation snapshot from PERSISTED data only, date-range filtering,
@@ -38,8 +38,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const history = require('../src/data/daily-history.js');
-const comparison = require('../src/data/daily-comparison.js');
+const history = require('../src/features/daily/daily-history.js');
+const comparison = require('../src/features/daily/daily-comparison.js');
 const store = require('../src/data/snapshot-store.js');
 const { createMockStorage } = require('./helpers/mock-chrome-storage.js');
 

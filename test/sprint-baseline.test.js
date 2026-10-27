@@ -6,8 +6,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const SprintBaseline = require('../src/data/sprint-baseline.js');
-const SprintScope = require('../src/data/sprint-scope.js');
+const SprintBaseline = require('../src/features/sprint/sprint-baseline.js');
+const SprintScope = require('../src/features/sprint/sprint-scope.js');
 
 function scope(items) {
   return SprintScope.buildScopeItems(items);

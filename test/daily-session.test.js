@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const Session = require('../src/data/daily-session.js');
+const Session = require('../src/features/daily/daily-session.js');
 
 const scope = { organization:'org', project:'proj', team:'team', board:'board' };
 const snap = (id, t, s=scope) => ({id,scope:s,capturedAt:{epochMs:t}});

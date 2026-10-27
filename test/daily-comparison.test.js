@@ -1,9 +1,9 @@
 // test/daily-comparison.test.js
 // Tests for Daily Comparison (docs/PRODUCT_ROADMAP.md T1.6).
 //
-// The comparison VIEW-MODEL (src/data/daily-comparison.js) is a pure, Chrome-free
+// The comparison VIEW-MODEL (src/features/daily/daily-comparison.js) is a pure, Chrome-free
 // and DOM-free module. It REUSES the classification engine
-// (src/data/daily-commitment.js, compareCommitment) and adds snapshot selection,
+// (src/features/daily/daily-commitment.js, compareCommitment) and adds snapshot selection,
 // daily metrics (counts + a proven fulfillment rate), reliability flags and the
 // per-result filters the UI needs.
 //
@@ -32,8 +32,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const comparison = require('../src/data/daily-comparison.js');
-const commitmentEngine = require('../src/data/daily-commitment.js');
+const comparison = require('../src/features/daily/daily-comparison.js');
+const commitmentEngine = require('../src/features/daily/daily-commitment.js');
 const store = require('../src/data/snapshot-store.js');
 const { createMockStorage } = require('./helpers/mock-chrome-storage.js');
 
