@@ -3,6 +3,21 @@
 <head>
   <meta charset="utf-8">
   <style>
+    :root { color-scheme: light; }
+    body { color: #1f2937; }
+    input[type="text"], input[type="number"], textarea, select {
+      color-scheme: light;
+      background: #ffffff;
+      color: #1f2937;
+      -webkit-text-fill-color: #1f2937;
+      caret-color: #1f2937;
+    }
+    input::placeholder, textarea::placeholder { color: #6b7280; opacity: 1; }
+    input:focus-visible, textarea:focus-visible, select:focus-visible {
+      outline: 2px solid #0078d4;
+      outline-offset: 1px;
+    }
+
     body { font-family: sans-serif; width: 320px; padding: 15px; background-color: #f8f9fa; }
     h4 { margin-top: 0; color: #333; font-size: 16px; text-align: center; }
     .form-group { margin-bottom: 12px; }
