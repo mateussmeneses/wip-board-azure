@@ -40,3 +40,13 @@ test('non-boards and untrusted domains have no storage scope', () => {
   assert.equal(Identity.resolveBoardScope('https://dev.azure.com/org/project/_workitems'),null);
   assert.equal(Identity.resolveBoardScope('http://dev.azure.com/org/project/_boards/board/t/x/y'),null);
 });
+
+test('Snapshot panel is not gated by configured WIP target or URL keyword', () => {
+  const fs=require('node:fs');
+  const path=require('node:path');
+  const source=fs.readFileSync(path.join(__dirname,'..','content.js'),'utf8');
+  assert.match(source, /function mountSnapshotPanelForBoard\(context, i18n\)/);
+  const matches=source.match(/mountSnapshotPanelForBoard\(snapshotContext, i18n\);/g)||[];
+  assert.equal(matches.length,2, 'both no-WIP-config and non-target WIP paths must mount Snapshot');
+  assert.match(source, /panel\.style\.display === 'none'\) panel\.style\.display = ''/);
+});
