@@ -230,6 +230,8 @@
     const baseline = i.baseline && i.baseline.baseline && Array.isArray(i.baseline.baseline.plannedIds)
       ? i.baseline.baseline
       : (i.baseline && Array.isArray(i.baseline.plannedIds) ? i.baseline : null);
+    const baselineRevision = i.baseline && i.baseline.baseline &&
+      typeof i.baseline.revision === 'number' ? i.baseline.revision : null;
 
     const flow = SprintBaseline.resolveFlow(i.flowConfig || (baseline && baseline.flow));
     const flowView = {
@@ -264,7 +266,7 @@
 
     // Build the per-observation series by REUSING the T2.3 progress engine.
     const series = ordered.map(function (entry) {
-      return buildSeriesPoint(entry, baseline, i.flowConfig || (baseline && baseline.flow), flow);
+      return buildSeriesPoint(entry, baseline, i.flowConfig || (baseline && baseline.flow), flow, baselineRevision);
     });
 
     // Late baseline (goal section 2/9): the first observation predates the
@@ -281,6 +283,9 @@
       limitations.push('late-baseline');
     }
 
+    if (series.some(function (p) { return p.baselineRevisionMismatch; })) {
+      limitations.push('baseline-revision-mismatch');
+    }
     const anyPartial = series.some(function (p) { return p.reliability !== Reliability.SUFFICIENT; });
     if (anyPartial) limitations.push('incomplete-observations');
 
@@ -340,14 +345,19 @@
   }
 
   // Build one time-series point from an observation by reusing the T2.3 engine.
-  function buildSeriesPoint(entry, baseline, flowConfig, flow) {
+  function buildSeriesPoint(entry, baseline, flowConfig, flow, baselineRevision) {
     const obs = entry.observation;
     const items = observationItems(obs);
 
     // When there is no baseline we still emit a point describing the observed
     // scope, but completion against the baseline is null (nothing to measure).
+    const ref = obs && obs.baselineRef;
+    const baselineRevisionMismatch = baselineRevision != null && ref &&
+      typeof ref.revision === 'number' && ref.revision !== baselineRevision;
+    // Never replay an older observation against a newer baseline version:
+    // the denominator and membership would be historically false.
     let progress = null;
-    if (baseline) {
+    if (baseline && !baselineRevisionMismatch) {
       progress = SprintProgress.computeProgress({
         baseline: baseline,
         currentItems: items,
@@ -371,6 +381,7 @@
     } else {
       reliability = Reliability.UNAVAILABLE;
     }
+    if (baselineRevisionMismatch) reliability = Reliability.UNAVAILABLE;
     // Neither an incomplete capture nor missing item positions may be
     // promoted to sufficient by a persisted reliability label.
     if ((obs && obs.complete !== true) ||
@@ -394,6 +405,7 @@
       notCompleted: notCompleted < 0 ? 0 : notCompleted,
       unknown: unknown,
       baselineTotal: b ? b.total : 0,
+      baselineRevisionMismatch: !!baselineRevisionMismatch,
       // Current scope and scope deltas at this instant.
       currentScope: progress ? progress.current.total : items.length,
       added: sc ? sc.added : 0,
