@@ -260,3 +260,14 @@ test('describeCapability reports flag/auth state and never claims proven live ac
   assert.equal(cap.liveAccessProven, false);
   assert.deepEqual(cap.endpointsImplemented.sort(), Client.Endpoints.slice().sort());
 });
+
+test('default authentication refuses requests even when feature flag is enabled', async () => {
+  const mock = createMockFetch([]);
+  const client = Client.createClient({
+    fetch: mock.fetch,
+    storage: stubSyncStorage({ azureApiEnabled: true }),
+  });
+  await assert.rejects(() => client.getIterations(SCOPE),
+    (e) => e.category === ErrorCategory.DISALLOWED);
+  assert.equal(mock.callCount(), 0);
+});
