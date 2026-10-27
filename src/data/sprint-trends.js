@@ -553,7 +553,7 @@
         prevSet = curSet;
         prevEpoch = entry.epoch;
         prevComplete = curComplete;
-        continue;
+        return;
       }
 
       const added = [];
