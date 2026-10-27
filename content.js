@@ -41,6 +41,27 @@ const I18N = {
     reasonNoColumns: 'no columns',
     reasonDuplicateIds: 'duplicate ids',
     reasonMissingIds: 'cards without id',
+    // Daily Commitment (roadmap T1.3): a delivery metric kept separate from WIP.
+    commitmentSectionTitle: 'Daily commitment (plan vs actual)',
+    commitmentHelp: 'One per line: workItemId: expected column. Based on the last captured snapshot.',
+    commitmentSave: 'Save commitment',
+    commitmentCompare: 'Plan vs actual',
+    commitmentSaving: 'Saving commitment…',
+    commitmentSaved: 'Commitment saved: {{items}} item(s).',
+    commitmentRevised: 'Commitment updated (revision {{revision}}): {{items}} item(s).',
+    commitmentNoBase: 'Capture a snapshot first: a commitment is based on a captured state.',
+    commitmentNoInput: 'No valid commitment line found. Use "id: expected column".',
+    commitmentUnknownIds: 'Ignored ids not on the base snapshot: {{ids}}.',
+    commitmentNone: 'No commitment saved yet for this board.',
+    commitmentError: 'Commitment failed: {{message}}',
+    commitmentSummary: 'Reached {{reached}} · behind {{behind}} · beyond {{beyond}} · off-track {{offTrack}} · missing {{missing}} (of {{committed}}).',
+    commitmentRow: '#{{id}}: expected {{expected}} → actual {{actual}} [{{status}}]',
+    commitmentActualNone: '—',
+    statusReached: 'reached',
+    statusBehind: 'behind',
+    statusBeyond: 'beyond',
+    statusOffTrack: 'off-track',
+    statusMissing: 'missing',
   },
   pt: {
     outdatedExtension: 'Sua extensão está desatualizada. Por favor, atualize. O link de download está no console.',
@@ -78,6 +99,27 @@ const I18N = {
     reasonNoColumns: 'sem colunas',
     reasonDuplicateIds: 'ids duplicados',
     reasonMissingIds: 'cards sem id',
+    // Compromisso diário (roadmap T1.3): métrica de entrega, separada do WIP.
+    commitmentSectionTitle: 'Compromisso diário (planejado x realizado)',
+    commitmentHelp: 'Um por linha: idDoWorkItem: coluna esperada. Baseado no último snapshot capturado.',
+    commitmentSave: 'Salvar compromisso',
+    commitmentCompare: 'Planejado x realizado',
+    commitmentSaving: 'Salvando compromisso…',
+    commitmentSaved: 'Compromisso salvo: {{items}} item(ns).',
+    commitmentRevised: 'Compromisso atualizado (revisão {{revision}}): {{items}} item(ns).',
+    commitmentNoBase: 'Capture um snapshot primeiro: o compromisso é baseado em um estado capturado.',
+    commitmentNoInput: 'Nenhuma linha de compromisso válida. Use "id: coluna esperada".',
+    commitmentUnknownIds: 'Ids ignorados (ausentes do snapshot base): {{ids}}.',
+    commitmentNone: 'Nenhum compromisso salvo ainda para este board.',
+    commitmentError: 'Falha no compromisso: {{message}}',
+    commitmentSummary: 'Atingiu {{reached}} · aquém {{behind}} · além {{beyond}} · indefinido {{offTrack}} · sumiu {{missing}} (de {{committed}}).',
+    commitmentRow: '#{{id}}: esperado {{expected}} → atual {{actual}} [{{status}}]',
+    commitmentActualNone: '—',
+    statusReached: 'atingiu',
+    statusBehind: 'aquém',
+    statusBeyond: 'além',
+    statusOffTrack: 'indefinido',
+    statusMissing: 'sumiu',
   },
 };
 
@@ -359,6 +401,67 @@ if (!document.getElementById('wip-alarm-style')) {
     }
     #wip-snapshot-panel .wip-snap-badge.complete { background: #e6f4ea; color: #1e8e3e; }
     #wip-snapshot-panel .wip-snap-badge.incomplete { background: #fff3cd; color: #856404; }
+
+    /* Daily Commitment section (roadmap T1.3): a discrete sub-section inside the
+       same snapshot panel. It is a DELIVERY projection, visually distinct from
+       the WIP indicator and never altering the WIP number. */
+    #wip-snapshot-panel .wip-commit-section {
+      margin-top: 10px;
+      border-top: 1px solid #eee;
+      padding-top: 10px;
+    }
+    #wip-snapshot-panel .wip-commit-section h4 {
+      margin: 0 0 6px 0;
+      font-size: 12px;
+      color: #1f2937;
+    }
+    #wip-snapshot-panel .wip-commit-help {
+      font-size: 11px;
+      color: #666;
+      margin: 0 0 6px 0;
+    }
+    #wip-snapshot-panel .wip-commit-input {
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 52px;
+      font-family: inherit;
+      font-size: 12px;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      resize: vertical;
+    }
+    #wip-snapshot-panel .wip-commit-output {
+      margin-top: 8px;
+      max-height: 160px;
+      overflow-y: auto;
+      font-size: 12px;
+    }
+    #wip-snapshot-panel .wip-commit-output:empty { display: none; }
+    #wip-snapshot-panel .wip-commit-summary {
+      font-size: 11px;
+      color: #374151;
+      margin: 6px 0;
+    }
+    #wip-snapshot-panel .wip-commit-row {
+      padding: 2px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #wip-snapshot-panel .wip-commit-status {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 1px 6px;
+      border-radius: 10px;
+      text-transform: uppercase;
+    }
+    #wip-snapshot-panel .wip-commit-status.reached { background: #e6f4ea; color: #1e8e3e; }
+    #wip-snapshot-panel .wip-commit-status.beyond { background: #e8f0fe; color: #1a56db; }
+    #wip-snapshot-panel .wip-commit-status.behind { background: #fff3cd; color: #856404; }
+    #wip-snapshot-panel .wip-commit-status.off-track { background: #f3f4f6; color: #4b5563; }
+    #wip-snapshot-panel .wip-commit-status.missing { background: #fde8e8; color: #cc292b; }
   `;
   document.head.appendChild(style);
 }
@@ -766,6 +869,10 @@ const SnapshotStore =
   (typeof WIPBoardSnapshotStore !== 'undefined' && WIPBoardSnapshotStore) || null;
 const SnapshotCapture =
   (typeof WIPBoardSnapshotCapture !== 'undefined' && WIPBoardSnapshotCapture) || null;
+// Daily Commitment (roadmap T1.3): the pure plan-vs-actual engine. Optional, so a
+// missing module degrades to "commitment section unavailable", never a crash.
+const DailyCommitment =
+  (typeof WIPBoardDailyCommitment !== 'undefined' && WIPBoardDailyCommitment) || null;
 
 // A single store instance per page, created lazily so a missing module (older
 // manifest) degrades to "panel unavailable" instead of throwing at load.
@@ -1000,6 +1107,221 @@ async function handleViewHistory(context, i18n) {
   setSnapshotOutput(rows);
 }
 
+// --- Daily Commitment (roadmap T1.3) ---------------------------------------
+// Delivery projection kept strictly separate from the WIP indicator. It reads
+// the last captured snapshot as the base, lets the user declare an expected
+// destination column per work item, persists the plan as a versioned commitment
+// (reusing WIPBoardSnapshotStore — no new store), and projects plan vs actual
+// against the CURRENT board state. All actions run only on explicit clicks.
+
+function parseCommitmentInput(text) {
+  // Accepts lines like "620906: Code Review". Tolerant of blank lines and extra
+  // spaces. Returns a map { id -> expectedColumn } using numeric ids when the id
+  // is purely numeric (to match the snapshot item id type).
+  const expectations = {};
+  let count = 0;
+  String(text == null ? '' : text)
+    .split(/\r?\n/)
+    .forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+      const sep = trimmed.indexOf(':');
+      if (sep === -1) return;
+      const idPart = trimmed.slice(0, sep).trim();
+      const colPart = trimmed.slice(sep + 1).trim();
+      if (!idPart || !colPart) return;
+      const id = /^-?\d+$/.test(idPart) ? Number(idPart) : idPart;
+      expectations[id] = colPart;
+      count += 1;
+    });
+  return { expectations, count };
+}
+
+async function handleSaveCommitment(context, i18n) {
+  const store = getSnapshotStore();
+  if (!store || !DailyCommitment) {
+    setCommitmentStatus(i18n.t('commitmentError', { message: 'module unavailable' }), 'err');
+    return;
+  }
+
+  let boardModel;
+  try {
+    boardModel = readBoardModel();
+  } catch (err) {
+    setCommitmentStatus(i18n.t('commitmentError', { message: err && err.message ? err.message : String(err) }), 'err');
+    return;
+  }
+  const scope = resolveSnapshotScope(boardModel, context);
+  if (!scope) {
+    setCommitmentStatus(i18n.t('snapshotScopeMissing'), 'err');
+    return;
+  }
+
+  const input = document.getElementById('wip-commit-input');
+  const parsed = parseCommitmentInput(input ? input.value : '');
+  if (parsed.count === 0) {
+    setCommitmentStatus(i18n.t('commitmentNoInput'), 'err');
+    return;
+  }
+
+  setCommitmentStatus(i18n.t('commitmentSaving'), null);
+
+  let base;
+  try {
+    base = await store.getLatestSnapshot(scope);
+  } catch (err) {
+    setCommitmentStatus(i18n.t('commitmentError', { message: err && err.message ? err.message : String(err) }), 'err');
+    return;
+  }
+  if (!base) {
+    setCommitmentStatus(i18n.t('commitmentNoBase'), 'err');
+    return;
+  }
+
+  const built = DailyCommitment.buildCommitmentItems(base, parsed.expectations);
+  if (!built.items.length) {
+    setCommitmentStatus(i18n.t('commitmentNoInput'), 'err');
+    return;
+  }
+
+  try {
+    // Reuse an existing commitment for this board when present: a new daily plan
+    // is a REVISION (versioned history preserved), not a duplicate record.
+    const existing = await store.getCommitments(scope);
+    let saved;
+    if (existing && existing.length) {
+      saved = await store.reviseCommitment(scope, existing[0].id, built.items);
+      setCommitmentStatus(
+        i18n.t('commitmentRevised', { revision: saved.revision, items: built.items.length }),
+        'ok'
+      );
+    } else {
+      saved = await store.saveCommitment({ scope: scope, items: built.items, baseSnapshotId: base.id });
+      setCommitmentStatus(i18n.t('commitmentSaved', { items: built.items.length }), 'ok');
+    }
+  } catch (err) {
+    setCommitmentStatus(i18n.t('commitmentError', { message: err && err.message ? err.message : String(err) }), 'err');
+    return;
+  }
+
+  if (built.unknownIds.length) {
+    appendCommitmentNote(i18n.t('commitmentUnknownIds', { ids: built.unknownIds.join(', ') }));
+  }
+}
+
+async function handleCompareCommitment(context, i18n) {
+  const store = getSnapshotStore();
+  if (!store || !DailyCommitment || !SnapshotCapture) {
+    setCommitmentStatus(i18n.t('commitmentError', { message: 'module unavailable' }), 'err');
+    return;
+  }
+
+  let boardModel;
+  try {
+    boardModel = readBoardModel();
+  } catch (err) {
+    setCommitmentStatus(i18n.t('commitmentError', { message: err && err.message ? err.message : String(err) }), 'err');
+    return;
+  }
+  const scope = resolveSnapshotScope(boardModel, context);
+  if (!scope) {
+    setCommitmentStatus(i18n.t('snapshotScopeMissing'), 'err');
+    return;
+  }
+
+  let commitmentRecord;
+  try {
+    const existing = await store.getCommitments(scope);
+    commitmentRecord = existing && existing.length ? existing[0] : null;
+  } catch (err) {
+    setCommitmentStatus(i18n.t('commitmentError', { message: err && err.message ? err.message : String(err) }), 'err');
+    return;
+  }
+  if (!commitmentRecord) {
+    setCommitmentStatus(i18n.t('commitmentNone'), null);
+    setCommitmentOutput('');
+    return;
+  }
+
+  // Realized state = the CURRENT board, read through the same capture pipeline so
+  // ids/columns match the stored commitment. Read-only; no persistence here.
+  const realized = SnapshotCapture.buildCapture(boardModel, scope, { source: { origin: 'dom-reader' } });
+  const comparison = DailyCommitment.compareCommitment(commitmentRecord, {
+    items: realized.items,
+    columns: realized.columns,
+  });
+
+  renderCommitmentComparison(comparison, i18n);
+}
+
+function renderCommitmentComparison(comparison, i18n) {
+  const statusLabelKey = {
+    reached: 'statusReached',
+    behind: 'statusBehind',
+    beyond: 'statusBeyond',
+    'off-track': 'statusOffTrack',
+    missing: 'statusMissing',
+  };
+  const s = comparison.summary;
+  setCommitmentStatus('', null);
+
+  const summaryHtml =
+    `<div class="wip-commit-summary">` +
+    i18n.t('commitmentSummary', {
+      reached: s.reached,
+      behind: s.behind,
+      beyond: s.beyond,
+      offTrack: s.offTrack,
+      missing: s.missing,
+      committed: s.committed,
+    }).replace(/[<>]/g, '') +
+    `</div>`;
+
+  const rows = comparison.results
+    .map(r => {
+      const statusText = i18n.t(statusLabelKey[r.status] || 'statusOffTrack');
+      const actual = r.actualColumn == null ? i18n.t('commitmentActualNone') : r.actualColumn;
+      const text = i18n
+        .t('commitmentRow', {
+          id: r.id,
+          expected: r.expectedColumn,
+          actual: actual,
+          status: statusText,
+        })
+        .replace(/[<>]/g, '');
+      return (
+        `<div class="wip-commit-row">` +
+        `<span class="wip-commit-status ${r.status}">${statusText.replace(/[<>]/g, '')}</span>` +
+        `<span>${text}</span>` +
+        `</div>`
+      );
+    })
+    .join('');
+
+  setCommitmentOutput(summaryHtml + rows);
+}
+
+function setCommitmentStatus(message, kind) {
+  const status = document.getElementById('wip-commit-status');
+  if (!status) return;
+  status.textContent = message || '';
+  status.className = 'wip-snap-status' + (kind ? ' ' + kind : '');
+}
+
+function appendCommitmentNote(message) {
+  const status = document.getElementById('wip-commit-status');
+  if (!status) return;
+  const existing = status.textContent ? status.textContent + ' ' : '';
+  status.textContent = existing + message;
+}
+
+function setCommitmentOutput(html) {
+  const output = document.getElementById('wip-commit-output');
+  if (!output) return;
+  // Diff-before-write mirrors the indicator/snapshot guard (R1 fix discipline).
+  setIndicatorHtml(output, html || '');
+}
+
 function ensureSnapshotPanel(context, i18n) {
   // Build the panel once; refresh its labels on every call so a language change
   // is reflected without a reload. Returns early when the modules are missing so
@@ -1024,6 +1346,17 @@ function ensureSnapshotPanel(context, i18n) {
         </div>
         <p class="wip-snap-status" id="wip-snapshot-status"></p>
         <div class="wip-snap-output" id="wip-snapshot-output"></div>
+        <div class="wip-commit-section" id="wip-commit-section">
+          <h4 id="wip-commit-title"></h4>
+          <p class="wip-commit-help" id="wip-commit-help"></p>
+          <textarea class="wip-commit-input" id="wip-commit-input"></textarea>
+          <div class="wip-snap-actions">
+            <button class="wip-snap-btn" id="wip-commit-save" type="button"></button>
+            <button class="wip-snap-btn" id="wip-commit-compare" type="button"></button>
+          </div>
+          <p class="wip-snap-status" id="wip-commit-status"></p>
+          <div class="wip-commit-output" id="wip-commit-output"></div>
+        </div>
       </div>
     `;
     document.body.appendChild(panel);
@@ -1047,6 +1380,25 @@ function ensureSnapshotPanel(context, i18n) {
   setTextById('wip-snapshot-capture', i18n.t('snapshotCapture'));
   setTextById('wip-snapshot-latest', i18n.t('snapshotLatest'));
   setTextById('wip-snapshot-history', i18n.t('snapshotHistory'));
+
+  // Daily Commitment sub-section (roadmap T1.3). Shown only when the pure engine
+  // module is present; bound against the current context/i18n every refresh.
+  const commitSection = document.getElementById('wip-commit-section');
+  if (commitSection) {
+    if (DailyCommitment) {
+      commitSection.style.display = 'block';
+      bindSnapshotButton('wip-commit-save', () => handleSaveCommitment(context, i18n));
+      bindSnapshotButton('wip-commit-compare', () => handleCompareCommitment(context, i18n));
+      setTextById('wip-commit-title', i18n.t('commitmentSectionTitle'));
+      setTextById('wip-commit-help', i18n.t('commitmentHelp'));
+      setTextById('wip-commit-save', i18n.t('commitmentSave'));
+      setTextById('wip-commit-compare', i18n.t('commitmentCompare'));
+      const input = document.getElementById('wip-commit-input');
+      if (input) input.placeholder = i18n.t('commitmentHelp');
+    } else {
+      commitSection.style.display = 'none';
+    }
+  }
 }
 
 function bindSnapshotButton(id, handler) {

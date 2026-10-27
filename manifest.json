@@ -19,6 +19,7 @@
         "src/data/board-dom-reader.js",
         "src/data/snapshot-store.js",
         "src/data/snapshot-capture.js",
+        "src/data/daily-commitment.js",
         "content.js"
       ],
       "run_at": "document_end"

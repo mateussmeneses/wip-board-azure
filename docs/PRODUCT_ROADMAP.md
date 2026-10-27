@@ -126,16 +126,45 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   `docs/DAILY_SNAPSHOT_T1_2.md` (not yet executed in a live Chrome against a real
   Azure DevOps board).
 
-### T1.3 — Commitment model (expected vs actual)
+### T1.3 — Commitment model (expected vs actual) — DONE
 - Scope: per work item, store `startColumn` and `expectedColumn`; compare to the
   latest snapshot to classify on-track / behind / done.
 - Acceptance: classification matches a fixture of planned vs realized columns.
 - Tests: table-driven unit tests.
+- Status: `src/data/daily-commitment.js` (`WIPBoardDailyCommitment`) is a pure,
+  Chrome-free and DOM-free engine. `buildCommitmentItems(baseSnapshot, expectations)`
+  derives, per stable id, the `startColumn` (from the base snapshot) and the
+  `expectedColumn` (the planned destination), emitting exactly the item shape the
+  existing `WIPBoardSnapshotStore.saveCommitment` / `reviseCommitment` expect — no
+  new store is introduced; the versioned-commitment persistence already present is
+  reused. `compareCommitment(commitment, realizedState, options)` classifies each
+  committed item as `reached` / `behind` / `beyond` / `off-track` / `missing`:
+  `behind` vs `beyond` uses the flow ORDER of columns (from the realized state's
+  `columns` structure or an explicit `columnOrder`), and when the order cannot be
+  resolved it stays the conservative `off-track` rather than guessing a direction.
+  An item absent from the realized state is reported `missing`, never inferred as
+  delivered (reliability rule shared with the store's `diffStates`). Items without
+  a commitment are never part of the comparison. Delivery metrics are kept fully
+  separate from WIP (nothing here reads or writes a WIP number). Suite: 128 tests
+  pass (109 prior + 19 new in `test/daily-commitment.test.js`).
+- Pending real-browser validation: see the Chrome checklist in
+  `docs/DAILY_COMMITMENT_T1_3.md` (not yet executed in a live Chrome).
 
-### T1.4 — Visual projection (bilingual panel)
+### T1.4 — Visual projection (bilingual panel) — DONE (delivered alongside T1.3)
 - Scope: a panel section showing planned vs realized; EN/PT strings.
 - Acceptance: toggled independently of WIP indicator; WIP number unaffected.
 - Tests: i18n key coverage test; manual checklist.
+- Status: `content.js` adds a discrete "Daily commitment (plan vs actual)"
+  sub-section INSIDE the existing Daily Snapshot panel (no competing UI). It lets
+  the user declare an expected column per work item (one `id: column` per line,
+  based on the last captured snapshot), persists the plan as a versioned
+  commitment (re-saving becomes a revision), and projects plan vs actual against
+  the current board with a per-item status badge plus a summary line. All strings
+  are bilingual EN/PT. Every action runs only on an explicit click; the section is
+  mounted inside the existing `withObserverPaused()` write phase and writes its
+  output through the same diff-guard (`setIndicatorHtml`), so the R1 fix is intact
+  and the WIP number/behavior are unchanged. Real-browser validation pending (see
+  the checklist in `docs/DAILY_COMMITMENT_T1_3.md`).
 
 ---
 
