@@ -75,6 +75,72 @@ const I18N = {
     commitmentPlanSummary: 'Selected {{selected}} of {{total}} · {{withDestination}} with destination.',
     commitmentMissingDestination: '{{count}} selected item(s) still need a destination column.',
     commitmentUntitled: '(no title)',
+    // Projected Board (roadmap T1.5): the simulated end-of-day board.
+    projectedSectionTitle: 'Projected board (simulation)',
+    projectedHelp: 'Simulates how the board should look at end of day if every commitment is honored. It does not change Azure DevOps.',
+    projectedSimulationNote: 'Simulation only — no work item is moved in Azure DevOps.',
+    projectedShow: 'Projected board',
+    projectedViewInitial: 'Initial board',
+    projectedViewProjected: 'Projected board',
+    projectedNoBase: 'Capture a snapshot first: the projection is based on a captured state.',
+    projectedNoCommitment: 'No commitment for this snapshot yet. Choose work items and save a commitment to project the board.',
+    projectedError: 'Projection failed: {{message}}',
+    projectedSummary: 'Snapshot {{items}} cards · {{committed}} commitments · {{moves}} planned change(s).',
+    projectedColumnCount: '{{count}}',
+    projectedColumnDelta: '{{sign}}{{delta}}',
+    projectedMoveBadge: 'from {{from}}',
+    projectedEmptyColumn: '—',
+    projectedReliabilityWarning: 'Reliability warning: {{reasons}}.',
+    projectedReasonIncomplete: 'baseline snapshot incomplete',
+    projectedReasonUnknownIds: 'committed ids not on the snapshot',
+    projectedReasonInvalidDest: 'invalid destination columns',
+    // Daily Comparison (roadmap T1.6): plan vs. an observed later snapshot.
+    comparisonSectionTitle: 'Daily Comparison',
+    comparisonHelp: 'Compare what was planned in the daily against a later observed snapshot of the same board. It does not change Azure DevOps.',
+    comparisonRun: 'Compare daily',
+    comparisonLaterLabel: 'Later snapshot:',
+    comparisonNoBase: 'Capture a snapshot first: the comparison is based on a captured plan.',
+    comparisonNoCommitment: 'No commitment for this board yet. Save a commitment to compare the daily.',
+    comparisonNoLater: 'No later snapshot available yet. Capture another snapshot after the planning one to compare.',
+    comparisonError: 'Comparison failed: {{message}}',
+    comparisonLoading: 'Comparing…',
+    comparisonDailyDate: 'Daily: {{date}}',
+    comparisonInitialInfo: 'Initial snapshot: {{when}}',
+    comparisonLaterInfo: 'Later snapshot: {{when}}',
+    comparisonCommitmentInfo: 'Commitment revision {{revision}} ({{when}})',
+    comparisonArchivedNote: 'Comparing against the historical plan (revision {{revision}}), not a newer one.',
+    comparisonSummary: 'Planned {{committed}} · reached {{reached}} · beyond {{beyond}} · behind {{behind}} · off-track {{offTrack}} · missing {{missing}}.',
+    comparisonUndetermined: 'Undetermined (no proven failure): {{count}} — off-track {{offTrack}}, missing {{missing}}.',
+    comparisonRate: 'Proven fulfillment rate: {{rate}}%',
+    comparisonRateUnavailable: 'Proven fulfillment rate: unavailable (insufficient or unreliable data).',
+    comparisonFilterAll: 'All',
+    comparisonFilterReached: 'Reached',
+    comparisonFilterBeyond: 'Beyond',
+    comparisonFilterBehind: 'Behind',
+    comparisonFilterOffTrack: 'Off-track',
+    comparisonFilterMissing: 'Missing',
+    comparisonRow: '#{{id}}: {{start}} → expected {{expected}} → observed {{actual}} [{{status}}]',
+    comparisonColInitial: 'initial',
+    comparisonColExpected: 'expected',
+    comparisonColActual: 'observed',
+    comparisonActualNone: '—',
+    comparisonEmptyFilter: 'No work item in this result category.',
+    comparisonReliabilityWarning: 'Reliability: {{reasons}}.',
+    comparisonReasonNoLater: 'no later snapshot',
+    comparisonReasonLaterIncomplete: 'later snapshot incomplete',
+    comparisonReasonInitialIncomplete: 'initial snapshot incomplete',
+    comparisonReasonOrder: 'unreliable column order',
+    comparisonReasonNoCommitment: 'no commitment',
+    comparisonExplainOffTrackOrder: 'Direction cannot be established: the board exposes no reliable column order.',
+    comparisonExplainOffTrackIncompatible: 'Observed column is not on the expected flow; progress cannot be established.',
+    comparisonExplainMissingCard: 'The work item is not present in the later snapshot; its result cannot be determined.',
+    comparisonExplainMissingNoLater: 'No later snapshot to observe the work item in.',
+    // Navigation across the four daily views (roadmap T1.6 §6).
+    navSectionTitle: 'Daily views',
+    navInitial: 'Initial board',
+    navProjected: 'Projected board',
+    navActual: 'Actual result',
+    navComparison: 'Commitment comparison',
   },
   pt: {
     outdatedExtension: 'Sua extensão está desatualizada. Por favor, atualize. O link de download está no console.',
@@ -146,6 +212,72 @@ const I18N = {
     commitmentPlanSummary: 'Selecionados {{selected}} de {{total}} · {{withDestination}} com destino.',
     commitmentMissingDestination: '{{count}} item(ns) selecionado(s) ainda sem coluna de destino.',
     commitmentUntitled: '(sem título)',
+    // Board projetado (roadmap T1.5): o board simulado de fim de dia.
+    projectedSectionTitle: 'Board projetado (simulação)',
+    projectedHelp: 'Simula como o board deveria estar ao final do dia se todos os compromissos forem cumpridos. Não altera o Azure DevOps.',
+    projectedSimulationNote: 'Apenas simulação — nenhum work item é movido no Azure DevOps.',
+    projectedShow: 'Board projetado',
+    projectedViewInitial: 'Board inicial',
+    projectedViewProjected: 'Board projetado',
+    projectedNoBase: 'Capture um snapshot primeiro: a projeção é baseada em um estado capturado.',
+    projectedNoCommitment: 'Ainda não há compromisso para este snapshot. Escolha work items e salve um compromisso para projetar o board.',
+    projectedError: 'Falha na projeção: {{message}}',
+    projectedSummary: 'Snapshot {{items}} cards · {{committed}} compromissos · {{moves}} mudança(s) planejada(s).',
+    projectedColumnCount: '{{count}}',
+    projectedColumnDelta: '{{sign}}{{delta}}',
+    projectedMoveBadge: 'de {{from}}',
+    projectedEmptyColumn: '—',
+    projectedReliabilityWarning: 'Aviso de confiabilidade: {{reasons}}.',
+    projectedReasonIncomplete: 'snapshot base incompleto',
+    projectedReasonUnknownIds: 'ids com compromisso ausentes do snapshot',
+    projectedReasonInvalidDest: 'colunas de destino inválidas',
+    // Comparação da Daily (roadmap T1.6): planejado x snapshot posterior.
+    comparisonSectionTitle: 'Comparação da Daily',
+    comparisonHelp: 'Compara o que foi planejado na daily com um snapshot posterior observado do mesmo board. Não altera o Azure DevOps.',
+    comparisonRun: 'Comparar daily',
+    comparisonLaterLabel: 'Snapshot posterior:',
+    comparisonNoBase: 'Capture um snapshot primeiro: a comparação é baseada em um plano capturado.',
+    comparisonNoCommitment: 'Ainda não há compromisso para este board. Salve um compromisso para comparar a daily.',
+    comparisonNoLater: 'Ainda não há snapshot posterior disponível. Capture outro snapshot após o de planejamento para comparar.',
+    comparisonError: 'Falha na comparação: {{message}}',
+    comparisonLoading: 'Comparando…',
+    comparisonDailyDate: 'Daily: {{date}}',
+    comparisonInitialInfo: 'Snapshot inicial: {{when}}',
+    comparisonLaterInfo: 'Snapshot posterior: {{when}}',
+    comparisonCommitmentInfo: 'Compromisso revisão {{revision}} ({{when}})',
+    comparisonArchivedNote: 'Comparando com o plano histórico (revisão {{revision}}), não com um mais recente.',
+    comparisonSummary: 'Planejado {{committed}} · atingiu {{reached}} · além {{beyond}} · aquém {{behind}} · indefinido {{offTrack}} · sumiu {{missing}}.',
+    comparisonUndetermined: 'Não determinados (sem falha comprovada): {{count}} — indefinido {{offTrack}}, sumiu {{missing}}.',
+    comparisonRate: 'Taxa de cumprimento comprovado: {{rate}}%',
+    comparisonRateUnavailable: 'Taxa de cumprimento comprovado: indisponível (dados insuficientes ou não confiáveis).',
+    comparisonFilterAll: 'Todos',
+    comparisonFilterReached: 'Cumpridos',
+    comparisonFilterBeyond: 'Além do planejado',
+    comparisonFilterBehind: 'Pendentes',
+    comparisonFilterOffTrack: 'Fora do esperado',
+    comparisonFilterMissing: 'Sem evidência',
+    comparisonRow: '#{{id}}: {{start}} → esperado {{expected}} → observado {{actual}} [{{status}}]',
+    comparisonColInitial: 'inicial',
+    comparisonColExpected: 'esperada',
+    comparisonColActual: 'observada',
+    comparisonActualNone: '—',
+    comparisonEmptyFilter: 'Nenhum work item nesta categoria de resultado.',
+    comparisonReliabilityWarning: 'Confiabilidade: {{reasons}}.',
+    comparisonReasonNoLater: 'sem snapshot posterior',
+    comparisonReasonLaterIncomplete: 'snapshot posterior incompleto',
+    comparisonReasonInitialIncomplete: 'snapshot inicial incompleto',
+    comparisonReasonOrder: 'ordem de colunas não confiável',
+    comparisonReasonNoCommitment: 'sem compromisso',
+    comparisonExplainOffTrackOrder: 'Não é possível estabelecer a direção: o board não expõe uma ordem de colunas confiável.',
+    comparisonExplainOffTrackIncompatible: 'A coluna observada não está no fluxo esperado; o progresso não pode ser estabelecido.',
+    comparisonExplainMissingCard: 'O work item não está presente no snapshot posterior; o resultado não pode ser determinado.',
+    comparisonExplainMissingNoLater: 'Não há snapshot posterior para observar o work item.',
+    // Navegação entre as quatro visões da daily (roadmap T1.6 §6).
+    navSectionTitle: 'Visões da daily',
+    navInitial: 'Board inicial',
+    navProjected: 'Board projetado',
+    navActual: 'Resultado real',
+    navComparison: 'Comparação dos compromissos',
   },
 };
 
@@ -551,6 +683,280 @@ if (!document.getElementById('wip-alarm-style')) {
     #wip-snapshot-panel .wip-commit-status.behind { background: #fff3cd; color: #856404; }
     #wip-snapshot-panel .wip-commit-status.off-track { background: #f3f4f6; color: #4b5563; }
     #wip-snapshot-panel .wip-commit-status.missing { background: #fde8e8; color: #cc292b; }
+    /* Projected Board (roadmap T1.5). A light, column-oriented simulation view. */
+    #wip-snapshot-panel .wip-projected-section {
+      border-top: 1px dashed #d0d7de;
+      margin-top: 10px;
+      padding-top: 8px;
+    }
+    #wip-snapshot-panel .wip-projected-section h4 {
+      margin: 0 0 4px 0;
+      font-size: 12px;
+      color: #1f2937;
+    }
+    #wip-snapshot-panel .wip-projected-help {
+      font-size: 10px;
+      color: #6b7280;
+      margin: 0 0 6px 0;
+    }
+    #wip-snapshot-panel .wip-projected-toggle {
+      display: inline-flex;
+      gap: 4px;
+      margin: 4px 0;
+    }
+    #wip-snapshot-panel .wip-projected-tab {
+      font-size: 11px;
+      padding: 3px 8px;
+      border: 1px solid #c2c8d0;
+      border-radius: 4px;
+      background: #f8fafc;
+      color: #1f2937;
+      cursor: pointer;
+    }
+    #wip-snapshot-panel .wip-projected-tab.active {
+      background: #0b5fff;
+      border-color: #0b5fff;
+      color: #fff;
+    }
+    #wip-snapshot-panel .wip-projected-sim-note {
+      font-size: 10px;
+      color: #856404;
+      background: #fff8e1;
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin: 4px 0;
+      display: inline-block;
+    }
+    #wip-snapshot-panel .wip-projected-summary {
+      font-size: 11px;
+      color: #374151;
+      margin: 6px 0;
+    }
+    #wip-snapshot-panel .wip-projected-reliability {
+      font-size: 10px;
+      color: #cc292b;
+      margin: 2px 0 6px 0;
+    }
+    #wip-snapshot-panel .wip-projected-board {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    #wip-snapshot-panel .wip-projected-col {
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 4px 6px;
+      background: #fcfcfd;
+    }
+    #wip-snapshot-panel .wip-projected-col-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 11px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 3px;
+    }
+    #wip-snapshot-panel .wip-projected-col-count { color: #4b5563; font-weight: 500; }
+    #wip-snapshot-panel .wip-projected-col-delta { font-size: 10px; margin-left: 4px; }
+    #wip-snapshot-panel .wip-projected-col-delta.up { color: #1e8e3e; }
+    #wip-snapshot-panel .wip-projected-col-delta.down { color: #cc292b; }
+    #wip-snapshot-panel .wip-projected-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+    #wip-snapshot-panel .wip-projected-card {
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: #eef2f7;
+      color: #1f2937;
+    }
+    #wip-snapshot-panel .wip-projected-card.moved {
+      background: #e8f0fe;
+      border: 1px solid #1a56db;
+      color: #1a56db;
+    }
+    #wip-snapshot-panel .wip-projected-empty { font-size: 10px; color: #9ca3af; }
+
+    /* Daily views navigation (roadmap T1.6 §6): switch between the four views. */
+    #wip-snapshot-panel .wip-nav-section {
+      border-top: 1px solid #eee;
+      margin-top: 10px;
+      padding-top: 10px;
+    }
+    #wip-snapshot-panel .wip-nav-section h4 {
+      margin: 0 0 6px 0;
+      font-size: 12px;
+      color: #1f2937;
+    }
+    #wip-snapshot-panel .wip-nav-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    #wip-snapshot-panel .wip-nav-tab {
+      font-size: 11px;
+      padding: 3px 8px;
+      border: 1px solid #c9d4e3;
+      border-radius: 12px;
+      background: #f4f7fb;
+      color: #1f2937;
+      cursor: pointer;
+    }
+    #wip-snapshot-panel .wip-nav-tab.active {
+      background: #0b5fff;
+      border-color: #0b5fff;
+      color: #fff;
+    }
+
+    /* Daily Comparison (roadmap T1.6). Compact comparison cards, result filters. */
+    #wip-snapshot-panel .wip-comparison-section {
+      border-top: 1px dashed #d0d7de;
+      margin-top: 10px;
+      padding-top: 8px;
+    }
+    #wip-snapshot-panel .wip-comparison-section h4 {
+      margin: 0 0 4px 0;
+      font-size: 12px;
+      color: #1f2937;
+    }
+    #wip-snapshot-panel .wip-comparison-help {
+      font-size: 10px;
+      color: #6b7280;
+      margin: 0 0 6px 0;
+    }
+    #wip-snapshot-panel .wip-comparison-later {
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 11px;
+      padding: 4px 6px;
+      border: 1px solid #c9d4e3;
+      border-radius: 4px;
+      margin: 4px 0 6px 0;
+    }
+    #wip-snapshot-panel .wip-comparison-meta {
+      font-size: 10px;
+      color: #4b5563;
+      margin: 2px 0;
+    }
+    #wip-snapshot-panel .wip-comparison-archived {
+      font-size: 10px;
+      color: #856404;
+      background: #fff8e1;
+      border-radius: 3px;
+      padding: 1px 4px;
+      margin: 2px 0;
+      display: inline-block;
+    }
+    #wip-snapshot-panel .wip-comparison-summary {
+      font-size: 11px;
+      color: #374151;
+      margin: 6px 0 2px 0;
+    }
+    #wip-snapshot-panel .wip-comparison-undetermined {
+      font-size: 10px;
+      color: #6b7280;
+      margin: 2px 0;
+    }
+    #wip-snapshot-panel .wip-comparison-rate {
+      font-size: 13px;
+      font-weight: bold;
+      margin: 4px 0;
+    }
+    #wip-snapshot-panel .wip-comparison-rate .wip-rate-bar {
+      display: block;
+      height: 6px;
+      border-radius: 3px;
+      background: #e5e7eb;
+      margin-top: 3px;
+      overflow: hidden;
+    }
+    #wip-snapshot-panel .wip-comparison-rate .wip-rate-fill {
+      display: block;
+      height: 100%;
+      background: #1e8e3e;
+    }
+    #wip-snapshot-panel .wip-comparison-rate.unavailable { color: #6b7280; font-weight: normal; font-size: 11px; }
+    #wip-snapshot-panel .wip-comparison-reliability {
+      font-size: 10px;
+      color: #cc292b;
+      margin: 2px 0 6px 0;
+    }
+    #wip-snapshot-panel .wip-comparison-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      margin: 6px 0;
+    }
+    #wip-snapshot-panel .wip-comparison-filter {
+      font-size: 10px;
+      padding: 2px 6px;
+      border: 1px solid #c9d4e3;
+      border-radius: 10px;
+      background: #f4f7fb;
+      color: #374151;
+      cursor: pointer;
+    }
+    #wip-snapshot-panel .wip-comparison-filter.active {
+      background: #0b5fff;
+      border-color: #0b5fff;
+      color: #fff;
+    }
+    #wip-snapshot-panel .wip-comparison-cards {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    #wip-snapshot-panel .wip-comparison-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 5px 6px;
+      margin-bottom: 4px;
+      background: #fcfcfd;
+    }
+    #wip-snapshot-panel .wip-comparison-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+    #wip-snapshot-panel .wip-comparison-card-id { font-size: 11px; font-weight: 600; color: #1f2937; }
+    #wip-snapshot-panel .wip-comparison-flow {
+      font-size: 10px;
+      color: #4b5563;
+      margin-top: 2px;
+    }
+    #wip-snapshot-panel .wip-comparison-flow .wip-flow-expected { color: #1a56db; }
+    #wip-snapshot-panel .wip-comparison-flow .wip-flow-actual { color: #1f2937; font-weight: 500; }
+    #wip-snapshot-panel .wip-comparison-explain {
+      font-size: 10px;
+      color: #856404;
+      margin-top: 2px;
+    }
+    #wip-snapshot-panel .wip-comparison-status {
+      display: inline-block;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    #wip-snapshot-panel .wip-comparison-status.reached { background: #e6f4ea; color: #1e8e3e; }
+    #wip-snapshot-panel .wip-comparison-status.beyond { background: #e8f0fe; color: #1a56db; }
+    #wip-snapshot-panel .wip-comparison-status.behind { background: #fff3cd; color: #856404; }
+    #wip-snapshot-panel .wip-comparison-status.off-track { background: #f3f4f6; color: #4b5563; }
+    #wip-snapshot-panel .wip-comparison-status.missing { background: #fde8e8; color: #cc292b; }
+    #wip-snapshot-panel .wip-comparison-empty { font-size: 11px; color: #6b7280; padding: 6px 2px; }
+
+    /* View visibility toggling for the daily-views navigation. */
+    #wip-snapshot-panel.nav-initial #wip-projected-section,
+    #wip-snapshot-panel.nav-initial #wip-comparison-section,
+    #wip-snapshot-panel.nav-projected #wip-comparison-section,
+    #wip-snapshot-panel.nav-actual #wip-comparison-section,
+    #wip-snapshot-panel.nav-comparison #wip-projected-section { display: none !important; }
   `;
   document.head.appendChild(style);
 }
@@ -967,6 +1373,11 @@ const DailyCommitment =
 // section unavailable", never a crash.
 const CommitmentPicker =
   (typeof WIPBoardCommitmentPicker !== 'undefined' && WIPBoardCommitmentPicker) || null;
+// Projected Board (roadmap T1.5): the pure engine that simulates the expected
+// end-of-day board from the base snapshot + the saved commitment. Optional, so a
+// missing module degrades to "projected section unavailable", never a crash.
+const ProjectedBoard =
+  (typeof WIPBoardProjectedBoard !== 'undefined' && WIPBoardProjectedBoard) || null;
 
 // A single store instance per page, created lazily so a missing module (older
 // manifest) degrades to "panel unavailable" instead of throwing at load.
@@ -1629,6 +2040,588 @@ function setCommitmentOutput(html) {
   setIndicatorHtml(output, html || '');
 }
 
+// --- Projected Board (roadmap T1.5) ----------------------------------------
+// A read-only SIMULATION of the expected end-of-day board. It takes the last
+// captured snapshot as the baseline and the saved commitment as the declared
+// destinations, then renders either the INITIAL board (snapshot) or the
+// PROJECTED board (after the planned moves) per column. It never reads the live
+// board to invent items and never moves a work item in Azure DevOps.
+//
+// In-memory state holds the last computed projection and the active view so the
+// Initial/Projected toggle re-renders from memory without recomputing — keeping
+// the view light and adding no MutationObserver churn (R1 discipline).
+const projectedBoardState = {
+  projection: null,
+  view: 'projected', // 'initial' | 'projected'
+};
+
+async function handleShowProjectedBoard(context, i18n) {
+  const store = getSnapshotStore();
+  if (!store || !ProjectedBoard || !DailyCommitment) {
+    setProjectedStatus(i18n.t('projectedError', { message: 'module unavailable' }), 'err');
+    return;
+  }
+
+  let boardModel;
+  try {
+    boardModel = readBoardModel();
+  } catch (err) {
+    setProjectedStatus(i18n.t('projectedError', { message: err && err.message ? err.message : String(err) }), 'err');
+    return;
+  }
+  const scope = resolveSnapshotScope(boardModel, context);
+  if (!scope) {
+    setProjectedStatus(i18n.t('snapshotScopeMissing'), 'err');
+    return;
+  }
+
+  // Resolve the SAME-board baseline snapshot and its active commitment only. The
+  // live board is not used to substitute missing snapshot data (integrity rule).
+  let base;
+  let commitmentRecord;
+  try {
+    base = await store.getLatestSnapshot(scope);
+    const commitments = await store.getCommitments(scope);
+    commitmentRecord = commitments && commitments.length ? commitments[0] : null;
+  } catch (err) {
+    setProjectedStatus(i18n.t('projectedError', { message: err && err.message ? err.message : String(err) }), 'err');
+    return;
+  }
+
+  if (!base) {
+    setProjectedStatus(i18n.t('projectedNoBase'), 'err');
+    setProjectedOutput('');
+    projectedBoardState.projection = null;
+    return;
+  }
+
+  // No valid commitment for this snapshot: show an informative empty state rather
+  // than reusing an old/foreign plan (integrity rule). An empty commitment still
+  // lets the user see the initial board, so compute with an empty plan.
+  const commitmentForProjection = commitmentRecord || { items: [] };
+
+  let projection;
+  try {
+    projection = ProjectedBoard.project(base, commitmentForProjection);
+  } catch (err) {
+    setProjectedStatus(i18n.t('projectedError', { message: err && err.message ? err.message : String(err) }), 'err');
+    return;
+  }
+
+  projectedBoardState.projection = projection;
+  // Default to the projected view; if there is no commitment, the projected and
+  // initial boards are identical and a clarifying note is shown.
+  setProjectedStatus('', null);
+  if (!commitmentRecord) {
+    setProjectedStatus(i18n.t('projectedNoCommitment'), null);
+  }
+  renderProjectedBoard(i18n);
+}
+
+function renderProjectedBoard(i18n) {
+  const output = document.getElementById('wip-projected-output');
+  if (!output) return;
+  const projection = projectedBoardState.projection;
+  if (!projection) {
+    setProjectedOutput('');
+    return;
+  }
+
+  const useProjected = projectedBoardState.view !== 'initial';
+
+  const summary =
+    `<div class="wip-projected-summary">` +
+    escapeText(
+      i18n.t('projectedSummary', {
+        items: projection.summary.snapshotItemCount,
+        committed: projection.summary.committedCount,
+        moves: projection.summary.plannedMoveCount,
+      })
+    ) +
+    `</div>`;
+
+  let reliability = '';
+  if (!projection.reliability.complete) {
+    const reasonMap = {
+      INCOMPLETE_SNAPSHOT: 'projectedReasonIncomplete',
+      UNKNOWN_COMMITTED_IDS: 'projectedReasonUnknownIds',
+      INVALID_DESTINATIONS: 'projectedReasonInvalidDest',
+    };
+    const reasons = projection.reliability.reasons
+      .map(code => (reasonMap[code] ? i18n.t(reasonMap[code]) : code))
+      .join(', ');
+    reliability =
+      `<div class="wip-projected-reliability">` +
+      escapeText(i18n.t('projectedReliabilityWarning', { reasons: reasons })) +
+      `</div>`;
+  }
+
+  const columnsHtml = projection.columns
+    .map(col => renderProjectedColumn(col, useProjected, i18n))
+    .join('');
+
+  setProjectedOutput(
+    summary + reliability + `<div class="wip-projected-board">${columnsHtml}</div>`
+  );
+}
+
+function renderProjectedColumn(col, useProjected, i18n) {
+  const count = useProjected ? col.projectedCount : col.initialCount;
+  const ids = useProjected ? col.projectedIds : col.initialIds;
+
+  // Delta badge is only meaningful on the projected view.
+  let deltaHtml = '';
+  if (useProjected && col.delta !== 0) {
+    const sign = col.delta > 0 ? '+' : '';
+    const dir = col.delta > 0 ? 'up' : 'down';
+    deltaHtml =
+      `<span class="wip-projected-col-delta ${dir}">` +
+      escapeText(i18n.t('projectedColumnDelta', { sign: sign, delta: col.delta })) +
+      `</span>`;
+  }
+
+  const moveById = new Map();
+  if (useProjected && Array.isArray(col.items)) {
+    col.items.forEach(it => moveById.set(it.id, it));
+  }
+
+  const cardsHtml = ids.length
+    ? ids
+        .map(id => {
+          const meta = moveById.get(id);
+          const moved = !!(meta && meta.movedIn);
+          const badge =
+            moved && meta.fromColumn
+              ? ` <span class="wip-projected-move">(${escapeText(i18n.t('projectedMoveBadge', { from: meta.fromColumn }))})</span>`
+              : '';
+          return `<span class="wip-projected-card${moved ? ' moved' : ''}">#${escapeText(String(id))}${badge}</span>`;
+        })
+        .join('')
+    : `<span class="wip-projected-empty">${escapeText(i18n.t('projectedEmptyColumn'))}</span>`;
+
+  return (
+    `<div class="wip-projected-col">` +
+    `<div class="wip-projected-col-head">` +
+    `<span>${escapeText(col.name)}</span>` +
+    `<span class="wip-projected-col-count">${escapeText(i18n.t('projectedColumnCount', { count: count }))}${deltaHtml}</span>` +
+    `</div>` +
+    `<div class="wip-projected-cards">${cardsHtml}</div>` +
+    `</div>`
+  );
+}
+
+function setProjectedView(view, i18n) {
+  projectedBoardState.view = view === 'initial' ? 'initial' : 'projected';
+  const panel = document.getElementById('wip-snapshot-panel');
+  if (panel) {
+    const initialTab = panel.querySelector('#wip-projected-tab-initial');
+    const projectedTab = panel.querySelector('#wip-projected-tab-projected');
+    if (initialTab) initialTab.classList.toggle('active', projectedBoardState.view === 'initial');
+    if (projectedTab) projectedTab.classList.toggle('active', projectedBoardState.view === 'projected');
+  }
+  renderProjectedBoard(i18n);
+}
+
+function setProjectedStatus(message, kind) {
+  const status = document.getElementById('wip-projected-status');
+  if (!status) return;
+  status.textContent = message || '';
+  status.className = 'wip-snap-status' + (kind ? ' ' + kind : '');
+}
+
+function setProjectedOutput(html) {
+  const output = document.getElementById('wip-projected-output');
+  if (!output) return;
+  // Diff-before-write mirrors the indicator/snapshot guard (R1 fix discipline).
+  setIndicatorHtml(output, html || '');
+}
+
+// --- Daily Comparison (roadmap T1.6) ---------------------------------------
+// A read-only comparison between the daily PLAN (a commitment tied to an initial
+// snapshot) and a LATER observed snapshot of the SAME board. The classification
+// is delegated to WIPBoardDailyCommitment.compareCommitment (reused, not
+// reimplemented); the daily metrics, the proven fulfillment rate, reliability
+// and the result filters come from the pure WIPBoardDailyComparison view-model.
+// It never reads the live board to invent items and never moves a work item in
+// Azure DevOps. All DOM writes go through withObserverPaused()/setIndicatorHtml
+// so the R1 MutationObserver fix is preserved.
+//
+// In-memory state holds the last computed view-model, the chosen later snapshot
+// id and the active result filter so re-rendering (filter change, language
+// switch) never recomputes and never re-reads the board.
+const comparisonState = {
+  vm: null,
+  laterSnapshots: [], // valid later-snapshot candidates for the picker
+  selectedLaterId: null,
+  initial: null,
+  commitment: null,
+  filter: 'all',
+};
+
+const DailyComparison =
+  (typeof WIPBoardDailyComparison !== 'undefined' && WIPBoardDailyComparison) || null;
+
+async function handleRunComparison(context, i18n) {
+  const store = getSnapshotStore();
+  if (!store || !DailyComparison || !DailyCommitment) {
+    setComparisonStatus(i18n.t('comparisonError', { message: 'module unavailable' }), 'err');
+    return;
+  }
+
+  let boardModel;
+  try {
+    boardModel = readBoardModel();
+  } catch (err) {
+    setComparisonStatus(i18n.t('comparisonError', { message: errText(err) }), 'err');
+    return;
+  }
+  const scope = resolveSnapshotScope(boardModel, context);
+  if (!scope) {
+    setComparisonStatus(i18n.t('snapshotScopeMissing'), 'err');
+    return;
+  }
+
+  setComparisonStatus(i18n.t('comparisonLoading'), null);
+
+  // Resolve the SAME-board initial snapshot (latest capture), its active
+  // commitment, and the valid later snapshots. The live board is never used to
+  // substitute snapshot data (integrity rule).
+  let initial;
+  let commitmentRecord;
+  let snapshots;
+  try {
+    snapshots = await store.getSnapshots(scope);
+    initial = snapshots && snapshots.length ? snapshots[snapshots.length - 1] : null;
+    const commitments = await store.getCommitments(scope);
+    commitmentRecord = commitments && commitments.length ? commitments[0] : null;
+  } catch (err) {
+    setComparisonStatus(i18n.t('comparisonError', { message: errText(err) }), 'err');
+    return;
+  }
+
+  if (!initial) {
+    setComparisonStatus(i18n.t('comparisonNoBase'), 'err');
+    setComparisonOutput('');
+    comparisonState.vm = null;
+    return;
+  }
+  if (!commitmentRecord) {
+    setComparisonStatus(i18n.t('comparisonNoCommitment'), null);
+    setComparisonOutput('');
+    comparisonState.vm = null;
+    return;
+  }
+
+  // Valid later snapshots: same board, captured strictly after the initial one.
+  const laterSnapshots = DailyComparison.selectComparableSnapshots(snapshots, initial);
+
+  comparisonState.initial = initial;
+  comparisonState.commitment = commitmentRecord;
+  comparisonState.laterSnapshots = laterSnapshots;
+  // Keep a previously chosen later snapshot if still valid, else default to the
+  // newest valid one. Never auto-select an incompatible/other-board snapshot.
+  const stillValid = laterSnapshots.some(s => s.id === comparisonState.selectedLaterId);
+  comparisonState.selectedLaterId = stillValid
+    ? comparisonState.selectedLaterId
+    : (laterSnapshots.length ? laterSnapshots[0].id : null);
+
+  recomputeComparison(i18n);
+}
+
+// Build the view-model from the selected later snapshot. Pure; no board read.
+function recomputeComparison(i18n) {
+  const initial = comparisonState.initial;
+  const commitment = comparisonState.commitment;
+  if (!initial || !commitment || !DailyComparison) return;
+
+  const later =
+    comparisonState.laterSnapshots.find(s => s.id === comparisonState.selectedLaterId) || null;
+
+  const vm = DailyComparison.buildComparison({
+    initialSnapshot: initial,
+    commitment: commitment,
+    laterSnapshot: later,
+  });
+
+  comparisonState.vm = vm;
+  setComparisonStatus('', null);
+  renderComparison(i18n);
+}
+
+function comparisonStatusClass(status) {
+  return ['reached', 'beyond', 'behind', 'off-track', 'missing'].indexOf(status) !== -1
+    ? status
+    : 'off-track';
+}
+
+function renderComparison(i18n) {
+  const output = document.getElementById('wip-comparison-output');
+  if (!output) return;
+  const vm = comparisonState.vm;
+  if (!vm) {
+    setComparisonOutput('');
+    return;
+  }
+  if (!vm.ok) {
+    setComparisonOutput(
+      `<div class="wip-comparison-reliability">` +
+        escapeText(i18n.t('comparisonError', { message: vm.error || 'unknown' })) +
+        `</div>`
+    );
+    return;
+  }
+
+  const statusLabelKey = {
+    reached: 'statusReached',
+    behind: 'statusBehind',
+    beyond: 'statusBeyond',
+    'off-track': 'statusOffTrack',
+    missing: 'statusMissing',
+  };
+  const explainKey = {
+    OFF_TRACK_UNKNOWN_ORDER: 'comparisonExplainOffTrackOrder',
+    OFF_TRACK_INCOMPATIBLE: 'comparisonExplainOffTrackIncompatible',
+    MISSING_NO_CARD: 'comparisonExplainMissingCard',
+    MISSING_NO_LATER: 'comparisonExplainMissingNoLater',
+  };
+
+  const m = vm.metrics;
+
+  // Later-snapshot picker (same board, after the initial). Rebuilt here so a
+  // language change relabels without a board read.
+  const laterPicker = renderLaterPicker(i18n);
+
+  // Header meta: daily date, initial/later snapshot times, commitment revision.
+  let meta = '';
+  if (vm.dailyDate) {
+    meta += `<div class="wip-comparison-meta">${escapeText(i18n.t('comparisonDailyDate', { date: vm.dailyDate }))}</div>`;
+  }
+  meta += `<div class="wip-comparison-meta">${escapeText(i18n.t('comparisonInitialInfo', { when: formatSnapshotWhen(vm.initial.capturedAt) }))}</div>`;
+  if (vm.later) {
+    meta += `<div class="wip-comparison-meta">${escapeText(i18n.t('comparisonLaterInfo', { when: formatSnapshotWhen(vm.later.capturedAt) }))}</div>`;
+  } else {
+    meta += `<div class="wip-comparison-meta">${escapeText(i18n.t('comparisonNoLater'))}</div>`;
+  }
+  if (vm.commitment) {
+    meta += `<div class="wip-comparison-meta">${escapeText(i18n.t('comparisonCommitmentInfo', { revision: vm.commitment.revision, when: formatSnapshotWhen(vm.commitment.createdAt) }))}</div>`;
+    if (vm.commitment.usedArchived) {
+      meta += `<div class="wip-comparison-archived">${escapeText(i18n.t('comparisonArchivedNote', { revision: vm.commitment.revision }))}</div>`;
+    }
+  }
+
+  // Summary + undetermined (missing/off-track reported separately, never a proven
+  // failure) + proven fulfillment rate (suppressed when unreliable).
+  const summary =
+    `<div class="wip-comparison-summary">` +
+    escapeText(
+      i18n.t('comparisonSummary', {
+        committed: m.committed,
+        reached: m.reached,
+        beyond: m.beyond,
+        behind: m.behind,
+        offTrack: m.offTrack,
+        missing: m.missing,
+      })
+    ) +
+    `</div>`;
+
+  const undetermined =
+    `<div class="wip-comparison-undetermined">` +
+    escapeText(
+      i18n.t('comparisonUndetermined', {
+        count: m.undetermined,
+        offTrack: m.offTrack,
+        missing: m.missing,
+      })
+    ) +
+    `</div>`;
+
+  let rate;
+  if (m.rateReliable && m.fulfillmentRate != null) {
+    const pct = Math.max(0, Math.min(100, m.fulfillmentRate));
+    rate =
+      `<div class="wip-comparison-rate">` +
+      escapeText(i18n.t('comparisonRate', { rate: m.fulfillmentRate })) +
+      `<span class="wip-rate-bar"><span class="wip-rate-fill" style="width:${pct}%"></span></span>` +
+      `</div>`;
+  } else {
+    rate =
+      `<div class="wip-comparison-rate unavailable">` +
+      escapeText(i18n.t('comparisonRateUnavailable')) +
+      `</div>`;
+  }
+
+  // Reliability line (honest limitations), when not fully reliable.
+  let reliability = '';
+  if (!vm.reliability.reliable) {
+    const reasonMap = {
+      NO_LATER_SNAPSHOT: 'comparisonReasonNoLater',
+      INCOMPLETE_LATER_SNAPSHOT: 'comparisonReasonLaterIncomplete',
+      INCOMPLETE_INITIAL_SNAPSHOT: 'comparisonReasonInitialIncomplete',
+      UNRELIABLE_COLUMN_ORDER: 'comparisonReasonOrder',
+      NO_COMMITMENT: 'comparisonReasonNoCommitment',
+    };
+    const reasons = vm.reliability.reasons
+      .map(code => (reasonMap[code] ? i18n.t(reasonMap[code]) : code))
+      .join(', ');
+    reliability =
+      `<div class="wip-comparison-reliability">` +
+      escapeText(i18n.t('comparisonReliabilityWarning', { reasons: reasons })) +
+      `</div>`;
+  }
+
+  // Result filters.
+  const filters = renderComparisonFilters(i18n);
+
+  // Compact comparison cards for the active filter.
+  const rows = DailyComparison.filterResults(vm.results, comparisonState.filter);
+  let cards;
+  if (!rows.length) {
+    cards = `<div class="wip-comparison-empty">${escapeText(i18n.t('comparisonEmptyFilter'))}</div>`;
+  } else {
+    cards = rows
+      .map(r => {
+        const statusText = i18n.t(statusLabelKey[r.status] || 'statusOffTrack');
+        const actual = r.actualColumn == null ? i18n.t('comparisonActualNone') : r.actualColumn;
+        const start = r.startColumn == null ? i18n.t('comparisonActualNone') : r.startColumn;
+        const explain =
+          r.explanation && explainKey[r.explanation]
+            ? `<div class="wip-comparison-explain">${escapeText(i18n.t(explainKey[r.explanation]))}</div>`
+            : '';
+        return (
+          `<div class="wip-comparison-card">` +
+          `<div class="wip-comparison-card-head">` +
+          `<span class="wip-comparison-card-id">#${escapeText(String(r.id))}</span>` +
+          `<span class="wip-comparison-status ${comparisonStatusClass(r.status)}">${escapeText(statusText)}</span>` +
+          `</div>` +
+          `<div class="wip-comparison-flow">` +
+          `${escapeText(i18n.t('comparisonColInitial'))} ${escapeText(start)} → ` +
+          `<span class="wip-flow-expected">${escapeText(i18n.t('comparisonColExpected'))} ${escapeText(r.expectedColumn)}</span> → ` +
+          `<span class="wip-flow-actual">${escapeText(i18n.t('comparisonColActual'))} ${escapeText(actual)}</span>` +
+          `</div>` +
+          explain +
+          `</div>`
+        );
+      })
+      .join('');
+  }
+
+  setComparisonOutput(
+    laterPicker +
+      meta +
+      summary +
+      undetermined +
+      rate +
+      reliability +
+      filters +
+      `<div class="wip-comparison-cards">${cards}</div>`
+  );
+
+  bindComparisonInteractions(i18n);
+}
+
+function renderLaterPicker(i18n) {
+  const options = comparisonState.laterSnapshots
+    .map(s => {
+      const label = formatSnapshotWhen(s.capturedAt);
+      const selected = s.id === comparisonState.selectedLaterId ? ' selected' : '';
+      return `<option value="${escapeAttr(String(s.id))}"${selected}>${escapeText(label)}</option>`;
+    })
+    .join('');
+  if (!options) return '';
+  return (
+    `<label class="wip-comparison-meta">${escapeText(i18n.t('comparisonLaterLabel'))}</label>` +
+    `<select class="wip-comparison-later" id="wip-comparison-later">${options}</select>`
+  );
+}
+
+function renderComparisonFilters(i18n) {
+  const defs = [
+    { key: 'all', label: 'comparisonFilterAll' },
+    { key: 'reached', label: 'comparisonFilterReached' },
+    { key: 'beyond', label: 'comparisonFilterBeyond' },
+    { key: 'behind', label: 'comparisonFilterBehind' },
+    { key: 'off-track', label: 'comparisonFilterOffTrack' },
+    { key: 'missing', label: 'comparisonFilterMissing' },
+  ];
+  const buttons = defs
+    .map(d => {
+      const active = comparisonState.filter === d.key ? ' active' : '';
+      return `<button type="button" class="wip-comparison-filter${active}" data-filter="${escapeAttr(d.key)}">${escapeText(i18n.t(d.label))}</button>`;
+    })
+    .join('');
+  return `<div class="wip-comparison-filters">${buttons}</div>`;
+}
+
+// Bind the later-snapshot select and the result-filter buttons. Interaction
+// re-renders from memory only (no recompute, no board read): R1-safe.
+function bindComparisonInteractions(i18n) {
+  const select = document.getElementById('wip-comparison-later');
+  if (select) {
+    select.onchange = () => {
+      comparisonState.selectedLaterId = idFromDom(select.value);
+      recomputeComparison(i18n);
+    };
+  }
+  const output = document.getElementById('wip-comparison-output');
+  if (output) {
+    output.querySelectorAll('.wip-comparison-filter').forEach(btn => {
+      btn.onclick = () => {
+        comparisonState.filter = btn.getAttribute('data-filter') || 'all';
+        renderComparison(i18n);
+      };
+    });
+  }
+}
+
+function setComparisonStatus(message, kind) {
+  const status = document.getElementById('wip-comparison-status');
+  if (!status) return;
+  status.textContent = message || '';
+  status.className = 'wip-snap-status' + (kind ? ' ' + kind : '');
+}
+
+function setComparisonOutput(html) {
+  const output = document.getElementById('wip-comparison-output');
+  if (!output) return;
+  // Diff-before-write mirrors the indicator/snapshot guard (R1 fix discipline).
+  setIndicatorHtml(output, html || '');
+}
+
+function errText(err) {
+  return err && err.message ? err.message : String(err);
+}
+
+// --- Daily views navigation (roadmap T1.6 §6) ------------------------------
+// Switches the panel between the four daily views (Initial board, Projected
+// board, Actual result, Commitment comparison) while preserving the selected
+// snapshot/commitment identity. The navigation only toggles which sub-sections
+// are visible via a panel class; it never recomputes or re-reads the board, and
+// never mutates the Projected Board or Azure DevOps.
+const dailyViewState = { view: 'comparison' };
+
+function setDailyView(view, i18n) {
+  const allowed = ['initial', 'projected', 'actual', 'comparison'];
+  dailyViewState.view = allowed.indexOf(view) !== -1 ? view : 'comparison';
+  const panel = document.getElementById('wip-snapshot-panel');
+  if (panel) {
+    allowed.forEach(v => panel.classList.remove('nav-' + v));
+    panel.classList.add('nav-' + dailyViewState.view);
+    const tabs = panel.querySelectorAll('.wip-nav-tab');
+    tabs.forEach(tab => {
+      tab.classList.toggle('active', tab.getAttribute('data-view') === dailyViewState.view);
+    });
+  }
+  // The Initial and Actual result views are projected-board-driven states; map
+  // them onto the projected engine's Initial/Projected toggle so each view
+  // preserves the selected snapshot identity without recomputation.
+  if (dailyViewState.view === 'initial' && typeof setProjectedView === 'function') {
+    setProjectedView('initial', i18n);
+  } else if (dailyViewState.view === 'projected' && typeof setProjectedView === 'function') {
+    setProjectedView('projected', i18n);
+  }
+}
+
 // --- Picker HTML-safety helpers --------------------------------------------
 // The picker renders work-item titles, ids and column names into innerHTML.
 // Those values come from the board (untrusted), so every interpolated value is
@@ -1697,6 +2690,38 @@ function ensureSnapshotPanel(context, i18n) {
           <p class="wip-snap-status" id="wip-commit-status"></p>
           <div class="wip-commit-output" id="wip-commit-output"></div>
         </div>
+        <div class="wip-projected-section" id="wip-projected-section">
+          <h4 id="wip-projected-title"></h4>
+          <p class="wip-projected-help" id="wip-projected-help"></p>
+          <span class="wip-projected-sim-note" id="wip-projected-sim-note"></span>
+          <div class="wip-snap-actions">
+            <button class="wip-snap-btn" id="wip-projected-show" type="button"></button>
+          </div>
+          <div class="wip-projected-toggle">
+            <button class="wip-projected-tab" id="wip-projected-tab-initial" type="button"></button>
+            <button class="wip-projected-tab active" id="wip-projected-tab-projected" type="button"></button>
+          </div>
+          <p class="wip-snap-status" id="wip-projected-status"></p>
+          <div class="wip-commit-output" id="wip-projected-output"></div>
+        </div>
+        <div class="wip-comparison-section" id="wip-comparison-section">
+          <h4 id="wip-comparison-title"></h4>
+          <p class="wip-comparison-help" id="wip-comparison-help"></p>
+          <div class="wip-snap-actions">
+            <button class="wip-snap-btn" id="wip-comparison-run" type="button"></button>
+          </div>
+          <p class="wip-snap-status" id="wip-comparison-status"></p>
+          <div class="wip-commit-output" id="wip-comparison-output"></div>
+        </div>
+        <div class="wip-nav-section" id="wip-nav-section">
+          <h4 id="wip-nav-title"></h4>
+          <div class="wip-nav-tabs">
+            <button class="wip-nav-tab" id="wip-nav-initial" data-view="initial" type="button"></button>
+            <button class="wip-nav-tab" id="wip-nav-projected" data-view="projected" type="button"></button>
+            <button class="wip-nav-tab" id="wip-nav-actual" data-view="actual" type="button"></button>
+            <button class="wip-nav-tab active" id="wip-nav-comparison" data-view="comparison" type="button"></button>
+          </div>
+        </div>
       </div>
     `;
     document.body.appendChild(panel);
@@ -1752,6 +2777,84 @@ function ensureSnapshotPanel(context, i18n) {
       if (commitmentPickerState.rows.length) renderPickerList(i18n);
     } else {
       commitSection.style.display = 'none';
+    }
+  }
+
+  // Projected Board sub-section (roadmap T1.5). Shown only when the pure engine
+  // and the commitment engine are present; bound against the current context.
+  const projectedSection = document.getElementById('wip-projected-section');
+  if (projectedSection) {
+    if (ProjectedBoard && DailyCommitment) {
+      projectedSection.style.display = 'block';
+      bindSnapshotButton('wip-projected-show', () => handleShowProjectedBoard(context, i18n));
+      bindSnapshotButton('wip-projected-tab-initial', () => setProjectedView('initial', i18n));
+      bindSnapshotButton('wip-projected-tab-projected', () => setProjectedView('projected', i18n));
+      setTextById('wip-projected-title', i18n.t('projectedSectionTitle'));
+      setTextById('wip-projected-help', i18n.t('projectedHelp'));
+      setTextById('wip-projected-sim-note', i18n.t('projectedSimulationNote'));
+      setTextById('wip-projected-show', i18n.t('projectedShow'));
+      setTextById('wip-projected-tab-initial', i18n.t('projectedViewInitial'));
+      setTextById('wip-projected-tab-projected', i18n.t('projectedViewProjected'));
+
+      // Reflect the active view on the tabs and re-render if a projection is
+      // already loaded so a language switch relabels without recomputing.
+      const initialTab = projectedSection.querySelector('#wip-projected-tab-initial');
+      const projectedTab = projectedSection.querySelector('#wip-projected-tab-projected');
+      if (initialTab) initialTab.classList.toggle('active', projectedBoardState.view === 'initial');
+      if (projectedTab) projectedTab.classList.toggle('active', projectedBoardState.view !== 'initial');
+      if (projectedBoardState.projection) renderProjectedBoard(i18n);
+    } else {
+      projectedSection.style.display = 'none';
+    }
+  }
+
+  // Daily Comparison sub-section (roadmap T1.6). Shown only when the pure
+  // view-model and the commitment engine are present; bound against the current
+  // context/i18n every refresh so config and language changes take effect.
+  const comparisonSection = document.getElementById('wip-comparison-section');
+  if (comparisonSection) {
+    if (DailyComparison && DailyCommitment) {
+      comparisonSection.style.display = 'block';
+      bindSnapshotButton('wip-comparison-run', () => handleRunComparison(context, i18n));
+      setTextById('wip-comparison-title', i18n.t('comparisonSectionTitle'));
+      setTextById('wip-comparison-help', i18n.t('comparisonHelp'));
+      setTextById('wip-comparison-run', i18n.t('comparisonRun'));
+      // Relabel an already-rendered comparison without recomputing or re-reading
+      // the board, so a language switch keeps the current selection and metrics.
+      if (comparisonState.vm) renderComparison(i18n);
+    } else {
+      comparisonSection.style.display = 'none';
+    }
+  }
+
+  // Daily views navigation (roadmap T1.6 §6). Shown only when the projected and
+  // comparison views are both available, so the four-way switch is meaningful.
+  const navSection = document.getElementById('wip-nav-section');
+  if (navSection) {
+    if (ProjectedBoard && DailyComparison && DailyCommitment) {
+      navSection.style.display = 'block';
+      bindSnapshotButton('wip-nav-initial', () => setDailyView('initial', i18n));
+      bindSnapshotButton('wip-nav-projected', () => setDailyView('projected', i18n));
+      bindSnapshotButton('wip-nav-actual', () => setDailyView('actual', i18n));
+      bindSnapshotButton('wip-nav-comparison', () => setDailyView('comparison', i18n));
+      setTextById('wip-nav-title', i18n.t('navSectionTitle'));
+      setTextById('wip-nav-initial', i18n.t('navInitial'));
+      setTextById('wip-nav-projected', i18n.t('navProjected'));
+      setTextById('wip-nav-actual', i18n.t('navActual'));
+      setTextById('wip-nav-comparison', i18n.t('navComparison'));
+      // Reflect the active view on the tabs and the panel class.
+      const panelEl = document.getElementById('wip-snapshot-panel');
+      if (panelEl) {
+        ['initial', 'projected', 'actual', 'comparison'].forEach(v =>
+          panelEl.classList.remove('nav-' + v)
+        );
+        panelEl.classList.add('nav-' + dailyViewState.view);
+        navSection.querySelectorAll('.wip-nav-tab').forEach(tab => {
+          tab.classList.toggle('active', tab.getAttribute('data-view') === dailyViewState.view);
+        });
+      }
+    } else {
+      navSection.style.display = 'none';
     }
   }
 }

@@ -188,14 +188,94 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
   `test/commitment-picker-r1.test.js`). Real-browser validation pending (see the
   checklist in `docs/DAILY_COMMITMENT_T1_4.md`).
 
-### T1.5 — Projected Board (next increment, planned)
-- Scope: from the saved commitment + the live board, render the EXPECTED end-of-day
-  board state (each committed item shown in its destination column) so the team can
-  see the projected board during the daily. Read-only projection; never mutates
-  Azure DevOps; reuses the picker view-model and the commitment engine.
+### T1.5 — Projected Board — DONE
+- Scope: from the SAVED commitment + the BASE snapshot, render the EXPECTED
+  end-of-day board state (each committed item shown in its destination column) so
+  the team can see the projected board during the daily. Read-only projection;
+  never mutates Azure DevOps; reuses the commitment engine and the snapshot store.
 - Acceptance: the projected view places each committed item in its expected column
   and leaves uncommitted items where they are; WIP number unaffected.
 - Tests: projection unit tests (committed vs uncommitted placement, missing items).
+- Status: `src/data/projected-board.js` (`WIPBoardProjectedBoard`) is a pure,
+  Chrome-free and DOM-free engine. `project(baseSnapshot, commitment, options)`
+  takes the SELECTED snapshot as the authoritative baseline and the SAVED
+  commitment as the declared destinations, then returns the projected board: per
+  column it reports `initialCount`/`projectedCount`/`delta`, the `initialIds` and
+  `projectedIds`, and per-item move metadata (origin -> destination). It moves
+  ONLY items with an explicit, valid destination column that differs from the
+  origin; a destination equal to the origin is a no-op; a destination that is not
+  a real board column is reported under `invalidDestinations` and the item stays
+  put; a committed id absent from the baseline is reported under
+  `unknownCommittedIds` and never materialized. Stable ids are preserved,
+  duplicate snapshot/commitment ids collapse, item totals are conserved, and
+  inputs are never mutated (a deep-frozen snapshot projects fine). Columns come
+  from real board data (snapshot/commitment/explicit order) or are derived from
+  the item columns — never hardcoded. A `reliability` verdict flags an incomplete
+  snapshot, unknown ids or invalid destinations. The engine reads/writes NO WIP
+  number. `content.js` adds a "Projected board (simulation)" sub-section inside
+  the existing Daily Snapshot panel with an Initial/Projected toggle (re-renders
+  from memory, no recompute), per-column counts and +/- deltas, discreet
+  highlight + origin for moved cards, a summary (snapshot cards / commitments /
+  planned changes), a reliability warning, and a persistent "simulation only"
+  note — all localized EN/PT and written through the `withObserverPaused()` /
+  `setIndicatorHtml()` R1 guards. It uses the LATEST snapshot and the ACTIVE
+  (latest-revision) commitment of the SAME board scope only; the live board is
+  never used to substitute missing snapshot data, and with no commitment an
+  informative empty state is shown (no old/foreign plan reused).
+  `manifest.json` loads `src/data/projected-board.js` before `content.js`.
+  Suite: 178 tests pass (151 prior + 18 in `test/projected-board.test.js` + 4 in
+  `test/projected-board-r1.test.js` + 5 in `test/i18n-parity.test.js`).
+  Real-browser validation pending (see the checklist in
+  `docs/PROJECTED_BOARD_T1_5.md`).
+
+### T1.6 — Daily Comparison UI — DONE
+- Scope: a view that shows, per committed item, which commitments were FULFILLED,
+  which are PENDING, which went BEYOND the expectation and which lack enough
+  information to judge. Reuses `WIPBoardDailyCommitment.compareCommitment`
+  (reached / behind / beyond / off-track / missing) and the projected-board
+  layout; read-only; never mutates Azure DevOps.
+- Acceptance: the comparison view classifies each committed item against a chosen
+  later snapshot and summarizes counts per category plus a proven fulfillment
+  rate; WIP number unaffected.
+- Tests: comparison-view unit tests over fixtures for each category; i18n parity;
+  R1 regression for the new UI.
+- Status: `src/data/daily-comparison.js` (`WIPBoardDailyComparison`) is a pure,
+  Chrome-free and DOM-free PRESENTATION view-model. It REUSES the classification
+  engine (`WIPBoardDailyCommitment.compareCommitment`) via dependency injection —
+  no second comparison mechanism is created — and adds: (1)
+  `selectComparableSnapshots`, which returns only the SAME-board snapshots
+  captured STRICTLY AFTER the initial one (newest first), never auto-selecting an
+  incompatible or other-board snapshot; (2) `resolvePlan`, which honors an
+  explicit commitment REVISION so a historic daily is judged against the plan
+  actually declared that day, never silently rewritten by a newer revision; (3)
+  `buildComparison`, which classifies each committed item (reached / beyond /
+  behind / off-track / missing), reports `startColumn` from the initial snapshot,
+  the expected and the observed column, an explanation code for undetermined
+  results, the daily metrics, and an honest `reliability` verdict; and (4)
+  `filterResults` for the UI's per-category filters. The proven fulfillment rate
+  is `((reached + beyond) / committed) * 100`, computed ONLY when a later
+  snapshot exists AND the column order is reliable; otherwise it is `null` and
+  `rateReliable` is `false` so the UI suppresses a misleading percentage.
+  `missing`/`off-track` are surfaced separately as UNDETERMINED, never as proven
+  failures. A later snapshot from another board or not strictly after the initial
+  is refused (`SNAPSHOT_SCOPE_MISMATCH` / `LATER_SNAPSHOT_NOT_AFTER_INITIAL`).
+  `content.js` adds a "Daily Comparison / Comparação da Daily" sub-section inside
+  the existing snapshot panel with a later-snapshot picker, the daily date and
+  snapshot/commitment times, the metrics summary, a proven-fulfillment indicator
+  (percentage + bar, suppressed when unreliable), compact per-item comparison
+  cards (initial → expected → observed + status + explanation for undetermined),
+  result filters (All / Reached / Beyond / Behind / Off-track / Missing) and a
+  reliability line — all localized EN/PT and written through the
+  `withObserverPaused()` / `setIndicatorHtml()` R1 guards. A four-way "Daily
+  views" navigation (Initial board / Projected board / Actual result / Commitment
+  comparison) switches visible sub-sections while preserving the selected
+  snapshot/commitment identity; it never recomputes, never re-reads the board,
+  never mutates the Projected Board and never touches Azure DevOps. The comparison
+  module reads/writes NO WIP number. `manifest.json` loads
+  `src/data/daily-comparison.js` before `content.js`. Suite: 201 tests pass (178
+  prior + 22 in `test/daily-comparison.test.js` + 1 added T1.6 key-parity check
+  in `test/i18n-parity.test.js`). Real-browser validation pending (see the
+  checklist in `docs/DAILY_COMPARISON_T1_6.md`).
 
 ---
 
