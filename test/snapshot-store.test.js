@@ -397,3 +397,27 @@ test('age-based retention prunes snapshots older than maxAgeDays', async () => {
   assert.equal(kept.length, 1);
   assert.equal(kept[0].capturedAt.localDay, '2024-01-18');
 });
+
+test('retention preserves snapshots still referenced by recorded dailies', async () => {
+  const { api } = freshStore({
+    retention: { maxSnapshotsPerBoard: 1, maxCommitmentsPerBoard: 5 },
+  });
+  const createAt = (n) => api.createSnapshot({
+    scope: SCOPE_A, items: itemsFixture(), complete: true,
+    capturedAt: new Date(Date.UTC(2026, 9, 10 + n)),
+  });
+  const baseline = await createAt(0);
+  const plan = await api.saveCommitment({
+    scope: SCOPE_A, baseSnapshotId: baseline.id,
+    items: [{ id: 101, expectedColumn: 'Closed' }],
+  });
+  const observed = await createAt(1);
+  await api.recordCommitmentEvaluation(SCOPE_A, plan.id, {
+    laterSnapshotId: observed.id, revision: plan.revision,
+  });
+  const latest = await createAt(2);
+  const stored = await api.getSnapshots(SCOPE_A);
+  assert.ok(stored.some(s => s.id === baseline.id), 'planning baseline must survive');
+  assert.ok(stored.some(s => s.id === observed.id), 'evaluation snapshot must survive');
+  assert.ok(stored.some(s => s.id === latest.id), 'newest snapshot must survive');
+});
