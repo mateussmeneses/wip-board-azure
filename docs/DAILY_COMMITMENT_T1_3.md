@@ -22,8 +22,8 @@
 
 | File | Change |
 |---|---|
-| `src/data/daily-commitment.js` | **Added.** Pure, Chrome-free + DOM-free engine (`WIPBoardDailyCommitment`): `buildCommitmentItems` shapes commitment input from a base snapshot + expected columns; `compareCommitment` classifies plan vs actual (`reached`/`behind`/`beyond`/`off-track`/`missing`) using flow order. Never mutates inputs; no new store. |
-| `manifest.json` | `content_scripts[].js` now also loads `src/data/daily-commitment.js` (dependency before `content.js`). |
+| `src/features/daily/daily-commitment.js` | **Added.** Pure, Chrome-free + DOM-free engine (`WIPBoardDailyCommitment`): `buildCommitmentItems` shapes commitment input from a base snapshot + expected columns; `compareCommitment` classifies plan vs actual (`reached`/`behind`/`beyond`/`off-track`/`missing`) using flow order. Never mutates inputs; no new store. |
+| `manifest.json` | `content_scripts[].js` now also loads `src/features/daily/daily-commitment.js` (dependency before `content.js`). |
 | `content.js` | Added the Daily Commitment sub-section inside the existing §1d snapshot panel: per-item expectation input, Save/compare actions, per-item status badges + summary, all EN/PT. Added the `WIPBoardDailyCommitment` binding, handlers and CSS. No WIP math touched. |
 | `docs/PRODUCT_ROADMAP.md` | T1.3 and T1.4 marked DONE with status + pending-validation notes. |
 | `test/daily-commitment.test.js` | **Added.** 19 tests covering all T1.3-mandatory scenarios. |

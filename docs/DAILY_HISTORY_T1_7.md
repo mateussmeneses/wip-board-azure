@@ -45,7 +45,7 @@ metrics engine.
 | Daily Commitment engine (`compareCommitment`) | The underlying reached/behind/beyond/off-track/missing rules, reached transitively through T1.6. |
 | Projected Board + Comparison UI | The per-record "Open comparison" action loads the exact historic daily into the existing T1.6 comparison view, preserving the snapshot/commitment identity. |
 
-The new module `src/data/daily-history.js` (`WIPBoardDailyHistory`) is a pure,
+The new module `src/features/daily/daily-history.js` (`WIPBoardDailyHistory`) is a pure,
 Chrome-free and DOM-free AGGREGATION view-model. It adds only the parts T1.6 does
 not cover: reconstruction of one daily record per commitment, deterministic
 selection of the evaluation snapshot from PERSISTED data, date-range filtering,
@@ -317,7 +317,7 @@ the single reliable daily — never a fabricated number for the unevaluated one.
 ## 12. Chrome manual homologation checklist (NOT yet executed)
 
 1. Extension loads in `chrome://extensions` with no errors (the manifest already
-   loads `src/data/daily-history.js` before `content.js`).
+   loads `src/features/daily/daily-history.js` before `content.js`).
 2. On a configured board, open the snapshot panel; the "Daily History / Histórico
    da Daily" sub-section is visible.
 3. Record several dailies over different days (capture → commit → capture later →

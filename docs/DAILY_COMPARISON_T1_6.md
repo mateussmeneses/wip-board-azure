@@ -29,7 +29,7 @@ over stored snapshots and a stored commitment.
 ## 2. Reuse of the existing architecture (no second mechanism)
 
 The classification itself is NOT reimplemented. `compareCommitment`
-(`src/data/daily-commitment.js`, T1.3) already produces the per-item verdicts
+(`src/features/daily/daily-commitment.js`, T1.3) already produces the per-item verdicts
 (`reached` / `behind` / `beyond` / `off-track` / `missing`). T1.6 reuses it.
 
 | Reused component | Role in T1.6 |
@@ -40,7 +40,7 @@ The classification itself is NOT reimplemented. `compareCommitment`
 | Commitment Picker | The commitment under comparison is the one saved through the picker (T1.4). |
 | Projected Board engine | Reused by the Initial / Projected daily-views navigation; the comparison does not alter it. |
 
-The new module `src/data/daily-comparison.js` (`WIPBoardDailyComparison`) is a
+The new module `src/features/daily/daily-comparison.js` (`WIPBoardDailyComparison`) is a
 pure, Chrome-free and DOM-free PRESENTATION view-model. It adds only the parts
 `compareCommitment` does not cover: snapshot selection, revision resolution,
 daily metrics + the proven fulfillment rate, reliability verdict, explanations
@@ -234,7 +234,7 @@ the reason "unreliable column order".
 ## 11. Chrome manual homologation checklist (NOT yet executed)
 
 1. Extension loads in `chrome://extensions` with no errors after adding
-   `src/data/daily-comparison.js` to the manifest.
+   `src/features/daily/daily-comparison.js` to the manifest.
 2. On a configured board, open the snapshot panel; the "Daily Comparison /
    Comparação da Daily" sub-section and the "Daily views" navigation are visible.
 3. Capture a morning snapshot, save a commitment, capture an afternoon snapshot.
