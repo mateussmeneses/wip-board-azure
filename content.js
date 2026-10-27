@@ -1804,6 +1804,7 @@ function applyCardAlarm(card, isHighlightActive, alarmConfig, blockTag, i18n) {
 // fallback that the reader intentionally does not cover).
 
 const Reader = (typeof WIPBoardReader !== 'undefined' && WIPBoardReader) || null;
+const BoardIdentity = (typeof WIPBoardIdentity !== 'undefined' && WIPBoardIdentity) || null;
 
 function readBoardModel() {
   // Read the live document into the normalized model. The reader's default
@@ -2023,45 +2024,14 @@ function getSnapshotStore() {
 }
 
 function resolveSnapshotScope(boardModel, context) {
-  // Organization/project come from the reader model (parsed from card hrefs);
-  // team/board come from the configured board keyword + optional route filter so
-  // different teams/boards never collide in storage. Returns null when the
-  // mandatory org/project cannot be detected, so capture refuses rather than
-  // writing an ambiguous record.
-  const firstScoped = (boardModel.items || []).find(
-    item =>
-      item &&
-      typeof item.organization === 'string' &&
-      item.organization &&
-      typeof item.project === 'string' &&
-      item.project
-  );
-  // The Azure board URL still identifies its org and project when the board
-  // is empty, filtered or has no visible cards. Do not require a card href
-  // merely to resolve a stable storage scope.
-  let organization = firstScoped && firstScoped.organization;
-  let project = firstScoped && firstScoped.project;
-  if (!organization || !project) {
-    try {
-      const url = new URL(window.location.href);
-      const parts = url.pathname.split('/').filter(Boolean).map(decodeURIComponent);
-      if (url.hostname === 'dev.azure.com' && parts.length >= 2) {
-        organization = parts[0];
-        project = parts[1];
-      } else if (url.hostname.endsWith('.visualstudio.com') && parts.length >= 1) {
-        organization = url.hostname.slice(0, -'.visualstudio.com'.length);
-        project = parts[0];
-      }
-    } catch (_) {
-      return null;
-    }
+  // One scope per ACTUAL board route, regardless of the user's WIP keyword.
+  // This isolates both roadmap boards and maintenance even within one project.
+  // Legacy keyword-scoped snapshots are not migrated automatically because
+  // their originating board cannot be proven after the fact.
+  if (!BoardIdentity || typeof BoardIdentity.resolveBoardScope !== 'function') {
+    return null;
   }
-  if (!organization || !project) return null;
-
-  const board = context.currentBoardName || project;
-  const team = context.boardPathFilter || context.currentBoardName || 'default';
-
-  return { organization, project, team, board };
+  return BoardIdentity.resolveBoardScope(window.location.href);
 }
 
 function formatSnapshotWhen(capturedAt) {
