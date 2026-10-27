@@ -182,6 +182,9 @@ const I18N = {
     // Sprint Intelligence (roadmap T2.2): sprint identity, goal, scope baseline.
     sprintSectionTitle: 'Sprint Intelligence',
     sprintBaselineAlreadyExists: 'A baseline already exists for this sprint. It was not overwritten.',
+    trendsObservedUnavailable: 'Observed completion is unavailable for this baseline revision.',
+    trendsSeriesUnavailable: '{{when}} — completion unavailable (baseline mismatch).',
+    trendsScopeUnreliable: 'Incomplete observation: scope changes cannot be established.',
     sprintIncompleteScope: 'Current board data is incomplete; scope removals cannot be confirmed.',
     sprintHelp: 'Identify the sprint, its period and goal, and record the initially planned scope. Delivery data, kept separate from WIP. Uses the read-only API when enabled; otherwise a manual configuration, never simulated data.',
     sprintRefresh: 'Load sprint',
@@ -489,6 +492,9 @@ const I18N = {
     historyReasonFailed: 'falha na comparação',
     // Sprint Intelligence (roadmap T2.2): identidade da sprint, objetivo, linha de base do escopo.
     sprintBaselineAlreadyExists: 'Já existe uma linha de base para esta sprint. Ela não foi sobrescrita.',
+    trendsObservedUnavailable: 'A conclusão observada não está disponível para esta revisão da linha de base.',
+    trendsSeriesUnavailable: '{{when}} — conclusão indisponível (linha de base incompatível).',
+    trendsScopeUnreliable: 'Observação incompleta: não é possível determinar as alterações de escopo.',
     sprintIncompleteScope: 'Os dados atuais do board estão incompletos; não é possível confirmar remoções do escopo.',
     sprintSectionTitle: 'Sprint Intelligence',
     sprintHelp: 'Identifique a sprint, seu período e objetivo, e registre o escopo inicialmente planejado. Dados de entrega, separados do WIP. Usa a API somente leitura quando habilitada; caso contrário, configuração manual, nunca dados simulados.',
@@ -4337,15 +4343,19 @@ function renderTrendsProgressView(t, i18n) {
   if (t.time && t.time.reliable && t.time.elapsedPct != null) {
     html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsElapsed', { pct: t.time.elapsedPct }))}</span></div>`;
     html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsReference', { pct: t.time.linearReferencePct }))}</span></div>`;
-    const observedPct = t.latest && t.latest.baselineCompletionPct != null ? t.latest.baselineCompletionPct : 0;
-    html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsObservedCompletion', { pct: observedPct }))}</span></div>`;
-    html +=
-      `<div class="wip-progress-bar wip-trends-ref" role="img" aria-label="${escapeText(String(observedPct))}%">` +
-      `<div class="wip-progress-fill" style="width:${Math.max(0, Math.min(100, observedPct))}%"></div>` +
-      `<div class="wip-trends-ref-mark" style="left:${Math.max(0, Math.min(100, t.time.linearReferencePct))}%"></div>` +
-      `</div>`;
-    const dev = Math.round((observedPct - t.time.linearReferencePct) * 100) / 100;
-    html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsDeviation', { pts: dev > 0 ? '+' + dev : String(dev) }))}</span></div>`;
+    const observedPct = t.latest ? t.latest.baselineCompletionPct : null;
+    if (observedPct == null) {
+      html += `<div class="wip-snap-note">${escapeText(i18n.t('trendsObservedUnavailable'))}</div>`;
+    } else {
+      html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsObservedCompletion', { pct: observedPct }))}</span></div>`;
+      html +=
+        `<div class="wip-progress-bar wip-trends-ref" role="img" aria-label="${escapeText(String(observedPct))}%">` +
+        `<div class="wip-progress-fill" style="width:${Math.max(0, Math.min(100, observedPct))}%"></div>` +
+        `<div class="wip-trends-ref-mark" style="left:${Math.max(0, Math.min(100, t.time.linearReferencePct))}%"></div>` +
+        `</div>`;
+      const dev = Math.round((observedPct - t.time.linearReferencePct) * 100) / 100;
+      html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsDeviation', { pts: dev > 0 ? '+' + dev : String(dev) }))}</span></div>`;
+    }
   } else {
     html += `<div class="wip-snap-note">${escapeText(i18n.t('trendsElapsedUnknown'))}</div>`;
   }
@@ -4357,9 +4367,12 @@ function renderTrendsTrendsView(t, i18n) {
   let html = `<div class="wip-snap-row"><strong>${escapeText(i18n.t('trendsSeriesTitle'))}</strong></div>`;
   (t.series || []).forEach(function (p) {
     const when = formatTrendWhen(p.iso);
-    const pct = p.baselineCompletionPct == null ? 0 : p.baselineCompletionPct;
-    const key = p.reliability === 'sufficient' ? 'trendsSeriesPoint' : 'trendsSeriesPointPartial';
-    html += `<div class="wip-snap-row"><span>${escapeText(i18n.t(key, { when: when, pct: pct, completed: p.completed, total: p.baselineTotal }))}</span></div>`;
+    if (p.baselineCompletionPct == null) {
+      html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsSeriesUnavailable', { when: when }))}</span></div>`;
+    } else {
+      const key = p.reliability === 'sufficient' ? 'trendsSeriesPoint' : 'trendsSeriesPointPartial';
+      html += `<div class="wip-snap-row"><span>${escapeText(i18n.t(key, { when: when, pct: p.baselineCompletionPct, completed: p.completed, total: p.baselineTotal }))}</span></div>`;
+    }
   });
 
   // Burnup / burndown (only real instants; goal section 5).
@@ -4378,7 +4391,7 @@ function renderTrendsTrendsView(t, i18n) {
 function renderTrendsScopeView(t, i18n) {
   let html = `<div class="wip-snap-row"><strong>${escapeText(i18n.t('trendsScopeTitle'))}</strong></div>`;
   const intervals = (t.scopeTimeline || []).filter(function (iv) {
-    return iv.added.length || iv.removed.length || iv.returned.length;
+    return iv.reliable === false || iv.added.length || iv.removed.length || iv.returned.length;
   });
   if (intervals.length === 0) {
     html += `<div class="wip-snap-note">${escapeText(i18n.t('trendsScopeNone'))}</div>`;
@@ -4386,6 +4399,10 @@ function renderTrendsScopeView(t, i18n) {
   }
   intervals.forEach(function (iv) {
     html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsScopeInterval', { from: formatTrendWhen(iv.fromIso), to: formatTrendWhen(iv.toIso) }))}</span></div>`;
+    if (iv.reliable === false) {
+      html += `<div class="wip-snap-note">${escapeText(i18n.t('trendsScopeUnreliable'))}</div>`;
+      return;
+    }
     if (iv.added.length) html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsScopeAdded', { ids: iv.added.join(', ') }))}</span></div>`;
     if (iv.removed.length) html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsScopeRemoved', { ids: iv.removed.join(', ') }))}</span></div>`;
     if (iv.returned.length) html += `<div class="wip-snap-row"><span>${escapeText(i18n.t('trendsScopeReturned', { ids: iv.returned.join(', ') }))}</span></div>`;
