@@ -1522,6 +1522,8 @@ const ProjectedBoard =
 // so a missing module degrades to "history section unavailable", never a crash.
 const DailyHistory =
   (typeof WIPBoardDailyHistory !== 'undefined' && WIPBoardDailyHistory) || null;
+const DailySession =
+  (typeof WIPBoardDailySession !== 'undefined' && WIPBoardDailySession) || null;
 
 // A single store instance per page, created lazily so a missing module (older
 // manifest) degrades to "panel unavailable" instead of throwing at load.
@@ -1817,7 +1819,7 @@ async function handleOpenPicker(context, i18n) {
   try {
     base = await store.getLatestSnapshot(scope);
     const commitments = await store.getCommitments(scope);
-    existing = commitments && commitments.length ? commitments[0] : null;
+    existing = DailySession && base ? DailySession.matchingCommitment(commitments, base) : null;
   } catch (err) {
     setCommitmentStatus(i18n.t('commitmentError', { message: err && err.message ? err.message : String(err) }), 'err');
     return;
@@ -2030,7 +2032,11 @@ async function handleSaveCommitment(context, i18n) {
 
   let base;
   try {
-    base = await store.getLatestSnapshot(scope);
+    // The plan must use the exact baseline shown when the picker was opened.
+    // Captures made in another tab after opening the picker cannot change it.
+    base = commitmentPickerState.base
+      ? await store.getSnapshotById(scope, commitmentPickerState.base.id)
+      : null;
   } catch (err) {
     setCommitmentStatus(i18n.t('commitmentError', { message: err && err.message ? err.message : String(err) }), 'err');
     return;
@@ -2047,12 +2053,14 @@ async function handleSaveCommitment(context, i18n) {
   }
 
   try {
-    // Reuse an existing commitment for this board when present: a new daily plan
-    // is a REVISION (versioned history preserved), not a duplicate record.
-    const existing = await store.getCommitments(scope);
+    // Edit only an existing commitment from THIS planning snapshot. A new
+    // snapshot represents a new daily and must create a distinct commitment,
+    // otherwise old plans are overwritten and Daily History cannot work.
+    const commitments = await store.getCommitments(scope);
+    const existing = DailySession ? DailySession.matchingCommitment(commitments, base) : null;
     let saved;
-    if (existing && existing.length) {
-      saved = await store.reviseCommitment(scope, existing[0].id, built.items);
+    if (existing) {
+      saved = await store.reviseCommitment(scope, existing.id, built.items);
       setCommitmentStatus(
         i18n.t('commitmentRevised', { revision: saved.revision, items: built.items.length }),
         'ok'
@@ -2224,9 +2232,13 @@ async function handleShowProjectedBoard(context, i18n) {
   let base;
   let commitmentRecord;
   try {
-    base = await store.getLatestSnapshot(scope);
+    const snapshots = await store.getSnapshots(scope);
     const commitments = await store.getCommitments(scope);
-    commitmentRecord = commitments && commitments.length ? commitments[0] : null;
+    const session = DailySession ? DailySession.activeSession(commitments, snapshots) : null;
+    // A saved plan must ALWAYS use its own immutable baseline.
+    // Without a plan, the newest snapshot can be displayed alone.
+    commitmentRecord = session ? session.commitment : null;
+    base = session ? session.base : (snapshots.length ? snapshots[0] : null);
   } catch (err) {
     setProjectedStatus(i18n.t('projectedError', { message: err && err.message ? err.message : String(err) }), 'err');
     return;
@@ -2399,6 +2411,7 @@ const comparisonState = {
   selectedLaterId: null,
   initial: null,
   commitment: null,
+  revision: null, // historical evaluation may pin an earlier plan revision
   filter: 'all',
 };
 
@@ -2435,9 +2448,10 @@ async function handleRunComparison(context, i18n) {
   let snapshots;
   try {
     snapshots = await store.getSnapshots(scope);
-    initial = snapshots && snapshots.length ? snapshots[snapshots.length - 1] : null;
     const commitments = await store.getCommitments(scope);
-    commitmentRecord = commitments && commitments.length ? commitments[0] : null;
+    const session = DailySession ? DailySession.activeSession(commitments, snapshots) : null;
+    initial = session ? session.base : null;
+    commitmentRecord = session ? session.commitment : null;
   } catch (err) {
     setComparisonStatus(i18n.t('comparisonError', { message: errText(err) }), 'err');
     return;
@@ -2461,6 +2475,7 @@ async function handleRunComparison(context, i18n) {
 
   comparisonState.initial = initial;
   comparisonState.commitment = commitmentRecord;
+  comparisonState.revision = null; // latest plan by default; history pins a revision explicitly
   comparisonState.laterSnapshots = laterSnapshots;
   // Keep a previously chosen later snapshot if still valid, else default to the
   // newest valid one. Never auto-select an incompatible/other-board snapshot.
@@ -2484,6 +2499,7 @@ function recomputeComparison(i18n) {
   const vm = DailyComparison.buildComparison({
     initialSnapshot: initial,
     commitment: commitment,
+    revision: comparisonState.revision,
     laterSnapshot: later,
   });
 
@@ -3041,8 +3057,12 @@ function openHistoryRecordInComparison(btn, i18n) {
   // comparison algorithm is introduced here.
   comparisonState.initial = initial;
   comparisonState.commitment = commitment;
+  comparisonState.revision = rec.revisionInEffect != null ? rec.revisionInEffect : null;
   comparisonState.laterSnapshots = DailyComparison.selectComparableSnapshots(historyState.snapshots, initial);
-  comparisonState.selectedLaterId = laterId || (comparisonState.laterSnapshots.length ? comparisonState.laterSnapshots[0].id : null);
+  // Do not substitute an unrelated later snapshot for an unevaluated daily.
+  comparisonState.selectedLaterId =
+    laterId && comparisonState.laterSnapshots.some(s => String(s.id) === String(laterId))
+      ? laterId : null;
   comparisonState.filter = 'all';
   recomputeComparison(i18n);
 
