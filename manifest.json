@@ -38,6 +38,7 @@
       ],
       "run_at": "document_end",
       "css": [
+        "src/ui/board.css",
         "src/ui/forms.css"
       ]
     }

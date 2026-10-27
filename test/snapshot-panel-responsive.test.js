@@ -7,10 +7,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const source = fs.readFileSync(path.join(__dirname, '..', 'content.js'), 'utf8');
+const css = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui', 'board.css'), 'utf8');
 
 function rule(selector) {
   const escaped = selector.replace(/\./g, '\\.');
-  const match = source.match(new RegExp(escaped + '\\s*\\{([^}]*)\\}'));
+  const match = css.match(new RegExp(escaped + '\\s*\\{([^}]*)\\}'));
   assert.ok(match, 'missing CSS rule: ' + selector);
   return match[1];
 }
@@ -32,13 +33,13 @@ test('toggle stays visible while the body independently scrolls', () => {
   assert.match(body, /min-height:\s*0/);
   assert.match(body, /overflow-y:\s*auto/);
   assert.match(body, /overscroll-behavior:\s*contain/);
-  assert.match(source, /#wip-snapshot-panel\.open\s+#wip-snapshot-body\s*\{\s*display:\s*block/);
+  assert.match(css, /#wip-snapshot-panel\.open\s+#wip-snapshot-body\s*\{\s*display:\s*block/);
 });
 
 test('small viewports keep the panel within the visible window', () => {
-  assert.match(source, /@media\s*\(max-width:\s*600px\),\s*\(max-height:\s*500px\)/);
-  assert.match(source, /max-height:\s*calc\(100dvh\s*-\s*16px\)/);
-  assert.match(source, /width:\s*min\(360px,\s*calc\(100vw\s*-\s*16px\)\)/);
+  assert.match(css, /@media\s*\(max-width:\s*600px\),\s*\(max-height:\s*500px\)/);
+  assert.match(css, /max-height:\s*calc\(100dvh\s*-\s*16px\)/);
+  assert.match(css, /width:\s*min\(360px,\s*calc\(100vw\s*-\s*16px\)\)/);
 });
 
 test('toggle announces its state, and Escape can close the panel', () => {
