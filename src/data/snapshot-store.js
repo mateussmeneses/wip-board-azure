@@ -334,6 +334,9 @@
         order: typeof raw.order === 'number' ? raw.order : index,
         isDoneColumn: raw.isDoneColumn === true,
         count: typeof raw.count === 'number' ? raw.count : 0,
+        // Board header count is a separate observation, never used to invent
+        // work-item identities missing from the rendered DOM.
+        reportedCount: typeof raw.reportedCount === 'number' ? raw.reportedCount : null,
       };
       if (typeof raw.role === 'string') col.role = raw.role;
       return col;
