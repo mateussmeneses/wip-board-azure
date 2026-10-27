@@ -696,6 +696,19 @@
       return p.reliability === Reliability.SUFFICIENT;
     }).length;
 
+    // A large unknown share is an explicit evidence-quality reason, even when
+    // those unknowns also reduce the number of reliable observations.
+    if (ctx.hasBaseline && ctx.baselineTotal > 0 && ctx.latest &&
+        ctx.latest.unknown / ctx.baselineTotal >= cfg.unknownShareAtRiskFraction) {
+      return {
+        level: Risk.INSUFFICIENT_DATA,
+        signals: [{ code: 'unknown-share-high', weight: 'blocking',
+          value: round2(ctx.latest.unknown / ctx.baselineTotal * 100) }],
+        reliableObservations: reliableCount,
+        reason: 'too-many-unknown-items',
+      };
+    }
+
     // Hard gate: no baseline, no history, or too few reliable observations =>
     // Insufficient Data (goal section 7 preference).
     if (!ctx.hasBaseline || ctx.baselineTotal === 0 || !ctx.latest ||
