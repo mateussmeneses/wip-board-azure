@@ -1554,17 +1554,32 @@ function resolveSnapshotScope(boardModel, context) {
       typeof item.project === 'string' &&
       item.project
   );
-  if (!firstScoped) return null;
+  // The Azure board URL still identifies its org and project when the board
+  // is empty, filtered or has no visible cards. Do not require a card href
+  // merely to resolve a stable storage scope.
+  let organization = firstScoped && firstScoped.organization;
+  let project = firstScoped && firstScoped.project;
+  if (!organization || !project) {
+    try {
+      const url = new URL(window.location.href);
+      const parts = url.pathname.split('/').filter(Boolean).map(decodeURIComponent);
+      if (url.hostname === 'dev.azure.com' && parts.length >= 2) {
+        organization = parts[0];
+        project = parts[1];
+      } else if (url.hostname.endsWith('.visualstudio.com') && parts.length >= 1) {
+        organization = url.hostname.slice(0, -'.visualstudio.com'.length);
+        project = parts[0];
+      }
+    } catch (_) {
+      return null;
+    }
+  }
+  if (!organization || !project) return null;
 
-  const board = context.currentBoardName || firstScoped.project;
+  const board = context.currentBoardName || project;
   const team = context.boardPathFilter || context.currentBoardName || 'default';
 
-  return {
-    organization: firstScoped.organization,
-    project: firstScoped.project,
-    team: team,
-    board: board,
-  };
+  return { organization, project, team, board };
 }
 
 function formatSnapshotWhen(capturedAt) {
