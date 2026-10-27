@@ -151,3 +151,15 @@ test('buildViewModel without a baseline reports hasBaseline false and null chang
   assert.equal(vm.hasBaseline, false);
   assert.equal(vm.changes, null);
 });
+
+test('view model does not claim scope removals when current capture is incomplete', () => {
+  const base = SprintBaseline.createBaseline(
+    { id: 'it-1' }, SprintScope.buildScopeItems([{id:1,column:'Approved'},{id:2,column:'Approved'}]),
+    null, {}
+  );
+  const vm = SI.buildViewModel({ baselineRecord: { baseline: base },
+    currentItems: [{id:1,column:'Closed'}], currentComplete: false });
+  assert.equal(vm.hasBaseline, true);
+  assert.equal(vm.currentScopeComplete, false);
+  assert.equal(vm.changes, null);
+});
