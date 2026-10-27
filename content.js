@@ -43,14 +43,14 @@ const I18N = {
     reasonMissingIds: 'cards without id',
     // Daily Commitment (roadmap T1.3): a delivery metric kept separate from WIP.
     commitmentSectionTitle: 'Daily commitment (plan vs actual)',
-    commitmentHelp: 'One per line: workItemId: expected column. Based on the last captured snapshot.',
+    commitmentHelp: 'Pick the work items you commit to move today and choose each destination column. Based on the last captured snapshot.',
     commitmentSave: 'Save commitment',
     commitmentCompare: 'Plan vs actual',
     commitmentSaving: 'Saving commitment…',
     commitmentSaved: 'Commitment saved: {{items}} item(s).',
     commitmentRevised: 'Commitment updated (revision {{revision}}): {{items}} item(s).',
     commitmentNoBase: 'Capture a snapshot first: a commitment is based on a captured state.',
-    commitmentNoInput: 'No valid commitment line found. Use "id: expected column".',
+    commitmentNoInput: 'Select at least one work item and choose its destination column.',
     commitmentUnknownIds: 'Ignored ids not on the base snapshot: {{ids}}.',
     commitmentNone: 'No commitment saved yet for this board.',
     commitmentError: 'Commitment failed: {{message}}',
@@ -62,6 +62,19 @@ const I18N = {
     statusBeyond: 'beyond',
     statusOffTrack: 'off-track',
     statusMissing: 'missing',
+    // Daily Commitment Card Picker (roadmap T1.4): the visual selection UI.
+    commitmentPickerLoad: 'Choose work items',
+    commitmentSearchPlaceholder: 'Search by id or title…',
+    commitmentPickEmpty: 'No work items in the base snapshot. Capture a snapshot first.',
+    commitmentPickNoMatch: 'No work item matches the search.',
+    commitmentColDestination: 'Destination',
+    commitmentDestinationPlaceholder: 'Destination column…',
+    commitmentCurrentColumn: 'Now: {{column}}',
+    commitmentOffBoard: 'off board',
+    commitmentNoAssignee: 'Unassigned',
+    commitmentPlanSummary: 'Selected {{selected}} of {{total}} · {{withDestination}} with destination.',
+    commitmentMissingDestination: '{{count}} selected item(s) still need a destination column.',
+    commitmentUntitled: '(no title)',
   },
   pt: {
     outdatedExtension: 'Sua extensão está desatualizada. Por favor, atualize. O link de download está no console.',
@@ -101,14 +114,14 @@ const I18N = {
     reasonMissingIds: 'cards sem id',
     // Compromisso diário (roadmap T1.3): métrica de entrega, separada do WIP.
     commitmentSectionTitle: 'Compromisso diário (planejado x realizado)',
-    commitmentHelp: 'Um por linha: idDoWorkItem: coluna esperada. Baseado no último snapshot capturado.',
+    commitmentHelp: 'Selecione os work items que você se compromete a mover hoje e escolha a coluna de destino de cada um. Baseado no último snapshot capturado.',
     commitmentSave: 'Salvar compromisso',
     commitmentCompare: 'Planejado x realizado',
     commitmentSaving: 'Salvando compromisso…',
     commitmentSaved: 'Compromisso salvo: {{items}} item(ns).',
     commitmentRevised: 'Compromisso atualizado (revisão {{revision}}): {{items}} item(ns).',
     commitmentNoBase: 'Capture um snapshot primeiro: o compromisso é baseado em um estado capturado.',
-    commitmentNoInput: 'Nenhuma linha de compromisso válida. Use "id: coluna esperada".',
+    commitmentNoInput: 'Selecione ao menos um work item e escolha a coluna de destino.',
     commitmentUnknownIds: 'Ids ignorados (ausentes do snapshot base): {{ids}}.',
     commitmentNone: 'Nenhum compromisso salvo ainda para este board.',
     commitmentError: 'Falha no compromisso: {{message}}',
@@ -120,6 +133,19 @@ const I18N = {
     statusBeyond: 'além',
     statusOffTrack: 'indefinido',
     statusMissing: 'sumiu',
+    // Seletor visual de cards do compromisso (roadmap T1.4).
+    commitmentPickerLoad: 'Escolher work items',
+    commitmentSearchPlaceholder: 'Buscar por id ou título…',
+    commitmentPickEmpty: 'Nenhum work item no snapshot base. Capture um snapshot primeiro.',
+    commitmentPickNoMatch: 'Nenhum work item corresponde à busca.',
+    commitmentColDestination: 'Destino',
+    commitmentDestinationPlaceholder: 'Coluna de destino…',
+    commitmentCurrentColumn: 'Agora: {{column}}',
+    commitmentOffBoard: 'fora do board',
+    commitmentNoAssignee: 'Sem responsável',
+    commitmentPlanSummary: 'Selecionados {{selected}} de {{total}} · {{withDestination}} com destino.',
+    commitmentMissingDestination: '{{count}} item(ns) selecionado(s) ainda sem coluna de destino.',
+    commitmentUntitled: '(sem título)',
   },
 };
 
@@ -420,17 +446,80 @@ if (!document.getElementById('wip-alarm-style')) {
       color: #666;
       margin: 0 0 6px 0;
     }
-    #wip-snapshot-panel .wip-commit-input {
+    /* Daily Commitment Card Picker (roadmap T1.4): a compact, searchable list of
+       work items with a checkbox and a destination dropdown per card. Replaces
+       the former free-text "id: column" textarea with a visual selection. */
+    #wip-snapshot-panel .wip-commit-search {
       width: 100%;
       box-sizing: border-box;
-      min-height: 52px;
       font-family: inherit;
       font-size: 12px;
       padding: 6px;
       border: 1px solid #ddd;
       border-radius: 6px;
-      resize: vertical;
+      margin-bottom: 6px;
     }
+    #wip-snapshot-panel .wip-commit-list {
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid #eee;
+      border-radius: 6px;
+    }
+    #wip-snapshot-panel .wip-commit-list:empty { display: none; }
+    #wip-snapshot-panel .wip-commit-pick {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 6px;
+      border-bottom: 1px solid #f1f1f1;
+    }
+    #wip-snapshot-panel .wip-commit-pick:last-child { border-bottom: none; }
+    #wip-snapshot-panel .wip-commit-pick.off-board { opacity: 0.75; }
+    #wip-snapshot-panel .wip-commit-pick input[type="checkbox"] {
+      margin-top: 2px;
+      flex: 0 0 auto;
+    }
+    #wip-snapshot-panel .wip-commit-pick-main {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    #wip-snapshot-panel .wip-commit-pick-title {
+      font-size: 12px;
+      color: #1f2937;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #wip-snapshot-panel .wip-commit-pick-meta {
+      font-size: 10px;
+      color: #6b7280;
+      margin-top: 1px;
+    }
+    #wip-snapshot-panel .wip-commit-pick-off {
+      color: #cc292b;
+      font-weight: bold;
+    }
+    #wip-snapshot-panel .wip-commit-dest {
+      margin-top: 4px;
+      width: 100%;
+      box-sizing: border-box;
+      font-family: inherit;
+      font-size: 11px;
+      padding: 3px 4px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    #wip-snapshot-panel .wip-commit-empty {
+      font-size: 11px;
+      color: #6b7280;
+      padding: 8px 4px;
+    }
+    #wip-snapshot-panel .wip-commit-plan {
+      font-size: 11px;
+      color: #374151;
+      margin: 6px 0;
+    }
+    #wip-snapshot-panel .wip-commit-plan .wip-commit-missing { color: #cc292b; }
     #wip-snapshot-panel .wip-commit-output {
       margin-top: 8px;
       max-height: 160px;
@@ -873,6 +962,11 @@ const SnapshotCapture =
 // missing module degrades to "commitment section unavailable", never a crash.
 const DailyCommitment =
   (typeof WIPBoardDailyCommitment !== 'undefined' && WIPBoardDailyCommitment) || null;
+// Daily Commitment Card Picker (roadmap T1.4): the pure view-model that shapes
+// the visual selection UI. Optional, so a missing module degrades to "commitment
+// section unavailable", never a crash.
+const CommitmentPicker =
+  (typeof WIPBoardCommitmentPicker !== 'undefined' && WIPBoardCommitmentPicker) || null;
 
 // A single store instance per page, created lazily so a missing module (older
 // manifest) degrades to "panel unavailable" instead of throwing at load.
@@ -1114,32 +1208,38 @@ async function handleViewHistory(context, i18n) {
 // (reusing WIPBoardSnapshotStore — no new store), and projects plan vs actual
 // against the CURRENT board state. All actions run only on explicit clicks.
 
-function parseCommitmentInput(text) {
-  // Accepts lines like "620906: Code Review". Tolerant of blank lines and extra
-  // spaces. Returns a map { id -> expectedColumn } using numeric ids when the id
-  // is purely numeric (to match the snapshot item id type).
-  const expectations = {};
-  let count = 0;
-  String(text == null ? '' : text)
-    .split(/\r?\n/)
-    .forEach(line => {
-      const trimmed = line.trim();
-      if (!trimmed) return;
-      const sep = trimmed.indexOf(':');
-      if (sep === -1) return;
-      const idPart = trimmed.slice(0, sep).trim();
-      const colPart = trimmed.slice(sep + 1).trim();
-      if (!idPart || !colPart) return;
-      const id = /^-?\d+$/.test(idPart) ? Number(idPart) : idPart;
-      expectations[id] = colPart;
-      count += 1;
-    });
-  return { expectations, count };
+// Picker in-memory state. Holds the base snapshot, the destination column
+// options and the current rows so a search keystroke or a checkbox toggle
+// re-renders from memory without re-reading the board (keeps the picker light
+// and avoids any extra MutationObserver churn — R1 discipline). `selection` maps
+// stable id -> { selected, expectedColumn } so a filtered-out row keeps its
+// choice while the user searches.
+const commitmentPickerState = {
+  base: null,
+  options: [],
+  rows: [],
+  selection: new Map(),
+};
+
+function resetCommitmentPicker() {
+  commitmentPickerState.base = null;
+  commitmentPickerState.options = [];
+  commitmentPickerState.rows = [];
+  commitmentPickerState.selection = new Map();
+  const search = document.getElementById('wip-commit-search');
+  if (search) search.value = '';
+  const list = document.getElementById('wip-commit-list');
+  if (list) setIndicatorHtml(list, '');
+  const plan = document.getElementById('wip-commit-plan');
+  if (plan) plan.textContent = '';
 }
 
-async function handleSaveCommitment(context, i18n) {
+// Open (or refresh) the visual picker: read the base snapshot and the current
+// board, merge them through the pure picker view-model, pre-select from any saved
+// commitment, and render the searchable list. Runs ONLY on an explicit click.
+async function handleOpenPicker(context, i18n) {
   const store = getSnapshotStore();
-  if (!store || !DailyCommitment) {
+  if (!store || !DailyCommitment || !CommitmentPicker || !SnapshotCapture) {
     setCommitmentStatus(i18n.t('commitmentError', { message: 'module unavailable' }), 'err');
     return;
   }
@@ -1157,9 +1257,216 @@ async function handleSaveCommitment(context, i18n) {
     return;
   }
 
-  const input = document.getElementById('wip-commit-input');
-  const parsed = parseCommitmentInput(input ? input.value : '');
-  if (parsed.count === 0) {
+  let base;
+  let existing;
+  try {
+    base = await store.getLatestSnapshot(scope);
+    const commitments = await store.getCommitments(scope);
+    existing = commitments && commitments.length ? commitments[0] : null;
+  } catch (err) {
+    setCommitmentStatus(i18n.t('commitmentError', { message: err && err.message ? err.message : String(err) }), 'err');
+    return;
+  }
+  if (!base) {
+    setCommitmentStatus(i18n.t('commitmentNoBase'), 'err');
+    resetCommitmentPicker();
+    return;
+  }
+
+  // Live board (titles/current column/assignee) + base snapshot (committable ids
+  // + startColumn) + saved commitment (pre-selection). Read-only; no persistence.
+  const liveModel = { items: boardModel.items, columns: boardModel.columns };
+  const rows = CommitmentPicker.buildPickerRows(base, liveModel, existing);
+  const options = CommitmentPicker.buildColumnOptions(liveModel, base);
+
+  commitmentPickerState.base = base;
+  commitmentPickerState.options = options;
+  commitmentPickerState.rows = rows;
+  // Seed the selection map from the pre-selection the view-model computed.
+  commitmentPickerState.selection = new Map();
+  rows.forEach(row => {
+    commitmentPickerState.selection.set(row.id, {
+      selected: !!row.selected,
+      expectedColumn: row.expectedColumn || '',
+    });
+  });
+
+  setCommitmentStatus('', null);
+  setCommitmentOutput('');
+  renderPickerList(i18n);
+}
+
+// Render the (optionally filtered) picker rows. Reads the in-memory rows and the
+// current selection; never re-reads the board. Each row carries a checkbox, the
+// id/title/assignee, the current column and a destination dropdown.
+function renderPickerList(i18n) {
+  const list = document.getElementById('wip-commit-list');
+  if (!list) return;
+
+  // The picker list lives inside document.body, which the MutationObserver
+  // watches. Writing it outside the paused phase would emit childList records and
+  // re-arm the WIP recompute on every keystroke/toggle — the exact R1 loop. So
+  // every DOM write here runs inside withObserverPaused(), the same guard the WIP
+  // write phase uses, keeping the R1 fix intact.
+  withObserverPaused(() => {
+    const rows = commitmentPickerState.rows;
+    if (!rows.length) {
+      list.innerHTML = `<p class="wip-commit-empty">${escapeText(i18n.t('commitmentPickEmpty'))}</p>`;
+      return;
+    }
+
+    const search = document.getElementById('wip-commit-search');
+    const query = search ? search.value : '';
+    const visible = CommitmentPicker.filterRows(rows, query);
+
+    if (!visible.length) {
+      list.innerHTML = `<p class="wip-commit-empty">${escapeText(i18n.t('commitmentPickNoMatch'))}</p>`;
+      return;
+    }
+
+    const options = commitmentPickerState.options;
+    list.innerHTML = visible.map(row => renderPickerRow(row, options, i18n)).join('');
+
+    // Bind the per-row controls after each render (innerHTML replaced the nodes).
+    // Iterate the rendered nodes directly to avoid building attribute selectors
+    // from board-derived ids.
+    list.querySelectorAll('.wip-commit-pick').forEach(node => {
+      const rawId = node.getAttribute('data-pick-id');
+      bindPickerRow(node, idFromDom(rawId), i18n);
+    });
+  });
+
+  updatePlanSummary(i18n);
+}
+
+function renderPickerRow(row, options, i18n) {
+  const sel = commitmentPickerState.selection.get(row.id) || { selected: false, expectedColumn: '' };
+  const title = row.title ? escapeText(row.title) : escapeText(i18n.t('commitmentUntitled'));
+  const assignee = row.assignee ? escapeText(row.assignee) : escapeText(i18n.t('commitmentNoAssignee'));
+
+  const columnText = row.onBoard
+    ? i18n.t('commitmentCurrentColumn', { column: row.currentColumn || '—' })
+    : `<span class="wip-commit-pick-off">${escapeText(i18n.t('commitmentOffBoard'))}</span>`;
+
+  const optionsHtml =
+    `<option value="">${escapeText(i18n.t('commitmentDestinationPlaceholder'))}</option>` +
+    options
+      .map(opt => {
+        const value = escapeAttr(opt.name);
+        const selected = sameColumnName(opt.name, sel.expectedColumn) ? ' selected' : '';
+        return `<option value="${value}"${selected}>${escapeText(opt.name)}</option>`;
+      })
+      .join('');
+
+  const checked = sel.selected ? ' checked' : '';
+  const offClass = row.onBoard ? '' : ' off-board';
+  const idAttr = escapeAttr(String(row.id));
+
+  return (
+    `<div class="wip-commit-pick${offClass}" data-pick-id="${idAttr}">` +
+    `<input type="checkbox" data-pick-check="${idAttr}"${checked} />` +
+    `<div class="wip-commit-pick-main">` +
+    `<div class="wip-commit-pick-title">#${escapeText(String(row.id))} — ${title}</div>` +
+    `<div class="wip-commit-pick-meta">${assignee} · ${columnText}</div>` +
+    `<select class="wip-commit-dest" data-pick-dest="${idAttr}">${optionsHtml}</select>` +
+    `</div>` +
+    `</div>`
+  );
+}
+
+function bindPickerRow(node, key, i18n) {
+  const check = node.querySelector('input[type="checkbox"]');
+  const dest = node.querySelector('select.wip-commit-dest');
+  if (check) {
+    check.onchange = () => {
+      const entry = commitmentPickerState.selection.get(key) || { selected: false, expectedColumn: '' };
+      entry.selected = check.checked;
+      commitmentPickerState.selection.set(key, entry);
+      updatePlanSummary(i18n);
+    };
+  }
+  if (dest) {
+    dest.onchange = () => {
+      const entry = commitmentPickerState.selection.get(key) || { selected: false, expectedColumn: '' };
+      entry.expectedColumn = dest.value;
+      // Choosing a destination implies selecting the item (explicit intent).
+      if (dest.value) {
+        entry.selected = true;
+        if (check) check.checked = true;
+      }
+      commitmentPickerState.selection.set(key, entry);
+      updatePlanSummary(i18n);
+    };
+  }
+}
+
+// The data attribute stores the id as a string; map it back to the row id type.
+function idFromDom(id) {
+  return /^-?\d+$/.test(String(id)) ? Number(id) : id;
+}
+
+function updatePlanSummary(i18n) {
+  const plan = document.getElementById('wip-commit-plan');
+  if (!plan) return;
+  // Reflect the live selection (not just the rendered/filtered subset) so the
+  // summary is honest while the user searches.
+  const rows = commitmentPickerState.rows.map(row => {
+    const sel = commitmentPickerState.selection.get(row.id) || {};
+    return { selected: !!sel.selected, expectedColumn: sel.expectedColumn || '', onBoard: row.onBoard };
+  });
+  const s = CommitmentPicker.summarizeSelection(rows);
+  let text = i18n.t('commitmentPlanSummary', {
+    selected: s.selected,
+    total: s.total,
+    withDestination: s.withDestination,
+  });
+  if (s.missingDestination > 0) {
+    text += ' ' + i18n.t('commitmentMissingDestination', { count: s.missingDestination });
+  }
+  // Diff-before-write + observer pause: the summary node is under the observed
+  // body, so only write on change and never let the write re-arm the recompute.
+  if (plan.textContent !== text) {
+    withObserverPaused(() => {
+      plan.textContent = text;
+    });
+  }
+}
+
+// Collect the current selection into the array shape the picker view-model and
+// the engine consume: [{ id, expectedColumn }] for every ticked row.
+function collectPickerSelection() {
+  const out = [];
+  commitmentPickerState.selection.forEach((entry, id) => {
+    if (!entry || !entry.selected) return;
+    out.push({ id: id, expectedColumn: entry.expectedColumn || '' });
+  });
+  return out;
+}
+
+async function handleSaveCommitment(context, i18n) {
+  const store = getSnapshotStore();
+  if (!store || !DailyCommitment || !CommitmentPicker) {
+    setCommitmentStatus(i18n.t('commitmentError', { message: 'module unavailable' }), 'err');
+    return;
+  }
+
+  let boardModel;
+  try {
+    boardModel = readBoardModel();
+  } catch (err) {
+    setCommitmentStatus(i18n.t('commitmentError', { message: err && err.message ? err.message : String(err) }), 'err');
+    return;
+  }
+  const scope = resolveSnapshotScope(boardModel, context);
+  if (!scope) {
+    setCommitmentStatus(i18n.t('snapshotScopeMissing'), 'err');
+    return;
+  }
+
+  // Convert the visual selection into the engine expectations map. A selection
+  // without a destination is rejected (destination must be chosen explicitly).
+  const selection = CommitmentPicker.buildExpectationsFromSelection(collectPickerSelection());
+  if (selection.count === 0) {
     setCommitmentStatus(i18n.t('commitmentNoInput'), 'err');
     return;
   }
@@ -1178,7 +1485,7 @@ async function handleSaveCommitment(context, i18n) {
     return;
   }
 
-  const built = DailyCommitment.buildCommitmentItems(base, parsed.expectations);
+  const built = DailyCommitment.buildCommitmentItems(base, selection.expectations);
   if (!built.items.length) {
     setCommitmentStatus(i18n.t('commitmentNoInput'), 'err');
     return;
@@ -1322,6 +1629,34 @@ function setCommitmentOutput(html) {
   setIndicatorHtml(output, html || '');
 }
 
+// --- Picker HTML-safety helpers --------------------------------------------
+// The picker renders work-item titles, ids and column names into innerHTML.
+// Those values come from the board (untrusted), so every interpolated value is
+// escaped before it reaches the DOM. Text and attribute contexts are escaped
+// separately so a title or column name can never break out of its node.
+
+function escapeText(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function escapeAttr(value) {
+  return escapeText(value).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// Case/accent-tolerant column name match used to pre-select a destination option.
+// Reuses the pure picker normalizer so UI and engine agree on equality.
+function sameColumnName(a, b) {
+  if (!CommitmentPicker || typeof CommitmentPicker.normalizeSearch !== 'function') {
+    return String(a == null ? '' : a) === String(b == null ? '' : b);
+  }
+  const na = CommitmentPicker.normalizeSearch(a);
+  const nb = CommitmentPicker.normalizeSearch(b);
+  return na !== '' && na === nb;
+}
+
 function ensureSnapshotPanel(context, i18n) {
   // Build the panel once; refresh its labels on every call so a language change
   // is reflected without a reload. Returns early when the modules are missing so
@@ -1349,10 +1684,15 @@ function ensureSnapshotPanel(context, i18n) {
         <div class="wip-commit-section" id="wip-commit-section">
           <h4 id="wip-commit-title"></h4>
           <p class="wip-commit-help" id="wip-commit-help"></p>
-          <textarea class="wip-commit-input" id="wip-commit-input"></textarea>
+          <div class="wip-snap-actions">
+            <button class="wip-snap-btn" id="wip-commit-pick" type="button"></button>
+            <button class="wip-snap-btn" id="wip-commit-compare" type="button"></button>
+          </div>
+          <input class="wip-commit-search" id="wip-commit-search" type="text" autocomplete="off" />
+          <div class="wip-commit-list" id="wip-commit-list"></div>
+          <p class="wip-commit-plan" id="wip-commit-plan"></p>
           <div class="wip-snap-actions">
             <button class="wip-snap-btn" id="wip-commit-save" type="button"></button>
-            <button class="wip-snap-btn" id="wip-commit-compare" type="button"></button>
           </div>
           <p class="wip-snap-status" id="wip-commit-status"></p>
           <div class="wip-commit-output" id="wip-commit-output"></div>
@@ -1385,16 +1725,31 @@ function ensureSnapshotPanel(context, i18n) {
   // module is present; bound against the current context/i18n every refresh.
   const commitSection = document.getElementById('wip-commit-section');
   if (commitSection) {
-    if (DailyCommitment) {
+    // The visual picker (roadmap T1.4) needs both the engine and the pure picker
+    // view-model. If either is missing, the whole sub-section is hidden so the
+    // core WIP indicator and the snapshot panel keep working.
+    if (DailyCommitment && CommitmentPicker) {
       commitSection.style.display = 'block';
+      bindSnapshotButton('wip-commit-pick', () => handleOpenPicker(context, i18n));
       bindSnapshotButton('wip-commit-save', () => handleSaveCommitment(context, i18n));
       bindSnapshotButton('wip-commit-compare', () => handleCompareCommitment(context, i18n));
       setTextById('wip-commit-title', i18n.t('commitmentSectionTitle'));
       setTextById('wip-commit-help', i18n.t('commitmentHelp'));
+      setTextById('wip-commit-pick', i18n.t('commitmentPickerLoad'));
       setTextById('wip-commit-save', i18n.t('commitmentSave'));
       setTextById('wip-commit-compare', i18n.t('commitmentCompare'));
-      const input = document.getElementById('wip-commit-input');
-      if (input) input.placeholder = i18n.t('commitmentHelp');
+
+      const search = document.getElementById('wip-commit-search');
+      if (search) {
+        search.placeholder = i18n.t('commitmentSearchPlaceholder');
+        // Bind the live filter once; re-rendering reuses the in-memory rows so a
+        // keystroke never re-reads the board (no extra observer churn, R1-safe).
+        search.oninput = () => renderPickerList(i18n);
+      }
+
+      // Re-render the list if it is already populated so a language switch
+      // relabels destinations/meta without losing the current selection.
+      if (commitmentPickerState.rows.length) renderPickerList(i18n);
     } else {
       commitSection.style.display = 'none';
     }

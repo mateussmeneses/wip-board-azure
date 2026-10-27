@@ -150,21 +150,52 @@ value (Daily Commitment) · **P2** = Sprint · **P3** = Roadmap / History.
 - Pending real-browser validation: see the Chrome checklist in
   `docs/DAILY_COMMITMENT_T1_3.md` (not yet executed in a live Chrome).
 
-### T1.4 — Visual projection (bilingual panel) — DONE (delivered alongside T1.3)
-- Scope: a panel section showing planned vs realized; EN/PT strings.
-- Acceptance: toggled independently of WIP indicator; WIP number unaffected.
-- Tests: i18n key coverage test; manual checklist.
-- Status: `content.js` adds a discrete "Daily commitment (plan vs actual)"
-  sub-section INSIDE the existing Daily Snapshot panel (no competing UI). It lets
-  the user declare an expected column per work item (one `id: column` per line,
-  based on the last captured snapshot), persists the plan as a versioned
-  commitment (re-saving becomes a revision), and projects plan vs actual against
-  the current board with a per-item status badge plus a summary line. All strings
-  are bilingual EN/PT. Every action runs only on an explicit click; the section is
-  mounted inside the existing `withObserverPaused()` write phase and writes its
-  output through the same diff-guard (`setIndicatorHtml`), so the R1 fix is intact
-  and the WIP number/behavior are unchanged. Real-browser validation pending (see
-  the checklist in `docs/DAILY_COMMITMENT_T1_3.md`).
+### T1.4 — Visual projection + Card Picker (bilingual panel) — DONE
+- Scope: a panel section showing planned vs realized; EN/PT strings. Extended to
+  replace the manual `id: column` textarea with a VISUAL work-item card picker.
+- Acceptance: toggled independently of WIP indicator; WIP number unaffected; the
+  destination column dropdown reflects the board's real columns; selection,
+  persistence, revisions and comparison all work from the picker.
+- Tests: i18n key coverage test; picker view-model unit tests; R1 regression for
+  the new UI; manual checklist.
+- Status (initial, kept for history): `content.js` first shipped a "Daily
+  commitment (plan vs actual)" sub-section INSIDE the existing Daily Snapshot
+  panel using a lightweight `id: column` textarea, persisting a versioned
+  commitment and projecting plan vs actual with per-item badges + summary, all
+  bilingual EN/PT, mounted inside `withObserverPaused()` and writing through the
+  `setIndicatorHtml` diff-guard.
+- Status (Card Picker increment): the textarea is replaced by a visual selection.
+  A new pure view-model `src/data/commitment-picker.js`
+  (`WIPBoardCommitmentPicker`) merges the base snapshot (authoritative committable
+  ids + `startColumn` at planning time), the live board model (title / current
+  column / assignee for display) and any saved commitment (pre-selection for
+  consult/edit), builds the destination-column options from the board's REAL
+  columns in flow order, filters rows by id/title search, and converts the
+  checkbox+dropdown selection back into the exact expectations map the T1.3 engine
+  (`WIPBoardDailyCommitment.buildCommitmentItems`) consumes — the snapshot store,
+  commitment engine and comparison rules are REUSED, not reimplemented. The panel
+  now renders a searchable list with a checkbox, id+title, assignee, current
+  column and a per-card destination dropdown, plus a live plan summary, Save,
+  "Choose work items" and "Plan vs actual" actions. A selection without a chosen
+  destination is rejected (destination must be explicit); duplicate ids are
+  collapsed; an item present on the base snapshot but gone from the live board is
+  still offered and flagged off-board (never assumed done). Every picker DOM write
+  (list render on each keystroke/toggle, summary) runs inside `withObserverPaused()`
+  and the summary is diff-guarded, so the R1 fix is preserved for the new,
+  write-heavy UI. Board-derived text is HTML-escaped before it reaches innerHTML.
+  `manifest.json` loads `src/data/commitment-picker.js` before `content.js`.
+  Suite: 151 tests pass (128 prior + 20 in `test/commitment-picker.test.js` + 3 in
+  `test/commitment-picker-r1.test.js`). Real-browser validation pending (see the
+  checklist in `docs/DAILY_COMMITMENT_T1_4.md`).
+
+### T1.5 — Projected Board (next increment, planned)
+- Scope: from the saved commitment + the live board, render the EXPECTED end-of-day
+  board state (each committed item shown in its destination column) so the team can
+  see the projected board during the daily. Read-only projection; never mutates
+  Azure DevOps; reuses the picker view-model and the commitment engine.
+- Acceptance: the projected view places each committed item in its expected column
+  and leaves uncommitted items where they are; WIP number unaffected.
+- Tests: projection unit tests (committed vs uncommitted placement, missing items).
 
 ---
 
