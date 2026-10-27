@@ -43,6 +43,7 @@ const I18N = {
     reasonMissingIds: 'cards without id',
     reasonHeaderCountMismatch: 'Azure header totals differ from visible cards',
     reasonColumnAlignmentUnknown: 'column headers and card bodies cannot be matched safely',
+    reasonHeaderCountUnavailable: 'Azure does not expose a verifiable column total',
     snapshotObservedCount: '{{count}} visible',
     snapshotHeaderCount: '{{count}} on board',
     snapshotHeaderCountUnknown: 'board total not exposed',
@@ -360,6 +361,7 @@ const I18N = {
     reasonMissingIds: 'cards sem id',
     reasonHeaderCountMismatch: 'totais do cabeçalho do Azure diferem dos cards visíveis',
     reasonColumnAlignmentUnknown: 'não foi possível associar cabeçalhos e corpos de coluna com segurança',
+    reasonHeaderCountUnavailable: 'o Azure não disponibiliza um total verificável para a coluna',
     snapshotObservedCount: '{{count}} visíveis',
     snapshotHeaderCount: '{{count}} no board',
     snapshotHeaderCountUnknown: 'total do board indisponível',
@@ -1271,6 +1273,7 @@ function describeIncompleteReasons(reasons, i18n) {
     MISSING_IDS: 'reasonMissingIds',
     HEADER_COUNT_MISMATCH: 'reasonHeaderCountMismatch',
     COLUMN_ALIGNMENT_UNKNOWN: 'reasonColumnAlignmentUnknown',
+    HEADER_COUNT_UNAVAILABLE: 'reasonHeaderCountUnavailable',
   };
   return (reasons || [])
     .map(code => (map[code] ? i18n.t(map[code]) : code))

@@ -63,6 +63,7 @@
     MISSING_IDS: 'MISSING_IDS',
     HEADER_COUNT_MISMATCH: 'HEADER_COUNT_MISMATCH',
     COLUMN_ALIGNMENT_UNKNOWN: 'COLUMN_ALIGNMENT_UNKNOWN',
+    HEADER_COUNT_UNAVAILABLE: 'HEADER_COUNT_UNAVAILABLE',
   });
 
   // ---------------------------------------------------------------------------
@@ -203,6 +204,9 @@
     if (columns.some(function (c) {
       return c.reportedCount != null && c.reportedCount !== c.count;
     })) incompleteReasons.push(IncompleteReasons.HEADER_COUNT_MISMATCH);
+    if (safeModel.diagnostics && columns.some(function (c) {
+      return c.reportedCount == null;
+    })) incompleteReasons.push(IncompleteReasons.HEADER_COUNT_UNAVAILABLE);
     if (safeModel.diagnostics &&
         safeModel.diagnostics.columnAlignmentReliable === false) {
       incompleteReasons.push(IncompleteReasons.COLUMN_ALIGNMENT_UNKNOWN);
