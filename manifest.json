@@ -18,6 +18,7 @@
       ],
       "js": [
         "src/core/wip-logic.js",
+        "src/core/board-identity.js",
         "src/data/board-dom-reader.js",
         "src/data/snapshot-store.js",
         "src/data/snapshot-capture.js",
