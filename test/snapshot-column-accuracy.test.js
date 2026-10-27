@@ -59,3 +59,12 @@ test('same numeric id is counted once even when repeated in a swimlane', () => {
   assert.equal(snap.complete,false);
   assert.ok(snap.incompleteReasons.includes(capture.IncompleteReasons.DUPLICATE_IDS));
 });
+
+test('a DOM capture without board header totals cannot prove complete coverage', () => {
+  const noTotals=lanes.replace(/<span class="board-column-item-count">2<\/span>/g, '');
+  const observed=modelFrom(noTotals);
+  const result=capture.buildCapture(observed,scope);
+  assert.equal(result.complete,false);
+  assert.equal(result.columns[0].reportedCount,null);
+  assert.ok(result.incompleteReasons.includes(capture.IncompleteReasons.HEADER_COUNT_UNAVAILABLE));
+});
