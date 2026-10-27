@@ -1,0 +1,52 @@
+/* Isolated light-theme form controls for the injected Snapshot / Daily / Sprint UI.
+ * Azure DevOps may run in dark mode and apply page-wide input styles. All rules
+ * below are scoped to the extension-owned panel; the host UI is untouched.
+ */
+#wip-snapshot-panel {
+  color-scheme: light;
+}
+#wip-snapshot-panel :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  textarea,
+  select
+) {
+  color-scheme: light !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  -webkit-text-fill-color: #1f2937 !important;
+  caret-color: #1f2937 !important;
+  border: 1px solid #9ca3af !important;
+  border-radius: 5px;
+  box-shadow: none !important;
+  opacity: 1;
+}
+#wip-snapshot-panel :is(input, textarea, select)::placeholder {
+  color: #6b7280 !important;
+  -webkit-text-fill-color: #6b7280 !important;
+  opacity: 1;
+}
+#wip-snapshot-panel :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  textarea,
+  select
+):focus-visible {
+  border-color: #0078d4 !important;
+  outline: 2px solid #0078d4 !important;
+  outline-offset: 1px;
+}
+#wip-snapshot-panel :is(input, textarea, select):disabled {
+  background-color: #f3f4f6 !important;
+  color: #4b5563 !important;
+  -webkit-text-fill-color: #4b5563 !important;
+  cursor: not-allowed;
+}
+#wip-snapshot-panel select option {
+  color: #1f2937 !important;
+  background-color: #ffffff !important;
+}
+#wip-snapshot-panel input[type="checkbox"],
+#wip-snapshot-panel input[type="radio"] {
+  color-scheme: light;
+  accent-color: #0078d4;
+}
