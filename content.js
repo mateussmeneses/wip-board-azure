@@ -41,6 +41,12 @@ const I18N = {
     reasonNoColumns: 'no columns',
     reasonDuplicateIds: 'duplicate ids',
     reasonMissingIds: 'cards without id',
+    reasonHeaderCountMismatch: 'Azure header totals differ from visible cards',
+    reasonColumnAlignmentUnknown: 'column headers and card bodies cannot be matched safely',
+    snapshotObservedCount: '{{count}} visible',
+    snapshotHeaderCount: '{{count}} on board',
+    snapshotHeaderCountUnknown: 'board total not exposed',
+    snapshotBoardId: 'Board: {{board}}',
     // Daily Commitment (roadmap T1.3): a delivery metric kept separate from WIP.
     commitmentSectionTitle: 'Daily commitment (plan vs actual)',
     commitmentHelp: 'Pick the work items you commit to move today and choose each destination column. Based on the last captured snapshot.',
@@ -352,6 +358,12 @@ const I18N = {
     reasonNoColumns: 'sem colunas',
     reasonDuplicateIds: 'ids duplicados',
     reasonMissingIds: 'cards sem id',
+    reasonHeaderCountMismatch: 'totais do cabeçalho do Azure diferem dos cards visíveis',
+    reasonColumnAlignmentUnknown: 'não foi possível associar cabeçalhos e corpos de coluna com segurança',
+    snapshotObservedCount: '{{count}} visíveis',
+    snapshotHeaderCount: '{{count}} no board',
+    snapshotHeaderCountUnknown: 'total do board indisponível',
+    snapshotBoardId: 'Board: {{board}}',
     // Compromisso diário (roadmap T1.3): métrica de entrega, separada do WIP.
     commitmentSectionTitle: 'Compromisso diário (planejado x realizado)',
     commitmentHelp: 'Selecione os work items que você se compromete a mover hoje e escolha a coluna de destino de cada um. Baseado no último snapshot capturado.',
@@ -909,6 +921,9 @@ if (!document.getElementById('wip-alarm-style')) {
     }
     #wip-snapshot-panel .wip-snap-status.ok { color: #1e8e3e; }
     #wip-snapshot-panel .wip-snap-status.err { color: #cc292b; }
+    #wip-snapshot-panel .wip-snap-status.warn { color: #92400e; }
+    #wip-snapshot-panel .wip-snap-counts { text-align: right; font-size: 10px; white-space: normal; }
+    #wip-snapshot-panel .wip-snap-counts.mismatch { color: #9a3412; font-weight: 700; }
     #wip-snapshot-panel .wip-snap-output {
       margin-top: 8px;
       max-height: 180px;
@@ -2052,6 +2067,8 @@ function describeIncompleteReasons(reasons, i18n) {
     NO_COLUMNS: 'reasonNoColumns',
     DUPLICATE_IDS: 'reasonDuplicateIds',
     MISSING_IDS: 'reasonMissingIds',
+    HEADER_COUNT_MISMATCH: 'reasonHeaderCountMismatch',
+    COLUMN_ALIGNMENT_UNKNOWN: 'reasonColumnAlignmentUnknown',
   };
   return (reasons || [])
     .map(code => (map[code] ? i18n.t(map[code]) : code))
@@ -2073,14 +2090,23 @@ function setSnapshotOutput(html) {
   setIndicatorHtml(output, html || '');
 }
 
-function renderSnapshotColumns(columns, i18n) {
+function renderSnapshotColumns(columns, i18n, scope) {
   if (!Array.isArray(columns) || columns.length === 0) return '';
-  return columns
-    .map(col => {
-      const name = String(col.name == null ? '' : col.name).replace(/[<>]/g, '');
-      return `<div class="wip-snap-row"><span>${name}</span><span class="wip-detail-count">${col.count || 0}</span></div>`;
-    })
-    .join('');
+  const title = scope && scope.board
+    ? `<div class="wip-snap-note">${escapeText(i18n.t('snapshotBoardId', { board: scope.board }))}</div>`
+    : '';
+  return title + columns.map(col => {
+    const name = escapeText(String(col.name == null ? '' : col.name));
+    const observed = typeof col.count === 'number' ? col.count : 0;
+    const reported = typeof col.reportedCount === 'number' ? col.reportedCount : null;
+    const mismatch = reported != null && reported !== observed;
+    const observedText = escapeText(i18n.t('snapshotObservedCount', { count: observed }));
+    const headerText = escapeText(reported == null
+      ? i18n.t('snapshotHeaderCountUnknown')
+      : i18n.t('snapshotHeaderCount', { count: reported }));
+    return `<div class="wip-snap-row"><span>${name}</span>` +
+      `<span class="wip-snap-counts${mismatch ? ' mismatch' : ''}">${observedText} / ${headerText}</span></div>`;
+  }).join('');
 }
 
 async function handleCaptureSnapshot(context, i18n) {
@@ -2127,11 +2153,11 @@ async function handleCaptureSnapshot(context, i18n) {
       i18n.t('snapshotCapturedIncomplete', {
         reasons: describeIncompleteReasons(capture.incompleteReasons, i18n),
       }),
-      'ok'
+      'warn'
     );
   }
 
-  setSnapshotOutput(renderSnapshotColumns(capture.columns, i18n));
+  setSnapshotOutput(renderSnapshotColumns(capture.columns, i18n, scope));
 }
 
 async function handleViewLatestSnapshot(context, i18n) {
@@ -2174,7 +2200,7 @@ async function handleViewLatestSnapshot(context, i18n) {
     'ok'
   );
   const badge = `<div class="wip-snap-row"><span class="wip-snap-badge ${badgeKey}">${badgeText}</span></div>`;
-  setSnapshotOutput(badge + renderSnapshotColumns(latest.columns, i18n));
+  setSnapshotOutput(badge + renderSnapshotColumns(latest.columns, i18n, scope));
 }
 
 async function handleViewHistory(context, i18n) {
