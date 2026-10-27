@@ -163,8 +163,12 @@
       : null;
     const baseline = baselineRecord && baselineRecord.baseline ? baselineRecord.baseline : null;
 
+    const currentScopeComplete = i.currentComplete !== false;
     let changes = null;
-    if (baseline) {
+    // Presence in a partial DOM is observable; absence is not proof that
+    // work left the sprint. Hide authoritative scope-change totals until a
+    // complete read can establish membership.
+    if (baseline && currentScopeComplete) {
       changes = SprintBaseline.detectScopeChanges(baseline, currentItems, i.flowConfig);
     }
 
@@ -179,6 +183,7 @@
       days: days,
       // The current, live scope size (informational). Distinct from the baseline.
       currentScopeCount: currentItems.length,
+      currentScopeComplete: currentScopeComplete,
       baseline: baseline,
       baselineSavedAt: baselineRecord && baselineRecord.savedAt ? baselineRecord.savedAt : null,
       hasBaseline: !!baseline,
