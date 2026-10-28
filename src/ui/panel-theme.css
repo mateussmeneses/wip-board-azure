@@ -1,0 +1,185 @@
+/* Snapshot / Daily / Sprint panel: consistent accessible light surface.
+   Explicitly isolates typography and form/button colors from Azure DevOps
+   dark-mode styles without changing anything outside the extension panel. */
+#wip-snapshot-panel {
+  --wip-panel-fg: #16263b;
+  --wip-panel-muted: #43536a;
+  --wip-panel-border: #cbd5e1;
+  --wip-panel-primary: #0759bd;
+  --wip-panel-surface: #ffffff;
+  color-scheme: light;
+  font: 13px/1.5 system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  color: var(--wip-panel-fg) !important;
+  width: min(400px, calc(100vw - 32px));
+  filter: drop-shadow(0 8px 24px rgba(15, 23, 42, .20));
+}
+#wip-snapshot-header {
+  display: flex;
+  align-items: stretch;
+  min-height: 43px;
+  flex: 0 0 auto;
+  background: #113c67;
+  color: #ffffff !important;
+  border: 1px solid #0b3259;
+  border-radius: 11px 11px 0 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+#wip-snapshot-drag-handle {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 13px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff !important;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+#wip-snapshot-drag-handle:active { cursor: grabbing; }
+#wip-snapshot-drag-handle:focus-visible {
+  outline: 2px solid #ffdc77;
+  outline-offset: -3px;
+}
+#wip-snapshot-drag-handle :is(span, strong) { color: #ffffff !important; }
+#wip-snapshot-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#wip-snapshot-panel .wip-snapshot-grip { font-size: 19px; opacity: .95; line-height: 1; }
+#wip-snapshot-toggle {
+  display: grid;
+  place-items: center;
+  width: 49px;
+  min-width: 49px;
+  padding: 0;
+  height: auto;
+  flex: 0 0 auto;
+  border-radius: 0 10px 0 0;
+  background: #1a538e !important;
+  border: 0;
+  border-left: 1px solid rgba(255,255,255,.28);
+  box-shadow: none;
+  color: #ffffff !important;
+  cursor: pointer;
+}
+#wip-snapshot-toggle:hover { background: #2269ab !important; }
+#wip-snapshot-toggle:focus-visible { outline: 2px solid #ffdc77; outline-offset: -3px; }
+#wip-snapshot-toggle > span { color: #ffffff !important; font-size: 18px; }
+#wip-snapshot-panel #wip-snapshot-body {
+  color-scheme: light;
+  color: var(--wip-panel-fg) !important;
+  background: var(--wip-panel-surface) !important;
+  border: 1px solid var(--wip-panel-border);
+  border-top: 0;
+  border-radius: 0 0 11px 11px;
+  margin-top: 0;
+  box-shadow: none;
+  padding: 12px 14px 16px;
+  scrollbar-color: #94a3b8 #f1f5f9;
+}
+#wip-snapshot-panel :is(
+  .wip-snap-note, .wip-commit-help, .wip-projected-help,
+  .wip-comparison-help, .wip-projected-summary, .wip-comparison-meta,
+  .wip-commit-plan, .wip-commit-pick-meta, .wip-history-filter
+) { color: var(--wip-panel-muted) !important; font-size: 12px; line-height: 1.5; }
+#wip-snapshot-panel :is(
+  .wip-commit-section,.wip-projected-section,.wip-comparison-section,
+  .wip-history-section,.wip-sprint-section,.wip-nav-section
+) {
+  margin-top: 13px;
+  padding: 12px 0 0;
+  border-top: 1px solid #d7e2ee;
+  color: var(--wip-panel-fg);
+}
+#wip-snapshot-panel :is(
+  .wip-commit-section, .wip-projected-section,
+  .wip-comparison-section,.wip-history-section,
+  .wip-sprint-section,.wip-nav-section
+) h4 {
+  color: var(--wip-panel-fg) !important;
+  font-size: 13px !important;
+  font-weight: 700;
+  line-height: 1.4;
+  margin-bottom: 7px;
+}
+#wip-snapshot-panel :is(label, .wip-sprint-goal label, .wip-sprint-manual label) {
+  color: #334155 !important;
+  font-size: 12px;
+  font-weight: 600;
+}
+#wip-snapshot-panel :is(.wip-snap-btn, .wip-trends-tab, .wip-nav-tab,
+ .wip-projected-tab, .wip-comparison-filter) {
+  color: #084c97 !important;
+  background: #eef6ff !important;
+  border: 1px solid #b4d0ef !important;
+  border-radius: 7px;
+  min-height: 33px;
+  font-size: 12px;
+  font-weight: 600;
+}
+#wip-snapshot-panel :is(.wip-snap-btn, .wip-trends-tab, .wip-nav-tab,
+ .wip-projected-tab, .wip-comparison-filter):hover {
+  background: #dbeeff !important;
+  border-color: #4d91d2 !important;
+}
+#wip-snapshot-panel :is(.wip-trends-tab, .wip-nav-tab,
+ .wip-projected-tab, .wip-comparison-filter).active {
+  color: #ffffff !important;
+  background: #0759bd !important;
+  border-color: #0759bd !important;
+}
+#wip-snapshot-panel .wip-snap-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 7px;
+  margin: 8px 0 12px;
+}
+#wip-snapshot-panel :is(input:not([type="checkbox"]):not([type="radio"]), textarea, select) {
+  font: 12px/1.45 system-ui, "Segoe UI", Arial, sans-serif !important;
+  min-height: 34px;
+  padding: 7px 9px !important;
+  color: #14263d !important;
+  -webkit-text-fill-color: #14263d !important;
+  background-color: #ffffff !important;
+  border: 1px solid #899bad !important;
+  border-radius: 6px !important;
+  max-width: 100%;
+}
+#wip-snapshot-panel textarea { min-height: 64px; }
+#wip-snapshot-panel :is(.wip-sprint-goal,.wip-sprint-manual,.wip-history-card,
+  .wip-comparison-card,.wip-commit-pick,.wip-projected-col) {
+  background-color: #f8fbff !important;
+  color: #16263b !important;
+  border-color: #d7e2ee !important;
+  border-radius: 8px;
+}
+#wip-snapshot-panel .wip-sprint-goal,
+#wip-snapshot-panel .wip-sprint-manual { padding: 11px; margin-top: 9px; }
+#wip-snapshot-panel #wip-snapshot-output {
+  padding: 8px 0;
+  max-height: 190px;
+}
+#wip-snapshot-panel .wip-snap-row {
+  align-items: flex-start;
+  padding: 5px 2px;
+  border-bottom: 1px solid #edf2f7;
+  color: #16263b !important;
+}
+#wip-snapshot-panel .wip-snap-row > span { color: inherit; }
+#wip-snapshot-panel .wip-snap-counts { font-size: 11px; color: #43536a; }
+#wip-snapshot-panel .wip-snap-counts.mismatch { color: #9a3412 !important; }
+#wip-snapshot-panel :is(.wip-snap-status,.wip-commit-output,.wip-comparison-summary,
+ .wip-history-records,.wip-sprint-progress,.wip-sprint-trends) { line-height: 1.5; }
+#wip-snapshot-panel .wip-snap-status.ok { color: #166534 !important; }
+#wip-snapshot-panel .wip-snap-status.err { color: #b42318 !important; }
+#wip-snapshot-panel .wip-snap-status.warn { color: #854d0e !important; }
+#wip-snapshot-panel :is(button,input,select,textarea):focus-visible {
+  outline: 2px solid #0759bd !important;
+  outline-offset: 2px;
+}
+@media (max-width: 600px), (max-height: 500px) {
+  #wip-snapshot-panel { width: min(400px, calc(100vw - 16px)); }
+  #wip-snapshot-panel #wip-snapshot-body { padding: 10px; }
+}
