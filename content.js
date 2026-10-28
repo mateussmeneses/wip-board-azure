@@ -45,6 +45,8 @@ const I18N = {
     reasonColumnAlignmentUnknown: 'column headers and card bodies cannot be matched safely',
     reasonHeaderCountUnavailable: 'Azure does not expose a verifiable column total',
     snapshotObservedCount: '{{count}} visible',
+    snapshotDragHint: 'Drag to move this panel. Use arrow keys when focused.',
+    snapshotToggleHint: 'Expand or collapse the Snapshot panel.',
     snapshotHeaderCount: '{{count}} on board',
     snapshotHeaderCountUnknown: 'board total not exposed',
     snapshotBoardId: 'Board: {{board}}',
@@ -363,6 +365,8 @@ const I18N = {
     reasonColumnAlignmentUnknown: 'não foi possível associar cabeçalhos e corpos de coluna com segurança',
     reasonHeaderCountUnavailable: 'o Azure não disponibiliza um total verificável para a coluna',
     snapshotObservedCount: '{{count}} visíveis',
+    snapshotDragHint: 'Arraste para mover o painel. Use as setas do teclado com foco.',
+    snapshotToggleHint: 'Expandir ou recolher o painel Snapshot.',
     snapshotHeaderCount: '{{count}} no board',
     snapshotHeaderCountUnknown: 'total do board indisponível',
     snapshotBoardId: 'Board: {{board}}',
@@ -3716,10 +3720,15 @@ function ensureSnapshotPanel(context, i18n) {
     panel = document.createElement('div');
     panel.id = 'wip-snapshot-panel';
     panel.innerHTML = `
-      <button id="wip-snapshot-toggle" type="button" aria-controls="wip-snapshot-body" aria-expanded="false">
-        <span id="wip-snapshot-title"></span>
-        <span id="wip-snapshot-caret">▴</span>
-      </button>
+      <div id="wip-snapshot-header">
+        <div id="wip-snapshot-drag-handle" tabindex="0" role="group">
+          <span class="wip-snapshot-grip" aria-hidden="true">⠿</span>
+          <span id="wip-snapshot-title"></span>
+        </div>
+        <button id="wip-snapshot-toggle" type="button" aria-controls="wip-snapshot-body" aria-expanded="false">
+          <span id="wip-snapshot-caret" aria-hidden="true">▴</span>
+        </button>
+      </div>
       <div id="wip-snapshot-body" role="region" aria-labelledby="wip-snapshot-title">
         <p class="wip-snap-note" id="wip-snapshot-note"></p>
         <div class="wip-snap-actions">
@@ -3856,12 +3865,16 @@ function ensureSnapshotPanel(context, i18n) {
     document.body.appendChild(panel);
 
     const toggle = panel.querySelector('#wip-snapshot-toggle');
+    const panelDrag = (typeof WIPBoardPanelDrag !== 'undefined' && WIPBoardPanelDrag)
+      ? WIPBoardPanelDrag.attach(panel, panel.querySelector('#wip-snapshot-drag-handle'))
+      : null;
     const setOpen = (open) => {
       if (panel.classList.contains('open') === open) return;
       panel.classList.toggle('open', open);
       toggle.setAttribute('aria-expanded', String(open));
       const caret = panel.querySelector('#wip-snapshot-caret');
       if (caret) caret.textContent = open ? '▾' : '▴';
+      if (panelDrag) panelDrag.reclamp();
     };
     toggle.addEventListener('click', () => setOpen(!panel.classList.contains('open')));
     // Escape closes the panel even when focus is inside a deeply nested form.
@@ -3886,6 +3899,10 @@ function ensureSnapshotPanel(context, i18n) {
 
   // Localized, static labels.
   setTextById('wip-snapshot-title', i18n.t('snapshotPanelTitle'));
+  const dragHandle = panel.querySelector('#wip-snapshot-drag-handle');
+  if (dragHandle) dragHandle.setAttribute('aria-label', i18n.t('snapshotDragHint'));
+  const collapseButton = panel.querySelector('#wip-snapshot-toggle');
+  if (collapseButton) collapseButton.setAttribute('aria-label', i18n.t('snapshotToggleHint'));
   setTextById('wip-snapshot-note', i18n.t('snapshotLocalOnly'));
   setTextById('wip-snapshot-capture', i18n.t('snapshotCapture'));
   setTextById('wip-snapshot-latest', i18n.t('snapshotLatest'));
