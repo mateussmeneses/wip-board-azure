@@ -44,13 +44,15 @@ test('header and DOM mismatch is flagged and both values are persisted', async (
   assert.equal(saved.columns[0].reportedCount,7);
   assert.equal(saved.source.complete,false);
 });
-test('ambiguous column-body mapping is never declared complete', () => {
+test('missing swimlane cards remain incomplete even with reliable GUID mapping', () => {
   const bad=lanes.replace('<div class="kanban-board-column" data-column="b"><div class="wit-card" data-itemid="22"></div></div>','');
   const m=modelFrom(bad);
-  assert.equal(m.diagnostics.columnAlignmentReliable,false);
+  // Known GUIDs still identify all remaining columns; the board's header count
+  // proves the absent work item was not fully observed.
+  assert.equal(m.diagnostics.columnAlignmentReliable,true);
   const snap=capture.buildCapture(m,scope);
   assert.equal(snap.complete,false);
-  assert.ok(snap.incompleteReasons.includes(capture.IncompleteReasons.COLUMN_ALIGNMENT_UNKNOWN));
+  assert.ok(snap.incompleteReasons.includes(capture.IncompleteReasons.HEADER_COUNT_MISMATCH));
 });
 test('same numeric id is counted once even when repeated in a swimlane', () => {
   const m = modelFrom(lanes.replace('data-itemid="12"','data-itemid="11"'));
