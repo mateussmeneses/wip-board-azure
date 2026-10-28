@@ -44,13 +44,15 @@ test('header and DOM mismatch is flagged and both values are persisted', async (
   assert.equal(saved.columns[0].reportedCount,7);
   assert.equal(saved.source.complete,false);
 });
-test('ambiguous column-body mapping is never declared complete', () => {
+test('missing swimlane cards remain incomplete even with reliable GUID mapping', () => {
   const bad=lanes.replace('<div class="kanban-board-column" data-column="b"><div class="wit-card" data-itemid="22"></div></div>','');
   const m=modelFrom(bad);
-  assert.equal(m.diagnostics.columnAlignmentReliable,false);
+  // Known GUIDs still identify all remaining columns; the board's header count
+  // proves the absent work item was not fully observed.
+  assert.equal(m.diagnostics.columnAlignmentReliable,true);
   const snap=capture.buildCapture(m,scope);
   assert.equal(snap.complete,false);
-  assert.ok(snap.incompleteReasons.includes(capture.IncompleteReasons.COLUMN_ALIGNMENT_UNKNOWN));
+  assert.ok(snap.incompleteReasons.includes(capture.IncompleteReasons.HEADER_COUNT_MISMATCH));
 });
 test('same numeric id is counted once even when repeated in a swimlane', () => {
   const m = modelFrom(lanes.replace('data-itemid="12"','data-itemid="11"'));
@@ -67,4 +69,44 @@ test('a DOM capture without board header totals cannot prove complete coverage',
   assert.equal(result.complete,false);
   assert.equal(result.columns[0].reportedCount,null);
   assert.ok(result.incompleteReasons.includes(capture.IncompleteReasons.HEADER_COUNT_UNAVAILABLE));
+});
+
+test('ragged swimlane maps Closed cards by GUID even when final row omits middle column', () => {
+  const ragged = [
+    '<div class="kanban-board">',
+    '<span class="kanban-board-column-header" aria-label="Approved"><span class="board-column-item-count">1</span></span>',
+    '<span class="kanban-board-column-header" aria-label="HO"><span class="board-column-item-count">1</span></span>',
+    '<span class="kanban-board-column-header" aria-label="Closed"><span class="board-column-item-count">2</span></span>',
+    '<div class="kanban-board-column" data-column="a"><div class="wit-card" data-itemid="1"></div></div>',
+    '<div class="kanban-board-column" data-column="h"><div class="wit-card" data-itemid="2"></div></div>',
+    '<div class="kanban-board-column" data-column="c" data-done="true"><div class="wit-card" data-itemid="3"></div></div>',
+    '<div class="kanban-board-column" data-column="c" data-done="true"><div class="wit-card" data-itemid="4"></div></div>',
+    '</div>'
+  ].join('');
+  const model = modelFrom(ragged);
+  assert.equal(model.diagnostics.columnAlignmentReliable, true);
+  const result = capture.buildCapture(model, scope);
+  assert.equal(result.complete, true);
+  assert.deepEqual(result.columns.map(c => [c.name, c.count]), [
+    ['Approved', 1], ['HO', 1], ['Closed', 2]
+  ]);
+  assert.equal(result.items.find(x => x.id === 4).column, 'Closed');
+});
+
+test('unknown column layout reports uncertainty, never silently marks complete', () => {
+  const layout = [
+    '<div class="kanban-board">',
+    '<span class="kanban-board-column-header" aria-label="Approved"></span>',
+    '<span class="kanban-board-column-header" aria-label="Closed"></span>',
+    '<div class="kanban-board-column" data-column="a"><div class="wit-card" data-itemid="1"></div></div>',
+    '<div class="kanban-board-column" data-column="b"><div class="wit-card" data-itemid="2"></div></div>',
+    '<div class="kanban-board-column" data-column="unknown"><div class="wit-card" data-itemid="3"></div></div>',
+    '</div>'
+  ].join('');
+  const model = modelFrom(layout);
+  assert.equal(model.diagnostics.columnAlignmentReliable, false);
+  assert.equal(model.diagnostics.unmappedBodyCount, 1);
+  const result = capture.buildCapture(model, scope);
+  assert.equal(result.complete, false);
+  assert.ok(result.incompleteReasons.includes(capture.IncompleteReasons.COLUMN_ALIGNMENT_UNKNOWN));
 });

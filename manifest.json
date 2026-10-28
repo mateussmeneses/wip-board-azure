@@ -35,12 +35,14 @@
         "src/features/sprint/sprint-progress.js",
         "src/data/sprint-observation-store.js",
         "src/features/sprint/sprint-trends.js",
+        "src/ui/panel-drag.js",
         "content.js"
       ],
       "run_at": "document_end",
       "css": [
         "src/ui/board.css",
-        "src/ui/forms.css"
+        "src/ui/forms.css",
+        "src/ui/panel-theme.css"
       ]
     }
   ],
