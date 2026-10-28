@@ -204,9 +204,9 @@
     if (columns.some(function (c) {
       return c.reportedCount != null && c.reportedCount !== c.count;
     })) incompleteReasons.push(IncompleteReasons.HEADER_COUNT_MISMATCH);
-    if (safeModel.diagnostics && columns.some(function (c) {
-      return c.reportedCount == null;
-    })) incompleteReasons.push(IncompleteReasons.HEADER_COUNT_UNAVAILABLE);
+    // The Azure header counter is optional. For columns without it (often
+    // Closed), use the captured unique visible cards, not an absent number.
+    // Other completeness checks remain in force.
     if (safeModel.diagnostics &&
         safeModel.diagnostics.columnAlignmentReliable === false) {
       incompleteReasons.push(IncompleteReasons.COLUMN_ALIGNMENT_UNKNOWN);
