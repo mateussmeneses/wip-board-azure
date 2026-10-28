@@ -28,3 +28,10 @@
 3. When Azure column header count != visible captured cards, the UI shows both and flags incomplete capture.
 4. Text, select and textarea controls remain readable on a dark Azure theme.
 5. All existing WIP, Daily and Sprint tests pass.
+
+
+## Snapshot columns without a header counter (2026-10-28)
+
+Some terminal Azure DevOps columns (notably **Closed**) do not expose a numeric header counter. The Snapshot must not interpret this as an absent column or as evidence of incomplete capture. Each column always counts **unique visible DOM work-item IDs** in its correctly mapped bodies (including swimlanes). If the Azure header supplies a numeric total, that number is retained separately and compared with the DOM count. If there is no header counter, the Snapshot displays a **DOM-only card count** and no counter-mismatch validation is possible for that column. Existing structural/visibility issues (hidden cards, duplicate or missing IDs, ambiguous mappings) still produce an incomplete verdict. DOM-only does **not** establish that Azure loaded every work item: virtualization, filters and pagination remain coverage limitations.
+
+Regression tests cover mixed counted/uncounted columns, Closed with visible cards, empty Closed, persisted counts, and independent duplicate-ID warnings.
