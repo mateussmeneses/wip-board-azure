@@ -62,13 +62,16 @@ test('same numeric id is counted once even when repeated in a swimlane', () => {
   assert.ok(snap.incompleteReasons.includes(capture.IncompleteReasons.DUPLICATE_IDS));
 });
 
-test('a DOM capture without board header totals cannot prove complete coverage', () => {
+test('columns without a header counter use unique visible DOM cards', () => {
   const noTotals=lanes.replace(/<span class="board-column-item-count">2<\/span>/g, '');
   const observed=modelFrom(noTotals);
   const result=capture.buildCapture(observed,scope);
-  assert.equal(result.complete,false);
+  assert.equal(result.complete,true);
   assert.equal(result.columns[0].reportedCount,null);
-  assert.ok(result.incompleteReasons.includes(capture.IncompleteReasons.HEADER_COUNT_UNAVAILABLE));
+  assert.equal(result.columns[1].reportedCount,null);
+  assert.deepEqual(result.columns.map(c => c.count),[2,2]);
+  assert.equal(result.items.length,4);
+  assert.ok(!result.incompleteReasons.includes(capture.IncompleteReasons.HEADER_COUNT_UNAVAILABLE));
 });
 
 test('ragged swimlane maps Closed cards by GUID even when final row omits middle column', () => {
@@ -109,4 +112,50 @@ test('unknown column layout reports uncertainty, never silently marks complete',
   const result = capture.buildCapture(model, scope);
   assert.equal(result.complete, false);
   assert.ok(result.incompleteReasons.includes(capture.IncompleteReasons.COLUMN_ALIGNMENT_UNKNOWN));
+});
+
+test('Closed without a numeric counter is retained alongside counted columns', async () => {
+  const html=lanes.replace(
+    '<div class="kanban-board-column-header" aria-label="Closed"><span class="board-column-item-count">2</span></div>',
+    '<div class="kanban-board-column-header" aria-label="Closed"></div>'
+  );
+  const model=modelFrom(html);
+  const result=capture.buildCapture(model,scope);
+  assert.deepEqual(result.columns.map(c=>({name:c.name,count:c.count,header:c.reportedCount})),[
+    {name:'Approved',count:2,header:2},
+    {name:'Closed',count:2,header:null}
+  ]);
+  assert.equal(result.complete,true);
+  assert.deepEqual(result.items.filter(i=>i.column==='Closed').map(i=>i.id).sort((a,b)=>a-b),[21,22]);
+  const db=Store.createStore({storage:createMockStorage()});
+  await db.createSnapshot(result.storeInput);
+  const saved=await db.getLatestSnapshot(scope);
+  assert.equal(saved.columns.find(c=>c.name==='Closed').count,2);
+  assert.equal(saved.columns.find(c=>c.name==='Closed').reportedCount,null);
+  assert.equal(saved.items.filter(i=>i.column==='Closed').length,2);
+});
+
+test('empty Closed without a counter reports 0 cards without marking the whole capture incomplete', () => {
+  const html=lanes
+    .replace(
+      '<div class="kanban-board-column-header" aria-label="Closed"><span class="board-column-item-count">2</span></div>',
+      '<div class="kanban-board-column-header" aria-label="Closed"></div>'
+    )
+    .replace(/<div class="wit-card" data-itemid="2[12]"><\/div>/g,'');
+  const result=capture.buildCapture(modelFrom(html),scope);
+  assert.equal(result.columns[1].count,0);
+  assert.equal(result.columns[1].reportedCount,null);
+  assert.equal(result.complete,true);
+});
+
+test('no counter does not hide independent structural or visibility problems', () => {
+  const html=lanes
+    .replace(
+      '<div class="kanban-board-column-header" aria-label="Closed"><span class="board-column-item-count">2</span></div>',
+      '<div class="kanban-board-column-header" aria-label="Closed"></div>'
+    )
+    .replace('data-itemid="22"','data-itemid="21"');
+  const result=capture.buildCapture(modelFrom(html),scope);
+  assert.equal(result.complete,false);
+  assert.ok(result.incompleteReasons.includes(capture.IncompleteReasons.DUPLICATE_IDS));
 });
