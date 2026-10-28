@@ -161,23 +161,44 @@
       };
     }
 
-    // Azure boards with swimlanes repeat the SAME column bodies once per lane:
-    // [A,B,C] [A,B,C] ... . Pair by column slot across every row, not only the
-    // first row. If repeated GUIDs disagree, mark the mapping unreliable.
+    // Derive the stable column GUIDs from the first complete body row. Azure
+    // can omit/virtualize body slots in later swimlanes (often Closed), so
+    // mapping every later body by ordinal silently misplaces or drops cards.
+    const firstIds = bodies.slice(0, headers.length).map(function (b) {
+      return attr(b, 'data-column');
+    });
+    const firstRowHasIds = firstIds.length === headers.length &&
+      firstIds.every(Boolean) && new Set(firstIds).size === firstIds.length;
+    if (firstRowHasIds && bodies.every(function (b) {
+      return firstIds.indexOf(attr(b, 'data-column')) !== -1;
+    })) {
+      bodies.forEach(function (b) {
+        groups[firstIds.indexOf(attr(b, 'data-column'))].push(b);
+      });
+      return {
+        headers: headers, groups: groups, bodyCount: bodies.length,
+        reliable: groups.every(function (g) { return g.length > 0; }),
+        unmappedBodyCount: 0,
+      };
+    }
+
+    // Only use ordinal mapping where all swimlane rows contain every column.
+    // A ragged/unknown layout is incomplete; never assert a total for it.
     const fullRows = bodies.length >= headers.length &&
       bodies.length % headers.length === 0;
     bodies.forEach(function (body, i) {
       if (i < headers.length || fullRows) groups[i % headers.length].push(body);
     });
     const consistentIds = groups.every(function (group) {
-      const ids = group.map(function (b) { return attr(b, 'data-column'); }).filter(Boolean);
-      return ids.length < 2 || new Set(ids).size === 1;
+      const groupIds = group.map(function (b) { return attr(b, 'data-column'); }).filter(Boolean);
+      return groupIds.length < 2 || new Set(groupIds).size === 1;
     });
     return {
       headers: headers,
       groups: groups,
       bodyCount: bodies.length,
       reliable: fullRows && consistentIds,
+      unmappedBodyCount: fullRows ? 0 : Math.max(0, bodies.length - headers.length),
     };
   }
 
@@ -408,6 +429,7 @@
         headerCount: headerCount,
         bodyCount: bodyCount,
         columnAlignmentReliable: layout.reliable,
+        unmappedBodyCount: layout.unmappedBodyCount || 0,
       },
     };
   }
